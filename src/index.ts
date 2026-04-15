@@ -7,16 +7,11 @@ import { getGitInfo } from "./git"
 import { getConfigCounts } from "./config"
 import { parseTranscript } from "./transcript"
 import { renderLines } from "./render"
-import { bold, c, nbsp, pctColor } from "./format"
+import { bold, c, nbsp, pctColor, gradientBar } from "./format"
 import boxen from "boxen"
 
 const ANSI_RE = /\x1b\[[0-9;]*m/g
 const vlen = (s: string) => [...s.replace(ANSI_RE, "")].length
-
-function simpleBar(pct: number, width = 10): string {
-  const filled = Math.round((pct * width) / 100)
-  return "█".repeat(filled) + "░".repeat(width - filled)
-}
 
 const data = await parseStdin()
 const git = data.cwd ? getGitInfo(data.cwd) : null
@@ -29,7 +24,7 @@ const nbspLines = lines.map(nbsp)
 // Build colored title
 const title = (git?.repo ? bold("yellow", git.repo) + "  │  " : "")
   + c("cyan", data.model) + "  │  "
-  + simpleBar(data.ctx, 10) + " " + pctColor(data.ctx) + Math.round(data.ctx) + "%\x1b[0m"
+  + gradientBar(data.ctx, 10) + " " + pctColor(data.ctx) + Math.round(data.ctx) + "%\x1b[0m"
 
 // Render box WITHOUT title, then replace top border with our colored title
 const contentWidth = Math.max(...nbspLines.map(l => vlen(l)))

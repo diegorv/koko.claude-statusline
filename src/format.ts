@@ -34,7 +34,7 @@ export function gradientBar(percent: number, width = 20): string {
     }
     out += i < filled
       ? `\x1b[38;2;${r};${g};${b}m\u2588`
-      : "\x1b[38;2;60;60;60m\u2591"
+      : "\x1b[38;2;100;100;100m\u2591"
   }
   return out + RESET
 }
