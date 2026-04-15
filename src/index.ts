@@ -2,12 +2,12 @@
 // Usage: configured in ~/.claude/settings.json as statusLine command
 // Test:  echo '{"model":{"display_name":"Opus"}}' | bun src/index.ts
 
-import { parseStdin } from "./stdin"
-import { getGitInfo } from "./git"
-import { getConfigCounts } from "./config"
-import { parseTranscript } from "./transcript"
-import { render } from "./render"
-import { renderBoxes } from "./boxes"
+import { parseStdin } from "./parsing/stdin"
+import { getGitInfo } from "./collection/git"
+import { getConfigCounts } from "./collection/config"
+import { parseTranscript } from "./parsing/transcript"
+import { render } from "./ui/render"
+import { renderBoxes } from "./ui/boxes"
 
 const data = await parseStdin()
 const git = data.cwd ? getGitInfo(data.cwd) : null

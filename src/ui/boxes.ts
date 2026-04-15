@@ -1,6 +1,6 @@
 // Box rendering — assembles boxen output with custom title bars
 
-import type { StdinData } from "./stdin"
+import type { StdinData } from "../parsing/stdin"
 import type { RenderResult } from "./render"
 import { bold, c, nbsp, pctColor, gradientBar, formatDuration, vlen } from "./format"
 import boxen from "boxen"
