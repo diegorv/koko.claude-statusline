@@ -8,6 +8,8 @@ export interface StdinData {
   added: number
   removed: number
   cwd: string
+  ctxSize: number | null
+  sessionName: string | null
   rl5h: { pct: number; resetsAt: number } | null
   rl7d: { pct: number; resetsAt: number } | null
   vimMode: string | null
@@ -33,6 +35,8 @@ export async function parseStdin(): Promise<StdinData> {
     added:    raw.cost?.total_lines_added ?? 0,
     removed:  raw.cost?.total_lines_removed ?? 0,
     cwd:      raw.workspace?.current_dir ?? raw.cwd ?? "",
+    ctxSize:     raw.context_window?.context_window_size ?? null,
+    sessionName: raw.session_name ?? null,
     rl5h:     rl5h?.used_percentage != null
               ? { pct: Math.round(rl5h.used_percentage), resetsAt: rl5h.resets_at ?? 0 }
               : null,

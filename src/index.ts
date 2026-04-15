@@ -4,14 +4,16 @@
 
 import { parseStdin } from "./stdin"
 import { getGitInfo } from "./git"
-import { renderLine } from "./render"
+import { getConfigCounts } from "./config"
+import { renderLines } from "./render"
 import { box } from "./box"
-import { c } from "./format"
+import { c, nbsp } from "./format"
 
 const data = await parseStdin()
 const git = data.cwd ? getGitInfo(data.cwd) : null
-const line = renderLine(data, git)
+const config = data.cwd ? getConfigCounts(data.cwd) : null
+const lines = renderLines(data, git, config)
 
-for (const l of box([line], c("cyan", data.model))) {
+for (const l of box(lines.map(nbsp), c("cyan", data.model))) {
   console.log(l)
 }

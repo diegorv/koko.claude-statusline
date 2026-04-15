@@ -1,7 +1,8 @@
-// Layout composition
+// Layout composition — 2-line layout
 
 import type { StdinData } from "./stdin"
 import type { GitInfo } from "./git"
+import type { ConfigCounts } from "./config"
 import { c, bold, dim, gradientBar, pctColor, formatDuration, formatResetIn } from "./format"
 
 const I = {
@@ -15,10 +16,22 @@ const I = {
 const SEP = dim("  │  ")
 const RESET = "\x1b[0m"
 
-export function renderLine(data: StdinData, git: GitInfo | null): string {
-  const parts: string[] = []
+function ctxEmoji(pct: number): string {
+  if (pct >= 90) return "🚨"
+  if (pct >= 70) return "🔥"
+  if (pct >= 20) return "⚡"
+  return "🟢"
+}
 
-  // Git: repo + branch + file stats + ahead/behind
+function sizeLabel(size: number | null): string {
+  if (!size) return ""
+  return size >= 1000000 ? " (1M)" : " (200K)"
+}
+
+export function renderLines(data: StdinData, git: GitInfo | null, config: ConfigCounts | null): string[] {
+  // --- Line 1: session (git + context + cost + changes + duration + vim) ---
+  const line1: string[] = []
+
   if (git?.repo) {
     let str = `${bold("yellow", `${I.folder} ${git.repo}`)}  ${c("green", `${I.branch} ${git.branch}`)}`
     if (git.dirty) str += c("yellow", "*")
@@ -34,49 +47,59 @@ export function renderLine(data: StdinData, git: GitInfo | null): string {
     if (git.behind > 0) sync.push(c("red", `↓${git.behind}`))
     if (sync.length > 0) str += `  ${sync.join(" ")}`
 
-    parts.push(str)
+    line1.push(str)
   }
 
-  // Worktree
-  if (data.worktree) {
-    parts.push(c("magenta", `${I.tree} ${data.worktree}`))
-  }
+  line1.push(`${ctxEmoji(data.ctx)} ${gradientBar(data.ctx)} ${pctColor(data.ctx)}${Math.round(data.ctx)}%${RESET}${dim(sizeLabel(data.ctxSize))}`)
+  line1.push(c("yellow", `$${data.cost.toFixed(2)}`))
 
-  // Context bar
-  parts.push(`${gradientBar(data.ctx)} ${pctColor(data.ctx)}${Math.round(data.ctx)}%${RESET}`)
-
-  // Cost
-  parts.push(c("yellow", `$${data.cost.toFixed(2)}`))
-
-  // Lines added/removed
   if (data.added > 0 || data.removed > 0) {
-    parts.push(`${c("green", `+${data.added}`)} ${c("red", `-${data.removed}`)}`)
+    line1.push(`${c("green", `+${data.added}`)} ${c("red", `-${data.removed}`)}`)
   }
 
-  // Duration
   if (data.dur > 0) {
-    parts.push(dim(`${I.clock} ${formatDuration(data.dur)}`))
+    line1.push(dim(`${I.clock} ${formatDuration(data.dur)}`))
   }
 
-  // Vim mode
   if (data.vimMode) {
-    parts.push(dim(data.vimMode))
+    line1.push(dim(data.vimMode))
   }
 
-  // Rate limits
+  // --- Line 2: environment (rate limits + config counts + worktree + session name) ---
+  const line2: string[] = []
+
   if (data.rl5h) {
     let str = `${I.gauge} 5h ${gradientBar(data.rl5h.pct, 8)} ${pctColor(data.rl5h.pct)}${data.rl5h.pct}%${RESET}`
     const reset = data.rl5h.resetsAt ? formatResetIn(data.rl5h.resetsAt) : ""
     if (reset) str += dim(` (${reset})`)
-    parts.push(str)
+    line2.push(str)
   }
 
   if (data.rl7d) {
     let str = `7d ${gradientBar(data.rl7d.pct, 8)} ${pctColor(data.rl7d.pct)}${data.rl7d.pct}%${RESET}`
     const reset = data.rl7d.resetsAt ? formatResetIn(data.rl7d.resetsAt) : ""
     if (reset) str += dim(` (${reset})`)
-    parts.push(str)
+    line2.push(str)
   }
 
-  return parts.join(SEP)
+  if (config) {
+    const counts: string[] = []
+    if (config.claudeMd > 0) counts.push(`${config.claudeMd} CLAUDE.md`)
+    if (config.rules > 0)    counts.push(`${config.rules} rules`)
+    if (config.mcps > 0)     counts.push(`${config.mcps} MCPs`)
+    if (config.hooks > 0)    counts.push(`${config.hooks} hooks`)
+    for (const ct of counts) line2.push(dim(ct))
+  }
+
+  if (data.worktree) {
+    line2.push(c("magenta", `${I.tree} ${data.worktree}`))
+  }
+
+  if (data.sessionName) {
+    line2.push(dim(data.sessionName))
+  }
+
+  const lines = [line1.join(SEP)]
+  if (line2.length > 0) lines.push(line2.join(SEP))
+  return lines
 }
