@@ -5,6 +5,9 @@ import type { RenderResult } from "./render"
 import { bold, c, nbsp, pctColor, gradientBar, formatDuration, vlen } from "./format"
 import { box } from "./box"
 
+/** Wraps border characters in dim ANSI to match the box borders. */
+const dimBorder = (s: string) => `\x1b[2m${s}\x1b[0m`
+
 /**
  * Renders the complete terminal output with session and activity boxes.
  * Builds custom title bars with model info, context usage, cost, and duration.
@@ -51,7 +54,7 @@ export function renderBoxes(data: StdinData, result: RenderResult, repoName?: st
 
   const sessionBoxLines = sessionBox.split("\n")
   const dashes = Math.max(1, boxWidth - leftW - rightW - 8)
-  sessionBoxLines[0] = `╭─ ${titleLeft} ${"─".repeat(dashes)} ${titleRight} ─╮`
+  sessionBoxLines[0] = `${dimBorder("╭─")} ${titleLeft} ${dimBorder("─".repeat(dashes))} ${titleRight} ${dimBorder("─╮")}`
 
   const output: string[] = [sessionBoxLines.join("\n")]
 
@@ -65,10 +68,10 @@ export function renderBoxes(data: StdinData, result: RenderResult, repoName?: st
     const actBoxLines = actBox.split("\n")
     if (activityTitle) {
       const actDashes = Math.max(1, boxWidth - actTitleLeftW - actTitleW - 8)
-      actBoxLines[0] = `╭─ Activity ${"─".repeat(actDashes)} ${activityTitle} ─╮`
+      actBoxLines[0] = `${dimBorder("╭─")} Activity ${dimBorder("─".repeat(actDashes))} ${activityTitle} ${dimBorder("─╮")}`
     } else {
       const actDashes = Math.max(1, boxWidth - actTitleLeftW - 5)
-      actBoxLines[0] = `╭─ Activity ${"─".repeat(actDashes)}╮`
+      actBoxLines[0] = `${dimBorder("╭─")} Activity ${dimBorder("─".repeat(actDashes) + "╮")}`
     }
 
     output.push(actBoxLines.join("\n"))
