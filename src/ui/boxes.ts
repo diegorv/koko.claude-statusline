@@ -1,9 +1,9 @@
-// Box rendering — assembles boxen output with custom title bars
+// Box rendering — assembles box output with custom title bars
 
 import type { StdinData } from "../parsing/stdin"
 import type { RenderResult } from "./render"
 import { bold, c, nbsp, pctColor, gradientBar, formatDuration, vlen } from "./format"
-import boxen from "boxen"
+import { box } from "./box"
 
 /**
  * Renders the complete terminal output with session and activity boxes.
@@ -44,10 +44,8 @@ export function renderBoxes(data: StdinData, result: RenderResult, repoName?: st
   const boxWidth = Math.max(sessionMinW, actMinW)
 
   // Render session box
-  const sessionBox = boxen(sessionLines.join("\n"), {
-    padding: { top: 1, bottom: 0, left: 1, right: 1 },
-    borderStyle: "round",
-    dimBorder: true,
+  const sessionBox = box(sessionLines.join("\n"), {
+    padding: { top: 1, bottom: 0, left: 1 },
     width: boxWidth,
   })
 
@@ -59,10 +57,8 @@ export function renderBoxes(data: StdinData, result: RenderResult, repoName?: st
 
   // Render activity box (only if there's content)
   if (activity.length > 0) {
-    const actBox = boxen(actLines.join("\n"), {
-      padding: { top: 0, bottom: 0, left: 1, right: 1 },
-      borderStyle: "round",
-      dimBorder: true,
+    const actBox = box(actLines.join("\n"), {
+      padding: { top: 0, bottom: 0, left: 1 },
       width: boxWidth,
     })
 
