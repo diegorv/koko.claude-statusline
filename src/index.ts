@@ -3,6 +3,7 @@
 // Test:  echo '{"model":{"display_name":"Opus"}}' | bun src/index.ts
 
 import { c, bold, dim, gradientBar, pctColor, formatDuration, formatResetIn } from "./format"
+import { box } from "./box"
 
 // Nerd Font icons
 const I = {
@@ -12,7 +13,7 @@ const I = {
   gauge:  "\uf0e4",  //
 } as const
 
-const SEP = dim(" \u2502 ")
+const SEP = dim(" \u00b7 ")
 const RESET = "\x1b[0m"
 
 // --- Parse stdin ---
@@ -43,26 +44,28 @@ if (cwd) {
   } catch {}
 }
 
-// --- Build parts ---
-const parts: string[] = [c("cyan", `[${model}]`)]
+// --- Main line: project + bar + cost + velocity + duration ---
+const main: string[] = []
 
 if (repo) {
   let git = `${bold("yellow", `${I.folder} ${repo}`)} ${c("green", `${I.branch} ${branch}`)}`
   if (dirty) git += c("yellow", "*")
-  parts.push(git)
+  main.push(git)
 }
 
-parts.push(`${gradientBar(ctx)} ${pctColor(ctx)}${Math.round(ctx)}%${RESET}`)
-
-parts.push(c("yellow", `$${cost.toFixed(2)}`))
+main.push(`${gradientBar(ctx)} ${pctColor(ctx)}${Math.round(ctx)}%${RESET}`)
+main.push(c("yellow", `$${cost.toFixed(2)}`))
 
 if (added > 0 || removed > 0) {
-  parts.push(`${c("green", `+${added}`)} ${c("red", `-${removed}`)}`)
+  main.push(`${c("green", `+${added}`)} ${c("red", `-${removed}`)}`)
 }
 
 if (dur > 0) {
-  parts.push(dim(`${I.clock} ${formatDuration(dur)}`))
+  main.push(dim(`${I.clock} ${formatDuration(dur)}`))
 }
+
+// --- Rate limits line (optional) ---
+const rl: string[] = []
 
 const rl5h = data.rate_limits?.five_hour
 if (rl5h?.used_percentage != null) {
@@ -70,7 +73,7 @@ if (rl5h?.used_percentage != null) {
   let str = `${I.gauge} 5h: ${pctColor(pct)}${pct}%${RESET}`
   const reset = rl5h.resets_at ? formatResetIn(rl5h.resets_at) : ""
   if (reset) str += dim(` (${reset})`)
-  parts.push(str)
+  rl.push(str)
 }
 
 const rl7d = data.rate_limits?.seven_day
@@ -79,8 +82,13 @@ if (rl7d?.used_percentage != null) {
   let str = `7d: ${pctColor(pct)}${pct}%${RESET}`
   const reset = rl7d.resets_at ? formatResetIn(rl7d.resets_at) : ""
   if (reset) str += dim(` (${reset})`)
-  parts.push(str)
+  rl.push(str)
 }
 
 // --- Output ---
-console.log(parts.join(SEP))
+const content = [main.join(SEP)]
+if (rl.length > 0) content.push(rl.join(SEP))
+
+for (const line of box(content, c("cyan", model))) {
+  console.log(line)
+}
