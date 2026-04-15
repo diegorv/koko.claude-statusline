@@ -4,7 +4,7 @@ import type { StdinData } from "./stdin"
 import type { GitInfo } from "./git"
 import type { ConfigCounts } from "./config"
 import type { TranscriptData } from "./transcript"
-import { c, dim, gradientBar, pctColor, formatDuration, formatResetIn } from "./format"
+import { c, dim, gradientBar, pctColor, formatResetIn } from "./format"
 
 const I = {
   folder: "\uf07c",  //
@@ -57,15 +57,8 @@ export function renderLines(data: StdinData, git: GitInfo | null, config: Config
     line1.push(c("magenta", `${I.tree} ${data.worktree}`))
   }
 
-  const costLabel = data.cost < 0.10 ? `${Math.round(data.cost * 100)}¢` : `$${data.cost.toFixed(2)}`
-  line1.push(c("yellow", costLabel))
-
   if (data.added > 0 || data.removed > 0) {
     line1.push(`${c("green", `+${data.added}`)} ${c("red", `-${data.removed}`)}`)
-  }
-
-  if (data.dur >= 1000) {
-    line1.push(dim(`${I.clock} ${formatDuration(data.dur)}`))
   }
 
   if (data.vimMode) {
