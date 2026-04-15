@@ -4,7 +4,7 @@ import type { StdinData } from "./stdin"
 import type { GitInfo } from "./git"
 import type { ConfigCounts } from "./config"
 import type { TranscriptData } from "./transcript"
-import { c, bold, dim, gradientBar, pctColor, formatDuration, formatResetIn } from "./format"
+import { c, dim, gradientBar, pctColor, formatDuration, formatResetIn } from "./format"
 
 const I = {
   folder: "\uf07c",  //
@@ -48,7 +48,7 @@ export function renderLines(data: StdinData, git: GitInfo | null, config: Config
   const line1: string[] = []
 
   if (git?.repo) {
-    let str = `${bold("yellow", `${I.folder} ${git.repo}`)}  ${c("green", `${I.branch} ${git.branch}`)}`
+    let str = `${c("green", `${I.branch} ${git.branch}`)}`
     if (git.dirty) str += c("yellow", "*")
 
     const stats: string[] = []

@@ -7,7 +7,7 @@ import { getGitInfo } from "./git"
 import { getConfigCounts } from "./config"
 import { parseTranscript } from "./transcript"
 import { renderLines } from "./render"
-import { c, nbsp } from "./format"
+import { c, bold, nbsp } from "./format"
 import boxen from "boxen"
 
 const ANSI_RE = /\x1b\[[0-9;]*m/g
@@ -23,7 +23,7 @@ const nbspLines = lines.map(nbsp)
 const contentWidth = Math.max(...nbspLines.map(l => vlen(l)))
 
 const output = boxen(nbspLines.join("\n"), {
-  title: c("cyan", data.model),
+  title: (git?.repo ? bold("yellow", git.repo) + "  │  " : "") + c("cyan", data.model),
   titleAlignment: "left",
   padding: { top: 0, bottom: 0, left: 1, right: 1 },
   borderStyle: "round",
