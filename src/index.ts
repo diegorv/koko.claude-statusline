@@ -7,8 +7,11 @@ import { getGitInfo } from "./git"
 import { getConfigCounts } from "./config"
 import { parseTranscript } from "./transcript"
 import { renderLines } from "./render"
-import { box } from "./box"
 import { c, nbsp } from "./format"
+import boxen from "boxen"
+
+const ANSI_RE = /\x1b\[[0-9;]*m/g
+const vlen = (s: string) => [...s.replace(ANSI_RE, "")].length
 
 const data = await parseStdin()
 const git = data.cwd ? getGitInfo(data.cwd) : null
@@ -16,6 +19,15 @@ const config = data.cwd ? getConfigCounts(data.cwd) : null
 const transcript = data.transcriptPath ? parseTranscript(data.transcriptPath) : null
 const lines = renderLines(data, git, config, transcript)
 
-for (const l of box(lines.map(nbsp), c("cyan", data.model))) {
-  console.log(l)
-}
+const nbspLines = lines.map(nbsp)
+const contentWidth = Math.max(...nbspLines.map(l => vlen(l)))
+
+const output = boxen(nbspLines.join("\n"), {
+  title: c("cyan", data.model),
+  titleAlignment: "left",
+  padding: { top: 0, bottom: 0, left: 1, right: 1 },
+  borderStyle: "round",
+  dimBorder: true,
+  width: contentWidth + 6, // borders(2) + padding(2) + breathing room(2)
+})
+console.log(output)

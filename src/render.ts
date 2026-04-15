@@ -1,4 +1,4 @@
-// Layout composition — up to 3 lines
+// Layout composition — up to 4 lines with semantic grouping
 
 import type { StdinData } from "./stdin"
 import type { GitInfo } from "./git"
@@ -14,7 +14,8 @@ const I = {
   tree:   "\uf1bb",  //
 } as const
 
-const SEP = dim("  │  ")
+const GAP = "   " // 3 spaces within a group
+const SEP = dim("  │  ") // between different semantic groups
 const RESET = "\x1b[0m"
 
 function ctxEmoji(pct: number): string {
@@ -43,7 +44,7 @@ function formatElapsed(ms: number): string {
 }
 
 export function renderLines(data: StdinData, git: GitInfo | null, config: ConfigCounts | null, transcript: TranscriptData | null = null): string[] {
-  // --- Line 1: session (git + context + cost + changes + duration + vim) ---
+  // --- Line 1: session (all elements, spaces only) ---
   const line1: string[] = []
 
   if (git?.repo) {
@@ -64,7 +65,12 @@ export function renderLines(data: StdinData, git: GitInfo | null, config: Config
     line1.push(str)
   }
 
+  if (data.worktree) {
+    line1.push(c("magenta", `${I.tree} ${data.worktree}`))
+  }
+
   line1.push(`${ctxEmoji(data.ctx)} ${gradientBar(data.ctx)} ${pctColor(data.ctx)}${Math.round(data.ctx)}%${RESET}${dim(sizeLabel(data.ctxSize))}`)
+
   const costLabel = data.cost < 0.10 ? `${Math.round(data.cost * 100)}¢` : `$${data.cost.toFixed(2)}`
   line1.push(c("yellow", costLabel))
 
@@ -80,7 +86,7 @@ export function renderLines(data: StdinData, git: GitInfo | null, config: Config
     line1.push(dim(data.vimMode))
   }
 
-  // --- Line 2: environment (rate limits + config counts + worktree + session name) ---
+  // --- Line 2: rate limits (own line, spaces only) ---
   const line2: string[] = []
 
   if (data.rl5h) {
@@ -97,81 +103,83 @@ export function renderLines(data: StdinData, git: GitInfo | null, config: Config
     line2.push(str)
   }
 
+  // --- Line 3: environment (config counts + session name) ---
+  const line3: string[] = []
+
   if (config) {
-    const counts: string[] = []
-    if (config.claudeMd > 0) counts.push(`${config.claudeMd} CLAUDE.md`)
-    if (config.rules > 0)    counts.push(`${config.rules} rules`)
-    // MCP count: config + any extra servers seen in transcript
+    if (config.claudeMd > 0) line3.push(dim(`${config.claudeMd} CLAUDE.md`))
+    if (config.rules > 0)    line3.push(dim(`${config.rules} rules`))
+
     const mcpOk = transcript?.mcpStatus.ok ?? new Set()
     const mcpErr = transcript?.mcpStatus.errored ?? new Set()
     const mcpSeen = new Set([...mcpOk, ...mcpErr])
     const mcpCount = Math.max(config.mcps, mcpSeen.size)
     if (mcpCount > 0) {
       if (mcpErr.size > 0) {
-        counts.push(c("red", `${mcpCount} MCPs (${mcpErr.size} ✗)`))
+        line3.push(c("red", `${mcpCount} MCPs (${mcpErr.size} ✗)`))
       } else if (mcpOk.size > 0) {
-        counts.push(c("green", `${mcpCount} MCPs ✓`))
+        line3.push(c("green", `${mcpCount} MCPs ✓`))
       } else {
-        counts.push(`${mcpCount} MCPs`)
+        line3.push(dim(`${mcpCount} MCPs`))
       }
     }
-    if (config.hooks > 0)    counts.push(`${config.hooks} hooks`)
-    for (const ct of counts) line2.push(dim(ct))
-  }
 
-  if (data.worktree) {
-    line2.push(c("magenta", `${I.tree} ${data.worktree}`))
+    if (config.hooks > 0) line3.push(dim(`${config.hooks} hooks`))
   }
 
   if (data.sessionName) {
-    line2.push(dim(data.sessionName))
+    line3.push(dim(data.sessionName))
   }
 
-  // --- Line 3: activity (tools + agents + todos) ---
-  const line3: string[] = []
+  // --- Line 4: activity (tools │ agents │ todos) ---
+  const line4: string[] = []
 
   if (transcript) {
-    // Running tools (last 2, with target)
-    if (transcript.runningTools.length > 0) {
-      const parts = transcript.runningTools.map(t => {
-        const label = t.target ? `${t.name}: ${t.target}` : t.name
-        return `${c("cyan", spin())} ${label}`
-      })
-      line3.push(parts.join("  "))
+    // Running tools (with spinner + target)
+    const runningParts: string[] = []
+    for (const t of transcript.runningTools) {
+      const label = t.target ? `${t.name}: ${t.target}` : t.name
+      runningParts.push(`${c("cyan", spin())} ${label}`)
     }
 
-    // Completed tools: top 5 by count
+    // Completed tools (top 5 by count)
     const toolParts: string[] = []
     let count = 0
     for (const [name, n] of transcript.tools) {
       if (count++ >= 5) break
       toolParts.push(`${c("green", "✓")} ${name} ×${n}`)
     }
-    if (toolParts.length > 0) line3.push(toolParts.join("  "))
 
-    // Agents: last 3
+    const allTools = [...runningParts, ...toolParts]
+    if (allTools.length > 0) line4.push(allTools.join(GAP))
+
+    // Agents (last 3)
+    const agentParts: string[] = []
     for (const agent of transcript.agents) {
       if (agent.running) {
-        line3.push(`${c("cyan", spin())} ${agent.type} ${dim(`(${formatElapsed(agent.elapsed)})`)}`)
+        agentParts.push(`${c("cyan", spin())} ${agent.type} ${dim(`(${formatElapsed(agent.elapsed)})`)}`)
       } else {
-        line3.push(`${c("green", "✓")} ${agent.type} ${dim(`(${formatElapsed(agent.elapsed)})`)}`)
+        agentParts.push(`${c("green", "✓")} ${agent.type} ${dim(`(${formatElapsed(agent.elapsed)})`)}`)
       }
     }
+    if (agentParts.length > 0) line4.push(agentParts.join(GAP))
 
     // Todos
     const { total, completed, current } = transcript.todos
     if (total > 0) {
       if (current) {
         const label = current.length > 40 ? current.slice(0, 37) + "..." : current
-        line3.push(`${c("yellow", "▸")} ${label} ${dim(`(${completed}/${total})`)}`)
+        line4.push(`${c("yellow", "▸")} ${label} ${dim(`(${completed}/${total})`)}`)
       } else if (completed === total) {
-        line3.push(`${c("green", "✓")} All complete ${dim(`(${total}/${total})`)}`)
+        line4.push(`${c("green", "✓")} All complete ${dim(`(${total}/${total})`)}`)
       }
     }
   }
 
-  const lines = [line1.join(SEP)]
-  if (line2.length > 0) lines.push(line2.join(SEP))
-  if (line3.length > 0) lines.push(line3.join(SEP))
+  // Assemble lines
+  const lines = [line1.join(GAP)]
+  if (line2.length > 0) lines.push(line2.join(GAP))
+  if (line3.length > 0) lines.push(line3.join(GAP))
+  if (line4.length > 0) lines.push(line4.join(SEP))
   return lines
 }
