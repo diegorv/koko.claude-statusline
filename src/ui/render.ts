@@ -5,14 +5,16 @@ import type { GitInfo } from "../collection/git"
 import type { ConfigCounts } from "../collection/config"
 import type { TranscriptData } from "../parsing/transcript"
 import { SEP, GAP } from "./constants"
-import { renderGitStatus } from "./components/git-status"
-import { renderWorkspaceInfo } from "./components/workspace-info"
-import { renderRateLimit } from "./components/rate-limit"
-import { renderRunningTools } from "./components/running-tools"
-import { renderCompletedTools } from "./components/completed-tools"
-import { renderAgents } from "./components/agents"
-import { renderTodos } from "./components/todos"
-import { renderActivityTitle } from "./components/activity-title"
+import {
+  renderGitStatus,
+  renderWorkspaceInfo,
+  renderRateLimit,
+  renderRunningTools,
+  renderCompletedTools,
+  renderAgents,
+  renderTodos,
+  renderActivityTitle,
+} from "./components"
 
 export interface RenderResult {
   session: string[]

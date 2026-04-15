@@ -17,14 +17,13 @@ export interface StdinData {
   transcriptPath: string | null
 }
 
-export async function parseStdin(): Promise<StdinData> {
-  let raw: any
-  try {
-    raw = await Bun.stdin.json()
-  } catch {
-    process.exit(0)
-  }
-
+/**
+ * Maps a raw JSON object from Claude Code stdin into a normalized StdinData structure.
+ * Extracts and transforms nested fields with safe defaults for missing values.
+ * @param raw - Raw parsed JSON from stdin.
+ * @returns Normalized StdinData object.
+ */
+export function mapRawToStdinData(raw: any): StdinData {
   const rateLimitFiveHour = raw.rate_limits?.five_hour
   const rateLimitSevenDay = raw.rate_limits?.seven_day
 
@@ -48,4 +47,19 @@ export async function parseStdin(): Promise<StdinData> {
     worktree: raw.worktree?.name ?? null,
     transcriptPath: raw.transcript_path ?? null,
   }
+}
+
+/**
+ * Reads and parses JSON from Bun stdin, returning a normalized StdinData object.
+ * Exits the process silently if stdin cannot be parsed.
+ * @returns Promise resolving to the parsed StdinData.
+ */
+export async function parseStdin(): Promise<StdinData> {
+  let raw: any
+  try {
+    raw = await Bun.stdin.json()
+  } catch {
+    process.exit(0)
+  }
+  return mapRawToStdinData(raw)
 }

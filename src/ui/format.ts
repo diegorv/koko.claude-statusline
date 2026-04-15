@@ -16,13 +16,25 @@ export { RESET }
 
 const ANSI_RE = /\x1b\[[0-9;]*m/g
 
+/** Wraps text in the given ANSI color with an automatic reset. */
 export const c = (color: string, text: string) => `${ANSI[color] ?? ""}${text}${RESET}`
+
+/** Wraps text in bold + the given ANSI color with an automatic reset. */
 export const bold = (color: string, text: string) => `${BOLD}${ANSI[color] ?? ""}${text}${RESET}`
+
+/** Wraps text in dim (faint) ANSI style with an automatic reset. */
 export const dim = (text: string) => `${DIM}${text}${RESET}`
 
 /** Returns the visual length of a string, stripping ANSI escape codes. */
 export const vlen = (s: string) => [...s.replace(ANSI_RE, "")].length
 
+/**
+ * Renders a gradient bar from green to red based on the given percentage.
+ * Uses 256-color ANSI sequences for smooth color transitions.
+ * @param percent - Value from 0 to 100.
+ * @param width - Number of characters in the bar (default: 20).
+ * @returns ANSI-colored string of filled and empty block characters.
+ */
 export function gradientBar(percent: number, width = 20): string {
   const filled = Math.round((percent * width) / 100)
   let out = ""
@@ -46,12 +58,22 @@ export function gradientBar(percent: number, width = 20): string {
   return out + RESET
 }
 
+/**
+ * Returns the ANSI color code for a percentage value (green < 70, yellow 70-89, red >= 90).
+ * @param pct - Percentage value.
+ * @returns ANSI color escape code string.
+ */
 export function pctColor(pct: number): string {
   if (pct >= 90) return ANSI.red
   if (pct >= 70) return ANSI.yellow
   return ANSI.green
 }
 
+/**
+ * Formats a duration in milliseconds to a human-readable string (e.g. "1h 30m", "5m", "30s").
+ * @param ms - Duration in milliseconds.
+ * @returns Formatted duration string.
+ */
 export function formatDuration(ms: number): string {
   const sec = Math.floor(ms / 1000)
   const h = Math.floor(sec / 3600)
@@ -61,6 +83,12 @@ export function formatDuration(ms: number): string {
   return `${sec}s`
 }
 
+/**
+ * Formats the time remaining until a reset epoch as a human-readable countdown (e.g. "23m", "1h 15m").
+ * Returns empty string if the reset time is in the past.
+ * @param epochSec - Reset timestamp in seconds since Unix epoch.
+ * @returns Formatted countdown string, or empty if already past.
+ */
 export function formatResetIn(epochSec: number): string {
   const diff = epochSec * 1000 - Date.now()
   if (diff <= 0) return ""
@@ -71,4 +99,5 @@ export function formatResetIn(epochSec: number): string {
   return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
 
+/** Replaces regular spaces with non-breaking spaces for terminal rendering. */
 export const nbsp = (s: string) => s.replace(/ /g, "\u00A0")
