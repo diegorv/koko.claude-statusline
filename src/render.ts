@@ -18,18 +18,6 @@ const GAP = "   " // 3 spaces within a group
 const SEP = dim("  │  ") // between different semantic groups
 const RESET = "\x1b[0m"
 
-function ctxEmoji(pct: number): string {
-  if (pct >= 90) return "🚨"
-  if (pct >= 70) return "🔥"
-  if (pct >= 20) return "⚡"
-  return "🟢"
-}
-
-function sizeLabel(size: number | null): string {
-  if (!size) return ""
-  return size >= 1000000 ? " (1M)" : " (200K)"
-}
-
 const SPINNER = ["◐", "◓", "◑", "◒"]
 
 function spin(): string {
@@ -68,8 +56,6 @@ export function renderLines(data: StdinData, git: GitInfo | null, config: Config
   if (data.worktree) {
     line1.push(c("magenta", `${I.tree} ${data.worktree}`))
   }
-
-  line1.push(`${ctxEmoji(data.ctx)} ${gradientBar(data.ctx)} ${pctColor(data.ctx)}${Math.round(data.ctx)}%${RESET}${dim(sizeLabel(data.ctxSize))}`)
 
   const costLabel = data.cost < 0.10 ? `${Math.round(data.cost * 100)}¢` : `$${data.cost.toFixed(2)}`
   line1.push(c("yellow", costLabel))

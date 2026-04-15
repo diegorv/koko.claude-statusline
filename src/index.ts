@@ -7,11 +7,16 @@ import { getGitInfo } from "./git"
 import { getConfigCounts } from "./config"
 import { parseTranscript } from "./transcript"
 import { renderLines } from "./render"
-import { c, bold, nbsp } from "./format"
+import { nbsp } from "./format"
 import boxen from "boxen"
 
 const ANSI_RE = /\x1b\[[0-9;]*m/g
 const vlen = (s: string) => [...s.replace(ANSI_RE, "")].length
+
+function simpleBar(pct: number, width = 10): string {
+  const filled = Math.round((pct * width) / 100)
+  return "█".repeat(filled) + "░".repeat(width - filled)
+}
 
 const data = await parseStdin()
 const git = data.cwd ? getGitInfo(data.cwd) : null
@@ -20,14 +25,21 @@ const transcript = data.transcriptPath ? parseTranscript(data.transcriptPath) : 
 const lines = renderLines(data, git, config, transcript)
 
 const nbspLines = lines.map(nbsp)
+
+const title = (git?.repo ? git.repo + "  │  " : "")
+  + data.model + "  │  "
+  + simpleBar(data.ctx, 10) + " " + Math.round(data.ctx) + "%"
+
 const contentWidth = Math.max(...nbspLines.map(l => vlen(l)))
+const titleWidth = vlen(title)
+const boxWidth = Math.max(contentWidth + 6, titleWidth + 6)
 
 const output = boxen(nbspLines.join("\n"), {
-  title: (git?.repo ? bold("yellow", git.repo) + "  │  " : "") + c("cyan", data.model),
+  title,
   titleAlignment: "left",
   padding: { top: 0, bottom: 0, left: 1, right: 1 },
   borderStyle: "round",
   dimBorder: true,
-  width: contentWidth + 6, // borders(2) + padding(2) + breathing room(2)
+  width: boxWidth,
 })
 console.log(output)

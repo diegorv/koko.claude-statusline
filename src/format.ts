@@ -64,4 +64,11 @@ export function formatResetIn(epochSec: number): string {
   return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
 
+export function ctxEmoji(pct: number): string {
+  if (pct >= 90) return "🚨"
+  if (pct >= 70) return "🔥"
+  if (pct >= 20) return "⚡"
+  return "🟢"
+}
+
 export const nbsp = (s: string) => s.replace(/ /g, "\u00A0")
