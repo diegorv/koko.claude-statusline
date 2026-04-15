@@ -1,4 +1,4 @@
-// Layout composition — up to 4 lines with semantic grouping
+// Layout composition — 2-column grid layout
 
 import type { StdinData } from "./stdin"
 import type { GitInfo } from "./git"
@@ -14,9 +14,17 @@ const I = {
   tree:   "\uf1bb",  //
 } as const
 
-const GAP = "   " // 3 spaces within a group
-const SEP = dim("  │  ") // between different semantic groups
+const GAP = "   "
 const RESET = "\x1b[0m"
+const ANSI_RE = /\x1b\[[0-9;]*m/g
+
+const vlen = (s: string) => [...s.replace(ANSI_RE, "")].length
+
+// Pad a string with ANSI codes to a visual width
+function col(left: string, right: string, width = 42): string {
+  const pad = Math.max(2, width - vlen(left))
+  return left + " ".repeat(pad) + right
+}
 
 function ctxEmoji(pct: number): string {
   if (pct >= 90) return "🚨"
@@ -44,71 +52,79 @@ function formatElapsed(ms: number): string {
 }
 
 export function renderLines(data: StdinData, git: GitInfo | null, config: ConfigCounts | null, transcript: TranscriptData | null = null): string[] {
-  // --- Line 1: session (all elements, spaces only) ---
-  const line1: string[] = []
+  const lines: string[] = []
 
+  // === Row 1: git identity (left) + context bar (right) ===
+  let gitStr = ""
   if (git?.repo) {
-    let str = `${bold("yellow", `${I.folder} ${git.repo}`)}  ${c("green", `${I.branch} ${git.branch}`)}`
-    if (git.dirty) str += c("yellow", "*")
+    gitStr = `${bold("yellow", `${I.folder} ${git.repo}`)}  ${c("green", `${I.branch} ${git.branch}`)}`
+    if (git.dirty) gitStr += c("yellow", "*")
 
     const stats: string[] = []
     if (git.staged > 0)    stats.push(c("green", `+${git.staged}`))
     if (git.modified > 0)  stats.push(c("yellow", `~${git.modified}`))
     if (git.untracked > 0) stats.push(dim(`?${git.untracked}`))
-    if (stats.length > 0) str += `  ${stats.join(" ")}`
+    if (stats.length > 0) gitStr += `  ${stats.join(" ")}`
 
     const sync: string[] = []
     if (git.ahead > 0)  sync.push(c("green", `↑${git.ahead}`))
     if (git.behind > 0) sync.push(c("red", `↓${git.behind}`))
-    if (sync.length > 0) str += `  ${sync.join(" ")}`
-
-    line1.push(str)
+    if (sync.length > 0) gitStr += `  ${sync.join(" ")}`
   }
 
   if (data.worktree) {
-    line1.push(c("magenta", `${I.tree} ${data.worktree}`))
+    gitStr += (gitStr ? GAP : "") + c("magenta", `${I.tree} ${data.worktree}`)
   }
 
-  line1.push(`${ctxEmoji(data.ctx)} ${gradientBar(data.ctx)} ${pctColor(data.ctx)}${Math.round(data.ctx)}%${RESET}${dim(sizeLabel(data.ctxSize))}`)
+  const ctxStr = `${ctxEmoji(data.ctx)} ${gradientBar(data.ctx)} ${pctColor(data.ctx)}${Math.round(data.ctx)}%${RESET}${dim(sizeLabel(data.ctxSize))}`
 
+  if (gitStr) {
+    lines.push(col(gitStr, ctxStr))
+  } else {
+    lines.push(ctxStr)
+  }
+
+  // === Row 2: cost + changes + duration (left) + rate limits (right) ===
+  const metaParts: string[] = []
   const costLabel = data.cost < 0.10 ? `${Math.round(data.cost * 100)}¢` : `$${data.cost.toFixed(2)}`
-  line1.push(c("yellow", costLabel))
-
+  metaParts.push(c("yellow", costLabel))
   if (data.added > 0 || data.removed > 0) {
-    line1.push(`${c("green", `+${data.added}`)} ${c("red", `-${data.removed}`)}`)
+    metaParts.push(`${c("green", `+${data.added}`)} ${c("red", `-${data.removed}`)}`)
   }
-
   if (data.dur >= 1000) {
-    line1.push(dim(`${I.clock} ${formatDuration(data.dur)}`))
+    metaParts.push(dim(`${I.clock} ${formatDuration(data.dur)}`))
   }
-
   if (data.vimMode) {
-    line1.push(dim(data.vimMode))
+    metaParts.push(dim(data.vimMode))
   }
 
-  // --- Line 2: rate limits (own line, spaces only) ---
-  const line2: string[] = []
-
+  const rlParts: string[] = []
   if (data.rl5h) {
     let str = `${I.gauge} 5h ${gradientBar(data.rl5h.pct, 8)} ${pctColor(data.rl5h.pct)}${data.rl5h.pct}%${RESET}`
     const reset = data.rl5h.resetsAt ? formatResetIn(data.rl5h.resetsAt) : ""
     if (reset) str += dim(` (${reset})`)
-    line2.push(str)
+    rlParts.push(str)
   }
-
   if (data.rl7d) {
     let str = `7d ${gradientBar(data.rl7d.pct, 8)} ${pctColor(data.rl7d.pct)}${data.rl7d.pct}%${RESET}`
     const reset = data.rl7d.resetsAt ? formatResetIn(data.rl7d.resetsAt) : ""
     if (reset) str += dim(` (${reset})`)
-    line2.push(str)
+    rlParts.push(str)
   }
 
-  // --- Line 3: environment (config counts + session name) ---
-  const line3: string[] = []
+  const metaStr = metaParts.join(GAP)
+  const rlStr = rlParts.join(GAP)
+  if (rlStr) {
+    lines.push(col(metaStr, rlStr))
+  } else {
+    lines.push(metaStr)
+  }
 
+  // === Row 3: config counts (left) + agents (right) ===
+  const envParts: string[] = []
   if (config) {
-    if (config.claudeMd > 0) line3.push(dim(`${config.claudeMd} CLAUDE.md`))
-    if (config.rules > 0)    line3.push(dim(`${config.rules} rules`))
+    if (config.claudeMd > 0) envParts.push(dim(`${config.claudeMd} CLAUDE.md`))
+    if (config.rules > 0)    envParts.push(dim(`${config.rules} rules`))
 
     const mcpOk = transcript?.mcpStatus.ok ?? new Set()
     const mcpErr = transcript?.mcpStatus.errored ?? new Set()
@@ -116,33 +132,48 @@ export function renderLines(data: StdinData, git: GitInfo | null, config: Config
     const mcpCount = Math.max(config.mcps, mcpSeen.size)
     if (mcpCount > 0) {
       if (mcpErr.size > 0) {
-        line3.push(c("red", `${mcpCount} MCPs (${mcpErr.size} ✗)`))
+        envParts.push(c("red", `${mcpCount} MCPs (${mcpErr.size} ✗)`))
       } else if (mcpOk.size > 0) {
-        line3.push(c("green", `${mcpCount} MCPs ✓`))
+        envParts.push(c("green", `${mcpCount} MCPs ✓`))
       } else {
-        line3.push(dim(`${mcpCount} MCPs`))
+        envParts.push(dim(`${mcpCount} MCPs`))
       }
     }
-
-    if (config.hooks > 0) line3.push(dim(`${config.hooks} hooks`))
+    if (config.hooks > 0) envParts.push(dim(`${config.hooks} hooks`))
   }
-
   if (data.sessionName) {
-    line3.push(dim(data.sessionName))
+    envParts.push(dim(data.sessionName))
   }
 
-  // --- Line 4: activity (tools │ agents │ todos) ---
-  const line4: string[] = []
-
+  const agentParts: string[] = []
   if (transcript) {
-    // Running tools (with spinner + target)
+    for (const agent of transcript.agents) {
+      if (agent.running) {
+        agentParts.push(`${c("cyan", spin())} ${agent.type} ${dim(`(${formatElapsed(agent.elapsed)})`)}`)
+      } else {
+        agentParts.push(`${c("green", "✓")} ${agent.type} ${dim(`(${formatElapsed(agent.elapsed)})`)}`)
+      }
+    }
+  }
+
+  if (envParts.length > 0 || agentParts.length > 0) {
+    const envStr = envParts.join(GAP)
+    const agentStr = agentParts.join(GAP)
+    if (envStr && agentStr) {
+      lines.push(col(envStr, agentStr))
+    } else {
+      lines.push(envStr || agentStr)
+    }
+  }
+
+  // === Row 4: tools (left) + todos (right) ===
+  if (transcript) {
     const runningParts: string[] = []
     for (const t of transcript.runningTools) {
       const label = t.target ? `${t.name}: ${t.target}` : t.name
       runningParts.push(`${c("cyan", spin())} ${label}`)
     }
 
-    // Completed tools (top 5 by count)
     const toolParts: string[] = []
     let count = 0
     for (const [name, n] of transcript.tools) {
@@ -151,35 +182,27 @@ export function renderLines(data: StdinData, git: GitInfo | null, config: Config
     }
 
     const allTools = [...runningParts, ...toolParts]
-    if (allTools.length > 0) line4.push(allTools.join(GAP))
 
-    // Agents (last 3)
-    const agentParts: string[] = []
-    for (const agent of transcript.agents) {
-      if (agent.running) {
-        agentParts.push(`${c("cyan", spin())} ${agent.type} ${dim(`(${formatElapsed(agent.elapsed)})`)}`)
-      } else {
-        agentParts.push(`${c("green", "✓")} ${agent.type} ${dim(`(${formatElapsed(agent.elapsed)})`)}`)
-      }
-    }
-    if (agentParts.length > 0) line4.push(agentParts.join(GAP))
-
-    // Todos
+    let todoStr = ""
     const { total, completed, current } = transcript.todos
     if (total > 0) {
       if (current) {
-        const label = current.length > 40 ? current.slice(0, 37) + "..." : current
-        line4.push(`${c("yellow", "▸")} ${label} ${dim(`(${completed}/${total})`)}`)
+        const label = current.length > 35 ? current.slice(0, 32) + "..." : current
+        todoStr = `${c("yellow", "▸")} ${label} ${dim(`(${completed}/${total})`)}`
       } else if (completed === total) {
-        line4.push(`${c("green", "✓")} All complete ${dim(`(${total}/${total})`)}`)
+        todoStr = `${c("green", "✓")} All complete ${dim(`(${total}/${total})`)}`
+      }
+    }
+
+    if (allTools.length > 0 || todoStr) {
+      const toolStr = allTools.join(GAP)
+      if (toolStr && todoStr) {
+        lines.push(col(toolStr, todoStr))
+      } else {
+        lines.push(toolStr || todoStr)
       }
     }
   }
 
-  // Assemble lines
-  const lines = [line1.join(GAP)]
-  if (line2.length > 0) lines.push(line2.join(GAP))
-  if (line3.length > 0) lines.push(line3.join(GAP))
-  if (line4.length > 0) lines.push(line4.join(SEP))
   return lines
 }
