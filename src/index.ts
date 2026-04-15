@@ -7,11 +7,8 @@ import { getGitInfo } from "./git"
 import { getConfigCounts } from "./config"
 import { parseTranscript } from "./transcript"
 import { render } from "./render"
-import { bold, c, nbsp, pctColor, gradientBar, formatDuration } from "./format"
+import { bold, c, nbsp, pctColor, gradientBar, formatDuration, vlen } from "./format"
 import boxen from "boxen"
-
-const ANSI_RE = /\x1b\[[0-9;]*m/g
-const vlen = (s: string) => [...s.replace(ANSI_RE, "")].length
 
 const data = await parseStdin()
 const git = data.cwd ? getGitInfo(data.cwd) : null

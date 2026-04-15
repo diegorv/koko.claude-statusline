@@ -31,6 +31,10 @@ const HIDDEN_TOOLS = new Set([
   "TodoWrite", "TaskCreate", "TaskUpdate", "ToolSearch",
 ])
 
+function mcpDisplayName(name: string): string {
+  return (name.startsWith("mcp__") ? name.slice(5) : name).toLowerCase()
+}
+
 function extractTarget(name: string, input: any): string {
   if (!input) return ""
   if (name === "Read" || name === "Write" || name === "Edit")
@@ -134,7 +138,7 @@ export function parseTranscript(path: string): TranscriptData | null {
     if (!completedIds.has(id)) continue
     if (HIDDEN_TOOLS.has(name)) continue
     if (name === "Agent" || name === "Task") continue
-    const display = (name.startsWith("mcp__") ? name.slice(5) : name).toLowerCase()
+    const display = mcpDisplayName(name)
     toolCounts.set(display, (toolCounts.get(display) ?? 0) + 1)
   }
 
@@ -171,7 +175,7 @@ export function parseTranscript(path: string): TranscriptData | null {
     if (completedIds.has(id)) continue
     if (HIDDEN_TOOLS.has(name)) continue
     if (name === "Agent" || name === "Task") continue
-    const display = (name.startsWith("mcp__") ? name.slice(5) : name).toLowerCase()
+    const display = mcpDisplayName(name)
     runningTools.push({ name: display, target: extractTarget(name, input) })
   }
 

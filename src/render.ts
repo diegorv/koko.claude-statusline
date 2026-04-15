@@ -4,7 +4,7 @@ import type { StdinData } from "./stdin"
 import type { GitInfo } from "./git"
 import type { ConfigCounts } from "./config"
 import type { TranscriptData } from "./transcript"
-import { c, dim, gradientBar, pctColor, formatResetIn } from "./format"
+import { c, dim, gradientBar, pctColor, formatResetIn, formatDuration, RESET } from "./format"
 
 const I = {
   branch: "\ue0a0",  //
@@ -14,19 +14,11 @@ const I = {
 
 const GAP = "   "
 const SEP = dim("  │  ")
-const RESET = "\x1b[0m"
 
 const SPINNER = ["◐", "◓", "◑", "◒"]
 
 function spin(): string {
   return SPINNER[Math.floor(Date.now() / 300) % SPINNER.length]
-}
-
-function formatElapsed(ms: number): string {
-  const sec = Math.floor(ms / 1000)
-  if (sec < 60) return `${sec}s`
-  const min = Math.floor(sec / 60)
-  return `${min}m ${sec % 60}s`
 }
 
 export interface RenderResult {
@@ -109,9 +101,9 @@ export function render(data: StdinData, git: GitInfo | null, config: ConfigCount
     const agentParts: string[] = []
     for (const agent of transcript.agents) {
       if (agent.running) {
-        agentParts.push(`${c("cyan", spin())} ${agent.type} ${dim(`(${formatElapsed(agent.elapsed)})`)}`)
+        agentParts.push(`${c("cyan", spin())} ${agent.type} ${dim(`(${formatDuration(agent.elapsed)})`)}`)
       } else {
-        agentParts.push(`${c("green", "✓")} ${agent.type} ${dim(`(${formatElapsed(agent.elapsed)})`)}`)
+        agentParts.push(`${c("green", "✓")} ${agent.type} ${dim(`(${formatDuration(agent.elapsed)})`)}`)
       }
     }
     if (agentParts.length > 0) actLeft.push(agentParts.join(GAP))

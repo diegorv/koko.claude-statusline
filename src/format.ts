@@ -12,9 +12,16 @@ const ANSI: Record<string, string> = {
   cyan: "\x1b[36m",
 }
 
+export { RESET }
+
+const ANSI_RE = /\x1b\[[0-9;]*m/g
+
 export const c = (color: string, text: string) => `${ANSI[color] ?? ""}${text}${RESET}`
 export const bold = (color: string, text: string) => `${BOLD}${ANSI[color] ?? ""}${text}${RESET}`
 export const dim = (text: string) => `${DIM}${text}${RESET}`
+
+/** Returns the visual length of a string, stripping ANSI escape codes. */
+export const vlen = (s: string) => [...s.replace(ANSI_RE, "")].length
 
 export function gradientBar(percent: number, width = 20): string {
   const filled = Math.round((percent * width) / 100)
@@ -62,13 +69,6 @@ export function formatResetIn(epochSec: number): string {
   const h = Math.floor(mins / 60)
   const m = mins % 60
   return m > 0 ? `${h}h ${m}m` : `${h}h`
-}
-
-export function ctxEmoji(pct: number): string {
-  if (pct >= 90) return "🚨"
-  if (pct >= 70) return "🔥"
-  if (pct >= 20) return "⚡"
-  return "🟢"
 }
 
 export const nbsp = (s: string) => s.replace(/ /g, "\u00A0")
