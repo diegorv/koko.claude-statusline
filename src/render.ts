@@ -61,19 +61,19 @@ export function render(data: StdinData, git: GitInfo | null, config: ConfigCount
     parts.push(str)
   }
   if (data.worktree) parts.push(c("magenta", `${I.tree} ${data.worktree}`))
-  if (data.added > 0 || data.removed > 0) parts.push(`${c("green", `+${data.added}`)} ${c("red", `-${data.removed}`)}`)
+  if (data.linesAdded > 0 || data.linesRemoved > 0) parts.push(`${c("green", `+${data.linesAdded}`)} ${c("red", `-${data.linesRemoved}`)}`)
   if (data.vimMode) parts.push(dim(data.vimMode))
 
   // Rate limits section
-  if (data.rl5h) {
-    let str = `${I.gauge} 5h ${gradientBar(data.rl5h.pct, 8)} ${pctColor(data.rl5h.pct)}${data.rl5h.pct}%${RESET}`
-    const reset = data.rl5h.resetsAt ? formatResetIn(data.rl5h.resetsAt) : ""
+  if (data.rateLimit5h) {
+    let str = `${I.gauge} 5h ${gradientBar(data.rateLimit5h.pct, 8)} ${pctColor(data.rateLimit5h.pct)}${data.rateLimit5h.pct}%${RESET}`
+    const reset = data.rateLimit5h.resetsAt ? formatResetIn(data.rateLimit5h.resetsAt) : ""
     if (reset) str += dim(` (${reset})`)
     parts.push(str)
   }
-  if (data.rl7d) {
-    let str = `7d ${gradientBar(data.rl7d.pct, 8)} ${pctColor(data.rl7d.pct)}${data.rl7d.pct}%${RESET}`
-    const reset = data.rl7d.resetsAt ? formatResetIn(data.rl7d.resetsAt) : ""
+  if (data.rateLimit7d) {
+    let str = `7d ${gradientBar(data.rateLimit7d.pct, 8)} ${pctColor(data.rateLimit7d.pct)}${data.rateLimit7d.pct}%${RESET}`
+    const reset = data.rateLimit7d.resetsAt ? formatResetIn(data.rateLimit7d.resetsAt) : ""
     if (reset) str += dim(` (${reset})`)
     parts.push(str)
   }

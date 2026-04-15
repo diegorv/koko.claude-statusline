@@ -24,12 +24,12 @@ const sessionLines = session.map(nbsp)
 
 const titleLeft = (git?.repo ? bold("yellow", git.repo) + "  │  " : "")
   + c("cyan", data.model) + "  │  "
-  + gradientBar(data.ctx, 10) + " " + pctColor(data.ctx) + Math.round(data.ctx) + "%\x1b[0m"
+  + gradientBar(data.contextPercent, 10) + " " + pctColor(data.contextPercent) + Math.round(data.contextPercent) + "%\x1b[0m"
 
 const rightParts: string[] = []
 const costLabel = data.cost < 0.10 ? `${Math.round(data.cost * 100)}¢` : `$${data.cost.toFixed(2)}`
 rightParts.push(c("yellow", costLabel))
-if (data.dur >= 1000) rightParts.push(`⏱ ${formatDuration(data.dur)}`)
+if (data.durationMs >= 1000) rightParts.push(`⏱ ${formatDuration(data.durationMs)}`)
 const titleRight = rightParts.join("  ")
 
 const leftW = vlen(titleLeft)
