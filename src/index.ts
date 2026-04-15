@@ -7,7 +7,7 @@ import { getGitInfo } from "./git"
 import { getConfigCounts } from "./config"
 import { parseTranscript } from "./transcript"
 import { renderLines } from "./render"
-import { nbsp } from "./format"
+import { bold, c, nbsp, pctColor } from "./format"
 import boxen from "boxen"
 
 const ANSI_RE = /\x1b\[[0-9;]*m/g
@@ -26,20 +26,26 @@ const lines = renderLines(data, git, config, transcript)
 
 const nbspLines = lines.map(nbsp)
 
-const title = (git?.repo ? git.repo + "  │  " : "")
-  + data.model + "  │  "
-  + simpleBar(data.ctx, 10) + " " + Math.round(data.ctx) + "%"
+// Build colored title
+const title = (git?.repo ? bold("yellow", git.repo) + "  │  " : "")
+  + c("cyan", data.model) + "  │  "
+  + simpleBar(data.ctx, 10) + " " + pctColor(data.ctx) + Math.round(data.ctx) + "%\x1b[0m"
 
+// Render box WITHOUT title, then replace top border with our colored title
 const contentWidth = Math.max(...nbspLines.map(l => vlen(l)))
 const titleWidth = vlen(title)
 const boxWidth = Math.max(contentWidth + 6, titleWidth + 6)
 
-const output = boxen(nbspLines.join("\n"), {
-  title,
-  titleAlignment: "left",
+const raw = boxen(nbspLines.join("\n"), {
   padding: { top: 0, bottom: 0, left: 1, right: 1 },
   borderStyle: "round",
   dimBorder: true,
   width: boxWidth,
 })
-console.log(output)
+
+// Replace first line (top border) with custom title line
+const boxLines = raw.split("\n")
+const dashes = Math.max(1, boxWidth - vlen(title) - 5) // 5 = ╭─(2) + space(1) + space(1) + ╮(1)
+boxLines[0] = `╭─ ${title} ${"─".repeat(dashes)}╮`
+
+console.log(boxLines.join("\n"))
