@@ -13,7 +13,7 @@ const I = {
   gauge:  "\uf0e4",  //
 } as const
 
-const SEP = dim(" \u00b7 ")
+const SEP = dim("  │  ") // wider dim pipe separator
 const RESET = "\x1b[0m"
 
 // --- Parse stdin ---
@@ -44,11 +44,11 @@ if (cwd) {
   } catch {}
 }
 
-// --- Main line: project + bar + cost + velocity + duration ---
+// --- Main line: all elements ---
 const main: string[] = []
 
 if (repo) {
-  let git = `${bold("yellow", `${I.folder} ${repo}`)} ${c("green", `${I.branch} ${branch}`)}`
+  let git = `${bold("yellow", `${I.folder} ${repo}`)}  ${c("green", `${I.branch} ${branch}`)}`
   if (dirty) git += c("yellow", "*")
   main.push(git)
 }
@@ -64,31 +64,26 @@ if (dur > 0) {
   main.push(dim(`${I.clock} ${formatDuration(dur)}`))
 }
 
-// --- Rate limits line (optional) ---
-const rl: string[] = []
-
+// --- Rate limits (inline) ---
 const rl5h = data.rate_limits?.five_hour
 if (rl5h?.used_percentage != null) {
   const pct = Math.round(rl5h.used_percentage)
-  let str = `${I.gauge} 5h: ${pctColor(pct)}${pct}%${RESET}`
+  let str = `${I.gauge} 5h ${gradientBar(pct, 8)} ${pctColor(pct)}${pct}%${RESET}`
   const reset = rl5h.resets_at ? formatResetIn(rl5h.resets_at) : ""
   if (reset) str += dim(` (${reset})`)
-  rl.push(str)
+  main.push(str)
 }
 
 const rl7d = data.rate_limits?.seven_day
 if (rl7d?.used_percentage != null) {
   const pct = Math.round(rl7d.used_percentage)
-  let str = `7d: ${pctColor(pct)}${pct}%${RESET}`
+  let str = `7d ${gradientBar(pct, 8)} ${pctColor(pct)}${pct}%${RESET}`
   const reset = rl7d.resets_at ? formatResetIn(rl7d.resets_at) : ""
   if (reset) str += dim(` (${reset})`)
-  rl.push(str)
+  main.push(str)
 }
 
 // --- Output ---
-const content = [main.join(SEP)]
-if (rl.length > 0) content.push(rl.join(SEP))
-
-for (const line of box(content, c("cyan", model))) {
+for (const line of box([main.join(SEP)], c("cyan", model))) {
   console.log(line)
 }

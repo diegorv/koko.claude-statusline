@@ -12,16 +12,12 @@ function pad(s: string, width: number): string {
   return diff > 0 ? s + " ".repeat(diff) : s
 }
 
-function getWidth(): number {
-  const w = process.stdout?.columns
-    || process.stderr?.columns
-    || Number(process.env.COLUMNS)
-    || 80
-  return Math.max(w, 40)
-}
-
 export function box(lines: string[], title?: string): string[] {
-  const w = getWidth()
+  // Auto-size to content: the statusline area is smaller than the full terminal,
+  // so we fit the box around the content instead of guessing a width
+  const maxContent = Math.max(...lines.map(l => vlen(l)))
+  const titleLen = title ? vlen(title) + 5 : 0
+  const w = Math.max(maxContent + 4, titleLen + 2, 40)
   const inner = w - 4 // "│ " + content + " │"
 
   // ╭─ Title ──────╮
