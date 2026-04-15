@@ -39,8 +39,10 @@ export function render(data: StdinData, git: GitInfo | null, config: ConfigCount
   // ===== BOX 1: SESSION =====
   const session: string[] = []
 
-  // Line 1: branch + git stats + worktree + vim
-  const line1: string[] = []
+  // Single line: git info │ rate limits
+  const parts: string[] = []
+
+  // Git section
   if (git?.repo) {
     let str = `${c("green", `${I.branch} ${git.branch}`)}`
     if (git.dirty) str += c("yellow", "*")
@@ -56,28 +58,27 @@ export function render(data: StdinData, git: GitInfo | null, config: ConfigCount
     if (git.behind > 0) sync.push(c("red", `↓${git.behind}`))
     if (sync.length > 0) str += `  ${sync.join(" ")}`
 
-    line1.push(str)
+    parts.push(str)
   }
-  if (data.worktree) line1.push(c("magenta", `${I.tree} ${data.worktree}`))
-  if (data.added > 0 || data.removed > 0) line1.push(`${c("green", `+${data.added}`)} ${c("red", `-${data.removed}`)}`)
-  if (data.vimMode) line1.push(dim(data.vimMode))
-  if (line1.length > 0) session.push(line1.join(GAP))
+  if (data.worktree) parts.push(c("magenta", `${I.tree} ${data.worktree}`))
+  if (data.added > 0 || data.removed > 0) parts.push(`${c("green", `+${data.added}`)} ${c("red", `-${data.removed}`)}`)
+  if (data.vimMode) parts.push(dim(data.vimMode))
 
-  // Line 2: rate limits
-  const line2: string[] = []
+  // Rate limits section
   if (data.rl5h) {
     let str = `${I.gauge} 5h ${gradientBar(data.rl5h.pct, 8)} ${pctColor(data.rl5h.pct)}${data.rl5h.pct}%${RESET}`
     const reset = data.rl5h.resetsAt ? formatResetIn(data.rl5h.resetsAt) : ""
     if (reset) str += dim(` (${reset})`)
-    line2.push(str)
+    parts.push(str)
   }
   if (data.rl7d) {
     let str = `7d ${gradientBar(data.rl7d.pct, 8)} ${pctColor(data.rl7d.pct)}${data.rl7d.pct}%${RESET}`
     const reset = data.rl7d.resetsAt ? formatResetIn(data.rl7d.resetsAt) : ""
     if (reset) str += dim(` (${reset})`)
-    line2.push(str)
+    parts.push(str)
   }
-  if (line2.length > 0) session.push(line2.join(GAP))
+
+  if (parts.length > 0) session.push(parts.join(SEP))
 
   // ===== BOX 2: ACTIVITY =====
   const activity: string[] = []

@@ -48,7 +48,7 @@ const boxWidth = Math.max(sessionMinW, actMinW)
 
 // Render box 1
 const sessionBox = boxen(sessionLines.join("\n"), {
-  padding: { top: 0, bottom: 0, left: 1, right: 1 },
+  padding: { top: 1, bottom: 0, left: 1, right: 1 },
   borderStyle: "round",
   dimBorder: true,
   width: boxWidth,
