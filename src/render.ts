@@ -1,4 +1,4 @@
-// Layout composition — up to 4 lines with semantic grouping
+// Layout composition — 2 boxes: session + activity
 
 import type { StdinData } from "./stdin"
 import type { GitInfo } from "./git"
@@ -7,15 +7,13 @@ import type { TranscriptData } from "./transcript"
 import { c, dim, gradientBar, pctColor, formatResetIn } from "./format"
 
 const I = {
-  folder: "\uf07c",  //
   branch: "\ue0a0",  //
-  clock:  "\uf017",  //
   gauge:  "\uf0e4",  //
   tree:   "\uf1bb",  //
 } as const
 
-const GAP = "   " // 3 spaces within a group
-const SEP = dim("  │  ") // between different semantic groups
+const GAP = "   "
+const SEP = dim("  │  ")
 const RESET = "\x1b[0m"
 
 const SPINNER = ["◐", "◓", "◑", "◒"]
@@ -31,10 +29,18 @@ function formatElapsed(ms: number): string {
   return `${min}m ${sec % 60}s`
 }
 
-export function renderLines(data: StdinData, git: GitInfo | null, config: ConfigCounts | null, transcript: TranscriptData | null = null): string[] {
-  // --- Line 1: session (all elements, spaces only) ---
-  const line1: string[] = []
+export interface RenderResult {
+  session: string[]
+  activity: string[]   // title line for activity box
+  activityTitle: string
+}
 
+export function render(data: StdinData, git: GitInfo | null, config: ConfigCounts | null, transcript: TranscriptData | null = null): RenderResult {
+  // ===== BOX 1: SESSION =====
+  const session: string[] = []
+
+  // Line 1: branch + git stats + worktree + vim
+  const line1: string[] = []
   if (git?.repo) {
     let str = `${c("green", `${I.branch} ${git.branch}`)}`
     if (git.dirty) str += c("yellow", "*")
@@ -52,76 +58,42 @@ export function renderLines(data: StdinData, git: GitInfo | null, config: Config
 
     line1.push(str)
   }
+  if (data.worktree) line1.push(c("magenta", `${I.tree} ${data.worktree}`))
+  if (data.added > 0 || data.removed > 0) line1.push(`${c("green", `+${data.added}`)} ${c("red", `-${data.removed}`)}`)
+  if (data.vimMode) line1.push(dim(data.vimMode))
+  if (line1.length > 0) session.push(line1.join(GAP))
 
-  if (data.worktree) {
-    line1.push(c("magenta", `${I.tree} ${data.worktree}`))
-  }
-
-  if (data.added > 0 || data.removed > 0) {
-    line1.push(`${c("green", `+${data.added}`)} ${c("red", `-${data.removed}`)}`)
-  }
-
-  if (data.vimMode) {
-    line1.push(dim(data.vimMode))
-  }
-
-  // --- Line 2: rate limits (own line, spaces only) ---
+  // Line 2: rate limits
   const line2: string[] = []
-
   if (data.rl5h) {
     let str = `${I.gauge} 5h ${gradientBar(data.rl5h.pct, 8)} ${pctColor(data.rl5h.pct)}${data.rl5h.pct}%${RESET}`
     const reset = data.rl5h.resetsAt ? formatResetIn(data.rl5h.resetsAt) : ""
     if (reset) str += dim(` (${reset})`)
     line2.push(str)
   }
-
   if (data.rl7d) {
     let str = `7d ${gradientBar(data.rl7d.pct, 8)} ${pctColor(data.rl7d.pct)}${data.rl7d.pct}%${RESET}`
     const reset = data.rl7d.resetsAt ? formatResetIn(data.rl7d.resetsAt) : ""
     if (reset) str += dim(` (${reset})`)
     line2.push(str)
   }
+  if (line2.length > 0) session.push(line2.join(GAP))
 
-  // --- Line 3: environment (config counts + session name) ---
-  const line3: string[] = []
+  // ===== BOX 2: ACTIVITY =====
+  const activity: string[] = []
 
-  if (config) {
-    if (config.claudeMd > 0) line3.push(dim(`${config.claudeMd} CLAUDE.md`))
-    if (config.rules > 0)    line3.push(dim(`${config.rules} rules`))
-
-    const mcpOk = transcript?.mcpStatus.ok ?? new Set()
-    const mcpErr = transcript?.mcpStatus.errored ?? new Set()
-    const mcpSeen = new Set([...mcpOk, ...mcpErr])
-    const mcpCount = Math.max(config.mcps, mcpSeen.size)
-    if (mcpCount > 0) {
-      if (mcpErr.size > 0) {
-        line3.push(c("red", `${mcpCount} MCPs (${mcpErr.size} ✗)`))
-      } else if (mcpOk.size > 0) {
-        line3.push(c("green", `${mcpCount} MCPs ✓`))
-      } else {
-        line3.push(dim(`${mcpCount} MCPs`))
-      }
-    }
-
-    if (config.hooks > 0) line3.push(dim(`${config.hooks} hooks`))
-  }
-
-  if (data.sessionName) {
-    line3.push(dim(data.sessionName))
-  }
-
-  // --- Line 4: activity (tools │ agents │ todos) ---
-  const line4: string[] = []
+  // Activity content: tools + agents + todos
+  const actLeft: string[] = []  // tools + agents + todos
 
   if (transcript) {
-    // Running tools (with spinner + target)
+    // Running tools
     const runningParts: string[] = []
     for (const t of transcript.runningTools) {
       const label = t.target ? `${t.name}: ${t.target}` : t.name
       runningParts.push(`${c("cyan", spin())} ${label}`)
     }
 
-    // Completed tools (top 5 by count)
+    // Completed tools (top 5)
     const toolParts: string[] = []
     let count = 0
     for (const [name, n] of transcript.tools) {
@@ -130,9 +102,9 @@ export function renderLines(data: StdinData, git: GitInfo | null, config: Config
     }
 
     const allTools = [...runningParts, ...toolParts]
-    if (allTools.length > 0) line4.push(allTools.join(GAP))
+    if (allTools.length > 0) actLeft.push(allTools.join(GAP))
 
-    // Agents (last 3)
+    // Agents
     const agentParts: string[] = []
     for (const agent of transcript.agents) {
       if (agent.running) {
@@ -141,24 +113,46 @@ export function renderLines(data: StdinData, git: GitInfo | null, config: Config
         agentParts.push(`${c("green", "✓")} ${agent.type} ${dim(`(${formatElapsed(agent.elapsed)})`)}`)
       }
     }
-    if (agentParts.length > 0) line4.push(agentParts.join(GAP))
+    if (agentParts.length > 0) actLeft.push(agentParts.join(GAP))
 
     // Todos
     const { total, completed, current } = transcript.todos
     if (total > 0) {
       if (current) {
-        const label = current.length > 40 ? current.slice(0, 37) + "..." : current
-        line4.push(`${c("yellow", "▸")} ${label} ${dim(`(${completed}/${total})`)}`)
+        const label = current.length > 35 ? current.slice(0, 32) + "..." : current
+        actLeft.push(`${c("yellow", "▸")} ${label} ${dim(`(${completed}/${total})`)}`)
       } else if (completed === total) {
-        line4.push(`${c("green", "✓")} All complete ${dim(`(${total}/${total})`)}`)
+        actLeft.push(`${c("green", "✓")} All complete ${dim(`(${total}/${total})`)}`)
       }
     }
   }
 
-  // Assemble lines
-  const lines = [line1.join(GAP)]
-  if (line2.length > 0) lines.push(line2.join(GAP))
-  if (line3.length > 0) lines.push(line3.join(GAP))
-  if (line4.length > 0) lines.push(line4.join(SEP))
-  return lines
+  if (actLeft.length > 0) activity.push(actLeft.join(SEP))
+
+  // Activity title (right side: config counts)
+  const titleParts: string[] = []
+  if (config) {
+    if (config.claudeMd > 0) titleParts.push(`${config.claudeMd} CLAUDE.md`)
+
+    const mcpOk = transcript?.mcpStatus.ok ?? new Set()
+    const mcpErr = transcript?.mcpStatus.errored ?? new Set()
+    const mcpSeen = new Set([...mcpOk, ...mcpErr])
+    const mcpCount = Math.max(config.mcps, mcpSeen.size)
+    if (mcpCount > 0) {
+      if (mcpErr.size > 0) {
+        titleParts.push(c("red", `${mcpCount} MCPs (${mcpErr.size} ✗)`))
+      } else if (mcpOk.size > 0) {
+        titleParts.push(c("green", `${mcpCount} MCPs ✓`))
+      } else {
+        titleParts.push(`${mcpCount} MCPs`)
+      }
+    }
+    if (config.hooks > 0) titleParts.push(`${config.hooks} hooks`)
+    if (config.rules > 0) titleParts.push(`${config.rules} rules`)
+  }
+  if (data.sessionName) titleParts.push(data.sessionName)
+
+  const activityTitle = titleParts.join(GAP)
+
+  return { session, activity, activityTitle }
 }

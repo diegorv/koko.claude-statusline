@@ -6,8 +6,8 @@ import { parseStdin } from "./stdin"
 import { getGitInfo } from "./git"
 import { getConfigCounts } from "./config"
 import { parseTranscript } from "./transcript"
-import { renderLines } from "./render"
-import { bold, c, dim, nbsp, pctColor, gradientBar, formatDuration } from "./format"
+import { render } from "./render"
+import { bold, c, nbsp, pctColor, gradientBar, formatDuration } from "./format"
 import boxen from "boxen"
 
 const ANSI_RE = /\x1b\[[0-9;]*m/g
@@ -17,40 +17,66 @@ const data = await parseStdin()
 const git = data.cwd ? getGitInfo(data.cwd) : null
 const config = data.cwd ? getConfigCounts(data.cwd) : null
 const transcript = data.transcriptPath ? parseTranscript(data.transcriptPath) : null
-const lines = renderLines(data, git, config, transcript)
+const { session, activity, activityTitle } = render(data, git, config, transcript)
 
-const nbspLines = lines.map(nbsp)
+// === Box 1: Session ===
+const sessionLines = session.map(nbsp)
 
-// Build colored title (left side)
 const titleLeft = (git?.repo ? bold("yellow", git.repo) + "  │  " : "")
   + c("cyan", data.model) + "  │  "
   + gradientBar(data.ctx, 10) + " " + pctColor(data.ctx) + Math.round(data.ctx) + "%\x1b[0m"
 
-// Build right side (cost + duration)
 const rightParts: string[] = []
 const costLabel = data.cost < 0.10 ? `${Math.round(data.cost * 100)}¢` : `$${data.cost.toFixed(2)}`
 rightParts.push(c("yellow", costLabel))
-if (data.dur >= 1000) rightParts.push(dim(`⏱ ${formatDuration(data.dur)}`))
+if (data.dur >= 1000) rightParts.push(`⏱ ${formatDuration(data.dur)}`)
 const titleRight = rightParts.join("  ")
 
-// Render box WITHOUT title, then replace top border with our custom title line
-const contentWidth = Math.max(...nbspLines.map(l => vlen(l)))
-const leftWidth = vlen(titleLeft)
-const rightWidth = vlen(titleRight)
-const minBoxWidth = leftWidth + rightWidth + 9 // 8 overhead + 1 min dash
-const boxWidth = Math.max(contentWidth + 6, minBoxWidth)
+const leftW = vlen(titleLeft)
+const rightW = vlen(titleRight)
+// Calculate both box widths first, then use the max so they match
+const sessionContentW = Math.max(...(sessionLines.length > 0 ? sessionLines.map(l => vlen(l)) : [0]))
+const sessionMinW = Math.max(sessionContentW + 6, leftW + rightW + 9)
 
-const raw = boxen(nbspLines.join("\n"), {
+const actLines = activity.map(nbsp)
+const actContentW = activity.length > 0 ? Math.max(...actLines.map(l => vlen(l))) : 0
+const actTitleW = vlen(activityTitle)
+const actTitleLeftW = vlen("Activity")
+const actMinW = activity.length > 0 ? Math.max(actContentW + 6, actTitleLeftW + actTitleW + 9) : 0
+
+const boxWidth = Math.max(sessionMinW, actMinW)
+
+// Render box 1
+const sessionBox = boxen(sessionLines.join("\n"), {
   padding: { top: 0, bottom: 0, left: 1, right: 1 },
   borderStyle: "round",
   dimBorder: true,
   width: boxWidth,
 })
 
-// Replace first line: ╭─ leftTitle ──── rightTitle ─╮
-const boxLines = raw.split("\n")
-// ╭─(2) + space(1) + LEFT + space(1) + dashes + space(1) + RIGHT + space(1) + ─╮(2) = 8 overhead
-const dashes = Math.max(1, boxWidth - leftWidth - rightWidth - 8)
-boxLines[0] = `╭─ ${titleLeft} ${"─".repeat(dashes)} ${titleRight} ─╮`
+const sessionBoxLines = sessionBox.split("\n")
+const dashes = Math.max(1, boxWidth - leftW - rightW - 8)
+sessionBoxLines[0] = `╭─ ${titleLeft} ${"─".repeat(dashes)} ${titleRight} ─╮`
 
-console.log(boxLines.join("\n"))
+console.log(sessionBoxLines.join("\n"))
+
+// Render box 2 (only if there's content)
+if (activity.length > 0) {
+  const actBox = boxen(actLines.join("\n"), {
+    padding: { top: 0, bottom: 0, left: 1, right: 1 },
+    borderStyle: "round",
+    dimBorder: true,
+    width: boxWidth,
+  })
+
+  const actBoxLines = actBox.split("\n")
+  if (activityTitle) {
+    const actDashes = Math.max(1, boxWidth - actTitleLeftW - actTitleW - 8)
+    actBoxLines[0] = `╭─ Activity ${"─".repeat(actDashes)} ${activityTitle} ─╮`
+  } else {
+    const actDashes = Math.max(1, boxWidth - actTitleLeftW - 5)
+    actBoxLines[0] = `╭─ Activity ${"─".repeat(actDashes)}╮`
+  }
+
+  console.log(actBoxLines.join("\n"))
+}
