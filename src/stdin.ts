@@ -14,6 +14,7 @@ export interface StdinData {
   rl7d: { pct: number; resetsAt: number } | null
   vimMode: string | null
   worktree: string | null
+  transcriptPath: string | null
 }
 
 export async function parseStdin(): Promise<StdinData> {
@@ -45,5 +46,6 @@ export async function parseStdin(): Promise<StdinData> {
               : null,
     vimMode:  raw.vim?.mode ?? null,
     worktree: raw.worktree?.name ?? null,
+    transcriptPath: raw.transcript_path ?? null,
   }
 }
