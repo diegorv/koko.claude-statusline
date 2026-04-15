@@ -50,7 +50,8 @@ export function formatDuration(ms: number): string {
   const h = Math.floor(sec / 3600)
   const m = Math.floor((sec % 3600) / 60)
   if (h > 0) return m > 0 ? `${h}h ${m}m` : `${h}h`
-  return `${m}m`
+  if (m > 0) return `${m}m`
+  return `${sec}s`
 }
 
 export function formatResetIn(epochSec: number): string {

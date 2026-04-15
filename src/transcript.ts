@@ -9,15 +9,40 @@ export interface AgentInfo {
   elapsed: number // ms
 }
 
+export interface RunningTool {
+  name: string
+  target: string
+}
+
+export interface McpStatus {
+  ok: Set<string>      // servers with at least one successful call
+  errored: Set<string> // servers with at least one error
+}
+
 export interface TranscriptData {
   tools: Map<string, number>  // name → completed count
+  runningTools: RunningTool[]  // currently running tools
   agents: AgentInfo[]
   todos: { total: number; completed: number; current: string | null }
+  mcpStatus: McpStatus
 }
 
 const HIDDEN_TOOLS = new Set([
   "TodoWrite", "TaskCreate", "TaskUpdate", "ToolSearch",
 ])
+
+function extractTarget(name: string, input: any): string {
+  if (!input) return ""
+  if (name === "Read" || name === "Write" || name === "Edit")
+    return (input.file_path ?? input.path ?? "").split("/").pop() ?? ""
+  if (name === "Glob" || name === "Grep")
+    return input.pattern ?? ""
+  if (name === "Bash")
+    return (input.command ?? "").slice(0, 30)
+  if (name === "Skill")
+    return input.skill ?? ""
+  return ""
+}
 
 export function parseTranscript(path: string): TranscriptData | null {
   let text: string
@@ -26,13 +51,17 @@ export function parseTranscript(path: string): TranscriptData | null {
   } catch { return null }
 
   // Track tool_use by id
-  const toolUses = new Map<string, { name: string; ts: string }>()
+  const toolUses = new Map<string, { name: string; ts: string; input: any }>()
   const completedIds = new Set<string>()
   const toolCounts = new Map<string, number>()
 
   // Agents
   const agents: { id: string; type: string; description: string; ts: string }[] = []
   const agentCompletedIds = new Map<string, string>() // id → completion timestamp
+
+  // MCP status
+  const mcpOk = new Set<string>()
+  const mcpErrored = new Set<string>()
 
   // Todos
   let todos: { content: string; status: string }[] = []
@@ -50,7 +79,7 @@ export function parseTranscript(path: string): TranscriptData | null {
       if (block.type === "tool_use") {
         const { id, name, input } = block
 
-        toolUses.set(id, { name, ts })
+        toolUses.set(id, { name, ts, input })
 
         // Agent tracking
         if (name === "Agent" || name === "Task") {
@@ -82,16 +111,31 @@ export function parseTranscript(path: string): TranscriptData | null {
         if (agents.some(a => a.id === useId)) {
           agentCompletedIds.set(useId, ts)
         }
+
+        // Track MCP tool results (mcp__servername__toolname)
+        const toolInfo = toolUses.get(useId)
+        if (toolInfo?.name.startsWith("mcp__")) {
+          const server = toolInfo.name.split("__")[1]
+          if (server) {
+            if (block.is_error) {
+              mcpErrored.add(server)
+            } else {
+              mcpOk.add(server)
+            }
+          }
+        }
       }
     }
   }
 
   // Aggregate completed tool counts (exclude hidden + agents)
+  // MCP tools (mcp__server__tool) are grouped by server name
   for (const [id, { name }] of toolUses) {
     if (!completedIds.has(id)) continue
     if (HIDDEN_TOOLS.has(name)) continue
     if (name === "Agent" || name === "Task") continue
-    toolCounts.set(name, (toolCounts.get(name) ?? 0) + 1)
+    const display = (name.startsWith("mcp__") ? name.slice(5) : name).toLowerCase()
+    toolCounts.set(display, (toolCounts.get(display) ?? 0) + 1)
   }
 
   // Sort by count descending
@@ -121,9 +165,21 @@ export function parseTranscript(path: string): TranscriptData | null {
     ? { total: todoTotal, completed: todoCompleted, current: currentTodo?.content ?? null }
     : { total: 0, completed: 0, current: null }
 
+  // Build running tools (last 2, exclude hidden + agents)
+  const runningTools: RunningTool[] = []
+  for (const [id, { name, input }] of toolUses) {
+    if (completedIds.has(id)) continue
+    if (HIDDEN_TOOLS.has(name)) continue
+    if (name === "Agent" || name === "Task") continue
+    const display = (name.startsWith("mcp__") ? name.slice(5) : name).toLowerCase()
+    runningTools.push({ name: display, target: extractTarget(name, input) })
+  }
+
   return {
     tools: sortedTools,
+    runningTools: runningTools.slice(-2),
     agents: agentInfos,
     todos: todoData,
+    mcpStatus: { ok: mcpOk, errored: mcpErrored },
   }
 }

@@ -29,6 +29,12 @@ function sizeLabel(size: number | null): string {
   return size >= 1000000 ? " (1M)" : " (200K)"
 }
 
+const SPINNER = ["◐", "◓", "◑", "◒"]
+
+function spin(): string {
+  return SPINNER[Math.floor(Date.now() / 300) % SPINNER.length]
+}
+
 function formatElapsed(ms: number): string {
   const sec = Math.floor(ms / 1000)
   if (sec < 60) return `${sec}s`
@@ -59,13 +65,14 @@ export function renderLines(data: StdinData, git: GitInfo | null, config: Config
   }
 
   line1.push(`${ctxEmoji(data.ctx)} ${gradientBar(data.ctx)} ${pctColor(data.ctx)}${Math.round(data.ctx)}%${RESET}${dim(sizeLabel(data.ctxSize))}`)
-  line1.push(c("yellow", `$${data.cost.toFixed(2)}`))
+  const costLabel = data.cost < 0.10 ? `${Math.round(data.cost * 100)}¢` : `$${data.cost.toFixed(2)}`
+  line1.push(c("yellow", costLabel))
 
   if (data.added > 0 || data.removed > 0) {
     line1.push(`${c("green", `+${data.added}`)} ${c("red", `-${data.removed}`)}`)
   }
 
-  if (data.dur > 0) {
+  if (data.dur >= 1000) {
     line1.push(dim(`${I.clock} ${formatDuration(data.dur)}`))
   }
 
@@ -94,7 +101,20 @@ export function renderLines(data: StdinData, git: GitInfo | null, config: Config
     const counts: string[] = []
     if (config.claudeMd > 0) counts.push(`${config.claudeMd} CLAUDE.md`)
     if (config.rules > 0)    counts.push(`${config.rules} rules`)
-    if (config.mcps > 0)     counts.push(`${config.mcps} MCPs`)
+    // MCP count: config + any extra servers seen in transcript
+    const mcpOk = transcript?.mcpStatus.ok ?? new Set()
+    const mcpErr = transcript?.mcpStatus.errored ?? new Set()
+    const mcpSeen = new Set([...mcpOk, ...mcpErr])
+    const mcpCount = Math.max(config.mcps, mcpSeen.size)
+    if (mcpCount > 0) {
+      if (mcpErr.size > 0) {
+        counts.push(c("red", `${mcpCount} MCPs (${mcpErr.size} ✗)`))
+      } else if (mcpOk.size > 0) {
+        counts.push(c("green", `${mcpCount} MCPs ✓`))
+      } else {
+        counts.push(`${mcpCount} MCPs`)
+      }
+    }
     if (config.hooks > 0)    counts.push(`${config.hooks} hooks`)
     for (const ct of counts) line2.push(dim(ct))
   }
@@ -111,7 +131,16 @@ export function renderLines(data: StdinData, git: GitInfo | null, config: Config
   const line3: string[] = []
 
   if (transcript) {
-    // Tools: top 5 by count
+    // Running tools (last 2, with target)
+    if (transcript.runningTools.length > 0) {
+      const parts = transcript.runningTools.map(t => {
+        const label = t.target ? `${t.name}: ${t.target}` : t.name
+        return `${c("cyan", spin())} ${label}`
+      })
+      line3.push(parts.join("  "))
+    }
+
+    // Completed tools: top 5 by count
     const toolParts: string[] = []
     let count = 0
     for (const [name, n] of transcript.tools) {
@@ -123,7 +152,7 @@ export function renderLines(data: StdinData, git: GitInfo | null, config: Config
     // Agents: last 3
     for (const agent of transcript.agents) {
       if (agent.running) {
-        line3.push(`${c("cyan", "◐")} ${agent.type} ${dim(`(${formatElapsed(agent.elapsed)})`)}`)
+        line3.push(`${c("cyan", spin())} ${agent.type} ${dim(`(${formatElapsed(agent.elapsed)})`)}`)
       } else {
         line3.push(`${c("green", "✓")} ${agent.type} ${dim(`(${formatElapsed(agent.elapsed)})`)}`)
       }

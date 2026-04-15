@@ -21,12 +21,18 @@ function countMdFiles(dir: string): number {
   } catch { return 0 }
 }
 
+function readJson(path: string): any {
+  try { return JSON.parse(readFileSync(path, "utf-8")) } catch { return null }
+}
+
 function jsonKeys(path: string, key: string): number {
-  try {
-    const json = JSON.parse(readFileSync(path, "utf-8"))
-    const obj = json[key]
-    return obj && typeof obj === "object" ? Object.keys(obj).length : 0
-  } catch { return 0 }
+  const obj = readJson(path)?.[key]
+  return obj && typeof obj === "object" ? Object.keys(obj).length : 0
+}
+
+function jsonArray(path: string, key: string): string[] {
+  const arr = readJson(path)?.[key]
+  return Array.isArray(arr) ? arr : []
 }
 
 export function getConfigCounts(cwd: string): ConfigCounts {
@@ -47,11 +53,20 @@ export function getConfigCounts(cwd: string): ConfigCounts {
   const rules = countMdFiles(join(claude, "rules"))
               + countMdFiles(join(cwd, ".claude", "rules"))
 
-  // MCPs (mcpServers keys)
-  const mcps = jsonKeys(join(claude, "settings.json"), "mcpServers")
-             + jsonKeys(join(cwd, ".mcp.json"), "mcpServers")
-             + jsonKeys(join(cwd, ".claude", "settings.json"), "mcpServers")
-             + jsonKeys(join(cwd, ".claude", "settings.local.json"), "mcpServers")
+  // MCPs (mcpServers keys minus disabled)
+  const mcpTotal = jsonKeys(join(claude, "settings.json"), "mcpServers")
+                 + jsonKeys(join(home, ".claude.json"), "mcpServers")
+                 + jsonKeys(join(cwd, ".mcp.json"), "mcpServers")
+                 + jsonKeys(join(cwd, ".claude", "settings.json"), "mcpServers")
+                 + jsonKeys(join(cwd, ".claude", "settings.local.json"), "mcpServers")
+
+  const disabled = new Set([
+    ...jsonArray(join(claude, "settings.json"), "disabledMcpServers"),
+    ...jsonArray(join(claude, "settings.json"), "disabledMcpjsonServers"),
+    ...jsonArray(join(cwd, ".claude", "settings.json"), "disabledMcpServers"),
+    ...jsonArray(join(cwd, ".claude", "settings.json"), "disabledMcpjsonServers"),
+  ])
+  const mcps = Math.max(0, mcpTotal - disabled.size)
 
   // Hooks (hooks keys)
   const hooks = jsonKeys(join(claude, "settings.json"), "hooks")
