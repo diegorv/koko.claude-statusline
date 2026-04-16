@@ -7,11 +7,11 @@ import { getGitInfo } from "./collection/git"
 import { getConfigCounts } from "./collection/config"
 import { parseTranscript } from "./parsing/transcript"
 import { render } from "./ui/render"
-import { renderBoxes } from "./ui/boxes"
+import { renderLines } from "./ui/lines"
 
 const data = await parseStdin()
 const git = data.cwd ? getGitInfo(data.cwd) : null
 const config = data.cwd ? getConfigCounts(data.cwd) : null
 const transcript = data.transcriptPath ? parseTranscript(data.transcriptPath) : null
 const result = render(data, git, config, transcript)
-console.log(renderBoxes(data, result, git?.repo))
+console.log(renderLines(data, result, git?.repo))

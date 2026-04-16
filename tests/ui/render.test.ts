@@ -44,11 +44,46 @@ describe("render", () => {
     expect(result.session[0]).toContain("50%")
   })
 
-  test("session includes both git and rate limits separated", () => {
+  test("session emits separate rows for git and rate limits", () => {
     const data = { ...MINIMAL_DATA, rateLimit5h: { pct: 30, resetsAt: 0 } }
     const result = render(data, CLEAN_GIT, null, null)
+    expect(result.session.length).toBe(2)
     expect(result.session[0]).toContain("main")
+    expect(result.session[1]).toContain("5h")
+  })
+
+  test("session emits one row when only git or only rate limits", () => {
+    const onlyGit = render(MINIMAL_DATA, CLEAN_GIT, null, null)
+    expect(onlyGit.session.length).toBe(1)
+
+    const onlyRate = render({ ...MINIMAL_DATA, rateLimit5h: { pct: 10, resetsAt: 0 } }, null, null, null)
+    expect(onlyRate.session.length).toBe(1)
+  })
+
+  test("rate limit row groups 5h and 7d together", () => {
+    const data = {
+      ...MINIMAL_DATA,
+      rateLimit5h: { pct: 30, resetsAt: 0 },
+      rateLimit7d: { pct: 50, resetsAt: 0 },
+    }
+    const result = render(data, null, null, null)
+    expect(result.session.length).toBe(1)
     expect(result.session[0]).toContain("5h")
+    expect(result.session[0]).toContain("7d")
+  })
+
+  test("activity emits separate rows for tools, agents, todos", () => {
+    const transcript: TranscriptData = {
+      ...EMPTY_TRANSCRIPT,
+      tools: new Map([["read", 5]]),
+      agents: [{ type: "Explore", description: "x", running: false, elapsed: 1000 }],
+      todos: { total: 3, completed: 1, current: "Fix bug" },
+    }
+    const result = render(MINIMAL_DATA, null, null, transcript)
+    expect(result.activity.length).toBe(3)
+    expect(result.activity[0]).toContain("read")
+    expect(result.activity[1]).toContain("Explore")
+    expect(result.activity[2]).toContain("Fix bug")
   })
 
   test("activity includes tools from transcript", () => {

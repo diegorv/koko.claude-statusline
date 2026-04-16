@@ -1,6 +1,6 @@
 # claude-statusline
 
-A rich terminal status line for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Displays session info, git status, rate limits, tool usage, agents, todos, and config counts in styled ANSI boxes.
+A rich terminal status line for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Displays session info, git status, rate limits, tool usage, agents, todos, and config counts as a flat, terminal-width-adaptive layout.
 
 ## Features
 
@@ -30,7 +30,11 @@ Configure in `~/.claude/settings.json`:
 }
 ```
 
-Claude Code pipes session JSON to stdin. The script renders two styled boxes to stdout.
+Claude Code pipes session JSON to stdin. The script writes a header row (model, context bar, cost, duration, config counts), a horizontal rule, and one or more body rows (git, rate limits, tools, agents, todos) to stdout. Rows wrap at separator boundaries to fit the terminal width.
+
+### Tuning
+
+- `CLAUDE_STATUSLINE_RIGHT_MARGIN` (default `16`): columns reserved on the right for Claude Code's overlay indicators (e.g. `0 tokens`, `@model /effort`). Lower it to use more width, raise it if the output collides with the overlays.
 
 ## Test
 
@@ -60,8 +64,8 @@ src/
   ui/
     format.ts                     ANSI colors, gradient bar, duration formatting
     render.ts                     compositor (assembles components)
-    boxes.ts                      title bar assembly + box rendering
-    box.ts                        minimal box drawing (replaces boxen)
+    lines.ts                      flat-line layout (header + rule + body rows, wrap)
+    terminal.ts                   terminal width detection (stdout/stderr/env/dev-tty)
     constants.ts                  icons, separators, spinner
     components/
       index.ts                    barrel export for all components
@@ -79,7 +83,7 @@ tests/                            mirrors src/ structure
 
 ## Dependencies
 
-Zero runtime dependencies. Box drawing is handled by a minimal inline implementation inspired by [boxen](https://github.com/sindresorhus/boxen), using only the subset needed: round borders, dim style, fixed width, and padding.
+Zero runtime dependencies. Layout is rendered as plain ANSI rows with a horizontal rule between header and body — no box-drawing dependency.
 
 Dev dependency: `@types/bun` for TypeScript types.
 
