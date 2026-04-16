@@ -26,7 +26,12 @@ export const bold = (color: string, text: string) => `${BOLD}${ANSI[color] ?? ""
 export const dim = (text: string) => `${DIM}${text}${RESET}`
 
 /** Returns the visual length of a string, stripping ANSI escape codes. */
-export const vlen = (s: string) => [...s.replace(ANSI_RE, "")].length
+export function vlen(s: string): number {
+  const stripped = s.replace(ANSI_RE, "")
+  let count = 0
+  for (const _ of stripped) count++
+  return count
+}
 
 /**
  * Renders a gradient bar from green to red based on the given percentage.
