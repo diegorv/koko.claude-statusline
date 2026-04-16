@@ -42,7 +42,7 @@ export function vlen(s: string): number {
  */
 export function gradientBar(percent: number, width = 20): string {
   const filled = Math.round((percent * width) / 100)
-  let out = ""
+  const parts: string[] = []
   for (let i = 0; i < width; i++) {
     const t = width > 1 ? i / (width - 1) : 0
     let r: number, g: number, b: number
@@ -56,11 +56,11 @@ export function gradientBar(percent: number, width = 20): string {
       g = Math.round(200 - 160 * a)
       b = Math.round(20 * a)
     }
-    out += i < filled
+    parts.push(i < filled
       ? `\x1b[38;2;${r};${g};${b}m\u2588`
-      : "\x1b[38;2;100;100;100m\u2591"
+      : "\x1b[38;2;100;100;100m\u2591")
   }
-  return out + RESET
+  return parts.join("") + RESET
 }
 
 /**
@@ -80,6 +80,7 @@ export function pctColor(pct: number): string {
  * @returns Formatted duration string.
  */
 export function formatDuration(ms: number): string {
+  if (ms <= 0) return "0s"
   const sec = Math.floor(ms / 1000)
   const h = Math.floor(sec / 3600)
   const m = Math.floor((sec % 3600) / 60)

@@ -13,7 +13,8 @@ import { ICONS } from "../constants"
 export function renderGitStatus(git: GitInfo): string {
   if (!git.repo) return ""
 
-  let str = `${c("green", `${ICONS.branch} ${git.branch}`)}`
+  const branchDisplay = git.branch.length > 25 ? git.branch.slice(0, 22) + "..." : git.branch
+  let str = `${c("green", `${ICONS.branch} ${branchDisplay}`)}`
   if (git.dirty) str += c("yellow", "*")
 
   const stats: string[] = []

@@ -68,7 +68,7 @@ export function getGitInfo(cwd: string): GitInfo {
 
     return {
       repo, branch,
-      dirty: lines.length > 1,
+      dirty: staged + modified + untracked > 0,
       staged, modified, untracked,
       ahead, behind,
     }
