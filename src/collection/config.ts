@@ -21,23 +21,33 @@ function countMdFiles(dir: string): number {
   } catch { return 0 }
 }
 
-function readJson(path: string): any {
-  try { return JSON.parse(readFileSync(path, "utf-8")) } catch { return null }
-}
-
-function jsonKeys(path: string, key: string): number {
-  const obj = readJson(path)?.[key]
-  return obj && typeof obj === "object" ? Object.keys(obj).length : 0
-}
-
-function jsonArray(path: string, key: string): string[] {
-  const arr = readJson(path)?.[key]
-  return Array.isArray(arr) ? arr : []
-}
-
+/**
+ * Counts CLAUDE.md files, rules, enabled MCP servers, and hooks from the filesystem.
+ * Caches parsed JSON per file path to avoid redundant reads.
+ * @param cwd - Current working directory of the Claude Code session.
+ * @returns Configuration counts for display in the status line.
+ */
 export function getConfigCounts(cwd: string): ConfigCounts {
   const home = homedir()
   const claude = join(home, ".claude")
+
+  // Cache parsed JSON per file path — avoids reading the same file multiple times
+  const jsonCache = new Map<string, any>()
+  const readJson = (path: string): any => {
+    if (jsonCache.has(path)) return jsonCache.get(path)
+    let result: any = null
+    try { result = JSON.parse(readFileSync(path, "utf-8")) } catch {}
+    jsonCache.set(path, result)
+    return result
+  }
+  const jsonKeys = (path: string, key: string): number => {
+    const obj = readJson(path)?.[key]
+    return obj && typeof obj === "object" ? Object.keys(obj).length : 0
+  }
+  const jsonArray = (path: string, key: string): string[] => {
+    const arr = readJson(path)?.[key]
+    return Array.isArray(arr) ? arr : []
+  }
 
   // CLAUDE.md files
   const mdPaths = [
@@ -54,23 +64,26 @@ export function getConfigCounts(cwd: string): ConfigCounts {
               + countMdFiles(join(cwd, ".claude", "rules"))
 
   // MCPs (mcpServers keys minus disabled)
-  const mcpTotal = jsonKeys(join(claude, "settings.json"), "mcpServers")
+  const claudeSettings = join(claude, "settings.json")
+  const projectSettings = join(cwd, ".claude", "settings.json")
+
+  const mcpTotal = jsonKeys(claudeSettings, "mcpServers")
                  + jsonKeys(join(home, ".claude.json"), "mcpServers")
                  + jsonKeys(join(cwd, ".mcp.json"), "mcpServers")
-                 + jsonKeys(join(cwd, ".claude", "settings.json"), "mcpServers")
+                 + jsonKeys(projectSettings, "mcpServers")
                  + jsonKeys(join(cwd, ".claude", "settings.local.json"), "mcpServers")
 
   const disabled = new Set([
-    ...jsonArray(join(claude, "settings.json"), "disabledMcpServers"),
-    ...jsonArray(join(claude, "settings.json"), "disabledMcpjsonServers"),
-    ...jsonArray(join(cwd, ".claude", "settings.json"), "disabledMcpServers"),
-    ...jsonArray(join(cwd, ".claude", "settings.json"), "disabledMcpjsonServers"),
+    ...jsonArray(claudeSettings, "disabledMcpServers"),
+    ...jsonArray(claudeSettings, "disabledMcpjsonServers"),
+    ...jsonArray(projectSettings, "disabledMcpServers"),
+    ...jsonArray(projectSettings, "disabledMcpjsonServers"),
   ])
   const mcps = Math.max(0, mcpTotal - disabled.size)
 
   // Hooks (hooks keys)
-  const hooks = jsonKeys(join(claude, "settings.json"), "hooks")
-              + jsonKeys(join(cwd, ".claude", "settings.json"), "hooks")
+  const hooks = jsonKeys(claudeSettings, "hooks")
+              + jsonKeys(projectSettings, "hooks")
               + jsonKeys(join(cwd, ".claude", "settings.local.json"), "hooks")
 
   return { claudeMd, rules, mcps, hooks }
