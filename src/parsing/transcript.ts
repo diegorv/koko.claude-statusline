@@ -165,8 +165,9 @@ export function parseTranscript(path: string): TranscriptData | null {
   const now = Date.now()
   const agentInfos: AgentInfo[] = agents.map(a => {
     const running = !agentCompletedIds.has(a.id)
-    const startMs = a.ts ? new Date(a.ts).getTime() : now
-    const endMs = running ? now : (agentCompletedIds.get(a.id) ? new Date(agentCompletedIds.get(a.id)!).getTime() : now)
+    const startMs = a.ts ? new Date(a.ts).getTime() || now : now
+    const endTs = agentCompletedIds.get(a.id)
+    const endMs = running ? now : (endTs ? new Date(endTs).getTime() || now : now)
     return {
       type: a.type,
       description: a.description,
