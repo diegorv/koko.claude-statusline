@@ -39,7 +39,7 @@ export function renderBoxes(data: StdinData, result: RenderResult, repoName?: st
   const sessionMinW = Math.max(sessionContentW + 6, leftW + rightW + 9)
 
   const actLines = activity.map(nbsp)
-  const actContentW = activity.length > 0 ? Math.max(...actLines.map(l => vlen(l))) : 0
+  const actContentW = Math.max(...(actLines.length > 0 ? actLines.map(l => vlen(l)) : [0]))
   const actTitleW = vlen(activityTitle)
   const actTitleLeftW = vlen("Activity")
   const actMinW = activity.length > 0 ? Math.max(actContentW + 6, actTitleLeftW + actTitleW + 9) : 0
