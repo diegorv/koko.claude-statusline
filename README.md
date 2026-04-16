@@ -1,8 +1,6 @@
 # claude-statusline
 
-A rich terminal status line for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Displays session info, git status, rate limits, tool usage, agents, todos, and config counts in styled boxes.
-
-![screenshot](https://github.com/user-attachments/assets/placeholder.png)
+A rich terminal status line for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Displays session info, git status, rate limits, tool usage, agents, todos, and config counts in styled ANSI boxes.
 
 ## Features
 
@@ -32,13 +30,15 @@ Configure in `~/.claude/settings.json`:
 }
 ```
 
-Claude Code pipes session JSON to stdin. The script renders two boxes to stdout.
+Claude Code pipes session JSON to stdin. The script renders two styled boxes to stdout.
 
 ## Test
 
 ```bash
 bun test
 ```
+
+CI runs automatically on push and PR via GitHub Actions.
 
 Manual test:
 
@@ -50,29 +50,31 @@ echo '{"model":{"display_name":"Opus"},"context_window":{"used_percentage":45},"
 
 ```
 src/
-  index.ts                      entry point (orchestration only)
+  index.ts                        entry point (orchestration only)
   parsing/
-    stdin.ts                    parse Claude Code JSON from stdin
-    transcript.ts               parse session transcript JSONL
+    stdin.ts                      parse Claude Code JSON from stdin
+    transcript.ts                 parse session transcript JSONL
   collection/
-    git.ts                      git repo info via Bun.spawnSync
-    config.ts                   count CLAUDE.md, MCPs, hooks, rules
+    git.ts                        git repo info via Bun.spawnSync
+    config.ts                     count CLAUDE.md, MCPs, hooks, rules
   ui/
-    format.ts                   ANSI colors, gradient bar, duration formatting
-    render.ts                   compositor (assembles components)
-    boxes.ts                    title bar assembly + box rendering
-    box.ts                      minimal box drawing (replaces boxen)
-    constants.ts                icons, separators, spinner
+    format.ts                     ANSI colors, gradient bar, duration formatting
+    render.ts                     compositor (assembles components)
+    boxes.ts                      title bar assembly + box rendering
+    box.ts                        minimal box drawing (replaces boxen)
+    constants.ts                  icons, separators, spinner
     components/
-      git-status.ts             branch, dirty, staged/modified/untracked
-      workspace-info.ts         worktree, line changes, vim mode
-      rate-limit.ts             gradient bar + percentage + reset countdown
-      running-tools.ts          spinner + tool name/target
-      completed-tools.ts        checkmark + tool name + count
-      agents.ts                 agent status + elapsed time
-      todos.ts                  todo progress bar
-      activity-title.ts         config counts + session name
-tests/                          mirrors src/ structure
+      index.ts                    barrel export for all components
+      git-status.ts               branch, dirty, staged/modified/untracked
+      workspace-info.ts           worktree, line changes, vim mode
+      rate-limit.ts               gradient bar + percentage + reset countdown
+      running-tools.ts            spinner + tool name/target
+      completed-tools.ts          checkmark + tool name + count
+      agents.ts                   agent status + elapsed time
+      todos.ts                    todo progress bar
+      activity-title.ts           config counts + session name
+tests/                            mirrors src/ structure
+.github/workflows/ci.yml          CI (bun test on push & PR)
 ```
 
 ## Dependencies
