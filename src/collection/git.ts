@@ -17,6 +17,12 @@ const EMPTY: GitInfo = {
   ahead: 0, behind: 0,
 }
 
+/**
+ * Collects git repository status for the given working directory.
+ * Uses 2 git spawns: rev-parse (repo name) and status -b --porcelain (branch + status + ahead/behind).
+ * @param cwd - Working directory path.
+ * @returns Git info object, or empty defaults if not a git repo.
+ */
 export function getGitInfo(cwd: string): GitInfo {
   const run = (...args: string[]) =>
     Bun.spawnSync(["git", "--no-optional-locks", "-C", cwd, ...args]).stdout.toString().trim()
@@ -25,33 +31,44 @@ export function getGitInfo(cwd: string): GitInfo {
     const repo = run("rev-parse", "--show-toplevel").split("/").pop() ?? ""
     if (!repo) return EMPTY
 
-    const branch = run("symbolic-ref", "--short", "HEAD")
-    const porcelain = run("status", "--porcelain")
+    // Single command for branch, ahead/behind, and file status
+    const output = run("status", "-b", "--porcelain")
+    const lines = output.split("\n")
 
-    // Parse status --porcelain: XY filename
-    // X = staged status, Y = unstaged status
-    let staged = 0, modified = 0, untracked = 0
-    if (porcelain) {
-      for (const line of porcelain.split("\n")) {
-        const x = line[0], y = line[1]
-        if (x === "?" && y === "?") { untracked++; continue }
-        if (x && x !== " " && x !== "?") staged++
-        if (y && y !== " " && y !== "?") modified++
+    // First line: ## branch...upstream [ahead N, behind M]
+    const headerLine = lines[0] ?? ""
+    let branch = ""
+    let ahead = 0, behind = 0
+
+    if (headerLine.startsWith("## ")) {
+      const header = headerLine.slice(3)
+      // Parse "branch...upstream [ahead 2, behind 1]" or just "branch"
+      const dotIdx = header.indexOf("...")
+      branch = dotIdx >= 0 ? header.slice(0, dotIdx) : header.split(" ")[0]
+
+      const bracketMatch = header.match(/\[(.+)\]/)
+      if (bracketMatch) {
+        const aheadMatch = bracketMatch[1].match(/ahead (\d+)/)
+        const behindMatch = bracketMatch[1].match(/behind (\d+)/)
+        if (aheadMatch) ahead = parseInt(aheadMatch[1], 10)
+        if (behindMatch) behind = parseInt(behindMatch[1], 10)
       }
     }
 
-    // Ahead/behind upstream
-    let ahead = 0, behind = 0
-    try {
-      const ab = run("rev-list", "--left-right", "--count", "HEAD...@{upstream}")
-      const [a, b] = ab.split(/\s+/)
-      ahead = parseInt(a, 10) || 0
-      behind = parseInt(b, 10) || 0
-    } catch {} // no upstream configured
+    // Remaining lines: XY filename
+    let staged = 0, modified = 0, untracked = 0
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i]
+      if (!line) continue
+      const x = line[0], y = line[1]
+      if (x === "?" && y === "?") { untracked++; continue }
+      if (x && x !== " " && x !== "?") staged++
+      if (y && y !== " " && y !== "?") modified++
+    }
 
     return {
       repo, branch,
-      dirty: porcelain.length > 0,
+      dirty: lines.length > 1,
       staged, modified, untracked,
       ahead, behind,
     }
