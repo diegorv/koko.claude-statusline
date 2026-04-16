@@ -4,6 +4,7 @@ import type { StdinData } from "../parsing/stdin"
 import type { RenderResult } from "./render"
 import { bold, c, nbsp, pctColor, gradientBar, formatDuration, vlen } from "./format"
 import { box } from "./box"
+import { getTerminalWidth } from "./terminal"
 
 /** Wraps border characters in dim ANSI to match the box borders. */
 const dimBorder = (s: string) => `\x1b[2m${s}\x1b[0m`
@@ -49,7 +50,17 @@ export function renderBoxes(data: StdinData, result: RenderResult, repoName?: st
   const actTitleLeftW = vlen("Activity")
   const actMinW = activity.length > 0 ? Math.max(actContentW + 6, actTitleLeftW + actTitleW + 9) : 0
 
-  const boxWidth = Math.max(sessionMinW, actMinW)
+  // Stretch boxes to fill the terminal when it's wider than the content.
+  // Falls back to content-based width when terminal width is unknown.
+  // The right margin reserves space for Claude Code's overlay indicators
+  // (e.g. "0 tokens", "@model /effort") that share the statusline area.
+  const terminalWidth = getTerminalWidth()
+  const rightMargin = Number.parseInt(process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN ?? "", 10)
+  const margin = Number.isFinite(rightMargin) && rightMargin >= 0 ? rightMargin : 16
+  const contentMinW = Math.max(sessionMinW, actMinW)
+  const boxWidth = terminalWidth
+    ? Math.max(contentMinW, terminalWidth - margin)
+    : contentMinW
 
   // Render session box
   const sessionBox = box(sessionLines.join("\n"), {
