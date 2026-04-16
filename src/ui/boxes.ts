@@ -8,6 +8,11 @@ import { box } from "./box"
 /** Wraps border characters in dim ANSI to match the box borders. */
 const dimBorder = (s: string) => `\x1b[2m${s}\x1b[0m`
 
+// Title bar chrome: "╭─ " (3) + " " (1) + " " (1) + " ─╮" (3) = 8
+const TITLE_CHROME = 8
+// Single-side chrome: "╭─ " (3) + " ─╮" (2) = 5
+const TITLE_CHROME_SINGLE = 5
+
 /**
  * Renders the complete terminal output with session and activity boxes.
  * Builds custom title bars with model info, context usage, cost, and duration.
@@ -53,7 +58,7 @@ export function renderBoxes(data: StdinData, result: RenderResult, repoName?: st
   })
 
   const sessionBoxLines = sessionBox.split("\n")
-  const dashes = Math.max(1, boxWidth - leftW - rightW - 8)
+  const dashes = Math.max(1, boxWidth - leftW - rightW - TITLE_CHROME)
   sessionBoxLines[0] = `${dimBorder("╭─")} ${titleLeft} ${dimBorder("─".repeat(dashes))} ${titleRight} ${dimBorder("─╮")}`
 
   const output: string[] = [sessionBoxLines.join("\n")]
@@ -67,10 +72,10 @@ export function renderBoxes(data: StdinData, result: RenderResult, repoName?: st
 
     const actBoxLines = actBox.split("\n")
     if (activityTitle) {
-      const actDashes = Math.max(1, boxWidth - actTitleLeftW - actTitleW - 8)
+      const actDashes = Math.max(1, boxWidth - actTitleLeftW - actTitleW - TITLE_CHROME)
       actBoxLines[0] = `${dimBorder("╭─")} Activity ${dimBorder("─".repeat(actDashes))} ${activityTitle} ${dimBorder("─╮")}`
     } else {
-      const actDashes = Math.max(1, boxWidth - actTitleLeftW - 5)
+      const actDashes = Math.max(1, boxWidth - actTitleLeftW - TITLE_CHROME_SINGLE)
       actBoxLines[0] = `${dimBorder("╭─")} Activity ${dimBorder("─".repeat(actDashes) + "╮")}`
     }
 
