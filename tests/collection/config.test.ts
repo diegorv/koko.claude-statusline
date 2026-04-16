@@ -69,10 +69,10 @@ describe("getConfigCounts", () => {
     const claudeDir = join(TMP_DIR, ".claude")
     mkdirSync(claudeDir, { recursive: true })
     writeFileSync(join(claudeDir, "settings.json"), JSON.stringify({
-      hooks: { preCommit: {}, postPush: {} },
+      hooks: { PreToolUse: [{ command: "echo" }], PostToolUse: [{ command: "echo" }, { command: "test" }] },
     }))
     const result = getConfigCounts(TMP_DIR)
-    expect(result.hooks).toBeGreaterThanOrEqual(2)
+    expect(result.hooks).toBeGreaterThanOrEqual(3)
   })
 
   test("handles non-existent directory gracefully", () => {

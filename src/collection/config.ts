@@ -40,10 +40,6 @@ export function getConfigCounts(cwd: string): ConfigCounts {
     jsonCache.set(path, result)
     return result
   }
-  const jsonKeys = (path: string, key: string): number => {
-    const obj = readJson(path)?.[key]
-    return obj && typeof obj === "object" ? Object.keys(obj).length : 0
-  }
   const jsonArray = (path: string, key: string): string[] => {
     const arr = readJson(path)?.[key]
     return Array.isArray(arr) ? arr : []
@@ -63,15 +59,24 @@ export function getConfigCounts(cwd: string): ConfigCounts {
   const rules = countMdFiles(join(claude, "rules"))
               + countMdFiles(join(cwd, ".claude", "rules"))
 
-  // MCPs (mcpServers keys minus disabled)
+  // MCPs (unique mcpServers keys minus disabled)
   const claudeSettings = join(claude, "settings.json")
   const projectSettings = join(cwd, ".claude", "settings.json")
 
-  const mcpTotal = jsonKeys(claudeSettings, "mcpServers")
-                 + jsonKeys(join(home, ".claude.json"), "mcpServers")
-                 + jsonKeys(join(cwd, ".mcp.json"), "mcpServers")
-                 + jsonKeys(projectSettings, "mcpServers")
-                 + jsonKeys(join(cwd, ".claude", "settings.local.json"), "mcpServers")
+  const mcpPaths = [
+    claudeSettings,
+    join(home, ".claude.json"),
+    join(cwd, ".mcp.json"),
+    projectSettings,
+    join(cwd, ".claude", "settings.local.json"),
+  ]
+  const mcpNames = new Set<string>()
+  for (const path of mcpPaths) {
+    const obj = readJson(path)?.mcpServers
+    if (obj && typeof obj === "object") {
+      for (const key of Object.keys(obj)) mcpNames.add(key)
+    }
+  }
 
   const disabled = new Set([
     ...jsonArray(claudeSettings, "disabledMcpServers"),
@@ -79,12 +84,22 @@ export function getConfigCounts(cwd: string): ConfigCounts {
     ...jsonArray(projectSettings, "disabledMcpServers"),
     ...jsonArray(projectSettings, "disabledMcpjsonServers"),
   ])
-  const mcps = Math.max(0, mcpTotal - disabled.size)
+  for (const d of disabled) mcpNames.delete(d)
+  const mcps = mcpNames.size
 
-  // Hooks (hooks keys)
-  const hooks = jsonKeys(claudeSettings, "hooks")
-              + jsonKeys(projectSettings, "hooks")
-              + jsonKeys(join(cwd, ".claude", "settings.local.json"), "hooks")
+  // Hooks (count individual hook entries, not event types)
+  const countHooks = (path: string): number => {
+    const obj = readJson(path)?.hooks
+    if (!obj || typeof obj !== "object") return 0
+    let count = 0
+    for (const arr of Object.values(obj)) {
+      if (Array.isArray(arr)) count += arr.length
+    }
+    return count
+  }
+  const hooks = countHooks(claudeSettings)
+              + countHooks(projectSettings)
+              + countHooks(join(cwd, ".claude", "settings.local.json"))
 
   return { claudeMd, rules, mcps, hooks }
 }

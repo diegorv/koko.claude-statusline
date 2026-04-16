@@ -32,7 +32,10 @@ const HIDDEN_TOOLS = new Set([
 ])
 
 function mcpDisplayName(name: string): string {
-  return (name.startsWith("mcp__") ? name.slice(5) : name).toLowerCase()
+  if (!name.startsWith("mcp__")) return name.toLowerCase()
+  const parts = name.split("__")
+  // mcp__server__tool → "server", mcp__server_name__tool → "server_name"
+  return parts.length >= 3 ? parts.slice(1, -1).join(".") : parts[1]
 }
 
 function extractTarget(name: string, input: any): string {
@@ -92,8 +95,9 @@ export function parseTranscript(path: string): TranscriptData | null {
 
         toolUses.set(id, { name, input })
 
-        // Agent tracking
+        // Agent tracking (keep last 3 to bound memory)
         if (name === "Agent" || name === "Task") {
+          if (agents.length >= 3) agents.shift()
           agents.push({
             id,
             type: input?.subagent_type ?? input?.description ?? "agent",
@@ -105,7 +109,10 @@ export function parseTranscript(path: string): TranscriptData | null {
 
         // Todo tracking (TodoWrite replaces all)
         if (name === "TodoWrite" && input?.todos) {
-          const raw = typeof input.todos === "string" ? JSON.parse(input.todos) : input.todos
+          let raw: any
+          try {
+            raw = typeof input.todos === "string" ? JSON.parse(input.todos) : input.todos
+          } catch { continue }
           if (Array.isArray(raw)) {
             todos = raw.map((t: any) => ({
               content: t.content ?? t.subject ?? "",
@@ -154,9 +161,9 @@ export function parseTranscript(path: string): TranscriptData | null {
     [...toolCounts.entries()].sort((a, b) => b[1] - a[1])
   )
 
-  // Build agent infos (last 3)
+  // Build agent infos (already bounded to 3 during parsing)
   const now = Date.now()
-  const agentInfos: AgentInfo[] = agents.slice(-3).map(a => {
+  const agentInfos: AgentInfo[] = agents.map(a => {
     const running = !agentCompletedIds.has(a.id)
     const startMs = a.ts ? new Date(a.ts).getTime() : now
     const endMs = running ? now : (agentCompletedIds.get(a.id) ? new Date(agentCompletedIds.get(a.id)!).getTime() : now)

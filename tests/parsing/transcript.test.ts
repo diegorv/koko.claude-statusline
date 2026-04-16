@@ -101,8 +101,9 @@ describe("parseTranscript", () => {
       toolResultEntry("2"),
     ])
     const result = parseTranscript(path)!
-    // MCP tools are grouped by server name in display
-    expect(result.tools.has("github__search")).toBe(true)
+    // MCP tools are grouped by server name in display (server name only)
+    expect(result.tools.has("github")).toBe(true)
+    expect(result.tools.get("github")).toBe(2)
     expect(result.mcpStatus.ok.has("github")).toBe(true)
   })
 

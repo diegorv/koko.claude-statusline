@@ -17,5 +17,5 @@ export function renderTodos(todos: { total: number; completed: number; current: 
   if (completed === total) {
     return `${c("green", "✓")} All complete ${dim(`(${total}/${total})`)}`
   }
-  return null
+  return `${c("yellow", "▸")} ${dim(`(${completed}/${total})`)}`
 }

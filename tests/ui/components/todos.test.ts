@@ -28,7 +28,9 @@ describe("renderTodos", () => {
     expect(result).toContain("✓")
   })
 
-  test("returns null when not all complete and no current", () => {
-    expect(renderTodos({ total: 3, completed: 1, current: null })).toBeNull()
+  test("shows progress when pending todos exist but none in_progress", () => {
+    const result = renderTodos({ total: 3, completed: 1, current: null })
+    expect(result).toContain("▸")
+    expect(result).toContain("1/3")
   })
 })
