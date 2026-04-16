@@ -48,19 +48,26 @@ function extractTarget(name: string, input: any): string {
   return ""
 }
 
+/**
+ * Parses a Claude Code transcript JSONL file and extracts tool usage, agent tracking,
+ * todo progress, and MCP server health in a single pass.
+ * @param path - Absolute path to the transcript JSONL file.
+ * @returns Parsed transcript data, or null if the file cannot be read.
+ */
 export function parseTranscript(path: string): TranscriptData | null {
   let text: string
   try {
     text = readFileSync(path, "utf-8")
   } catch { return null }
 
-  // Track tool_use by id
-  const toolUses = new Map<string, { name: string; ts: string; input: any }>()
+  // Track tool_use by id — stores name + input for running tool display
+  const toolUses = new Map<string, { name: string; input: any }>()
   const completedIds = new Set<string>()
   const toolCounts = new Map<string, number>()
 
-  // Agents
+  // Agents — Set for O(1) lookup instead of array.some()
   const agents: { id: string; type: string; description: string; ts: string }[] = []
+  const agentIds = new Set<string>()
   const agentCompletedIds = new Map<string, string>() // id → completion timestamp
 
   // MCP status
@@ -83,7 +90,7 @@ export function parseTranscript(path: string): TranscriptData | null {
       if (block.type === "tool_use") {
         const { id, name, input } = block
 
-        toolUses.set(id, { name, ts, input })
+        toolUses.set(id, { name, input })
 
         // Agent tracking
         if (name === "Agent" || name === "Task") {
@@ -93,6 +100,7 @@ export function parseTranscript(path: string): TranscriptData | null {
             description: input?.description ?? "",
             ts,
           })
+          agentIds.add(id)
         }
 
         // Todo tracking (TodoWrite replaces all)
@@ -111,15 +119,24 @@ export function parseTranscript(path: string): TranscriptData | null {
         const useId = block.tool_use_id
         completedIds.add(useId)
 
-        // Track agent completion with timestamp
-        if (agents.some(a => a.id === useId)) {
+        const toolInfo = toolUses.get(useId)
+        if (!toolInfo) continue
+
+        // Track agent completion with timestamp — O(1) Set lookup
+        if (agentIds.has(useId)) {
           agentCompletedIds.set(useId, ts)
         }
 
+        // Increment completed tool count inline (avoids second pass)
+        const { name } = toolInfo
+        if (!HIDDEN_TOOLS.has(name) && name !== "Agent" && name !== "Task") {
+          const display = mcpDisplayName(name)
+          toolCounts.set(display, (toolCounts.get(display) ?? 0) + 1)
+        }
+
         // Track MCP tool results (mcp__servername__toolname)
-        const toolInfo = toolUses.get(useId)
-        if (toolInfo?.name.startsWith("mcp__")) {
-          const server = toolInfo.name.split("__")[1]
+        if (name.startsWith("mcp__")) {
+          const server = name.split("__")[1]
           if (server) {
             if (block.is_error) {
               mcpErrored.add(server)
@@ -132,17 +149,7 @@ export function parseTranscript(path: string): TranscriptData | null {
     }
   }
 
-  // Aggregate completed tool counts (exclude hidden + agents)
-  // MCP tools (mcp__server__tool) are grouped by server name
-  for (const [id, { name }] of toolUses) {
-    if (!completedIds.has(id)) continue
-    if (HIDDEN_TOOLS.has(name)) continue
-    if (name === "Agent" || name === "Task") continue
-    const display = mcpDisplayName(name)
-    toolCounts.set(display, (toolCounts.get(display) ?? 0) + 1)
-  }
-
-  // Sort by count descending
+  // Sort tools by count descending
   const sortedTools = new Map(
     [...toolCounts.entries()].sort((a, b) => b[1] - a[1])
   )
@@ -169,14 +176,13 @@ export function parseTranscript(path: string): TranscriptData | null {
     ? { total: todoTotal, completed: todoCompleted, current: currentTodo?.content ?? null }
     : { total: 0, completed: 0, current: null }
 
-  // Build running tools (last 2, exclude hidden + agents)
+  // Build running tools (last 2, exclude hidden + agents) — single pass over uncompleted
   const runningTools: RunningTool[] = []
   for (const [id, { name, input }] of toolUses) {
     if (completedIds.has(id)) continue
     if (HIDDEN_TOOLS.has(name)) continue
     if (name === "Agent" || name === "Task") continue
-    const display = mcpDisplayName(name)
-    runningTools.push({ name: display, target: extractTarget(name, input) })
+    runningTools.push({ name: mcpDisplayName(name), target: extractTarget(name, input) })
   }
 
   return {
