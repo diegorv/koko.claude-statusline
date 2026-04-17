@@ -25,7 +25,11 @@ const EMPTY: GitInfo = {
  */
 export function getGitInfo(cwd: string): GitInfo {
   const run = (...args: string[]) =>
-    Bun.spawnSync(["git", "--no-optional-locks", "-C", cwd, ...args]).stdout.toString().trim()
+    Bun.spawnSync({
+      cmd: ["git", "--no-optional-locks", "-C", cwd, ...args],
+      stdout: "pipe",
+      stderr: "ignore",  // suppress git warnings so they don't pollute the statusline
+    }).stdout.toString().trim()
 
   try {
     const repo = run("rev-parse", "--show-toplevel").split("/").pop() ?? ""
