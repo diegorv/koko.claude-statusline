@@ -112,11 +112,15 @@ export function formatResetIn(epochSec: number): string {
 /**
  * Formats a token count in compact form: `148k`, `1.2m`, `450`.
  * Uses 1 decimal place only when the value isn't a whole multiple of the unit.
+ *
+ * The 'k' threshold is 950 (not 1000) so values like 999_500 format as `1m`
+ * instead of the misleading `1000k` that naive rounding would produce.
  */
 export function formatTokens(n: number): string {
-  if (n >= 1_000_000) {
+  if (n >= 950_000) {
     const v = n / 1_000_000
-    return v === Math.trunc(v) ? `${v}m` : `${v.toFixed(1)}m`
+    const rounded = Math.round(v * 10) / 10
+    return rounded === Math.trunc(rounded) ? `${rounded}m` : `${rounded.toFixed(1)}m`
   }
   if (n >= 1_000) return `${Math.round(n / 1_000)}k`
   return `${n}`

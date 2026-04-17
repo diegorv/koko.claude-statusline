@@ -81,6 +81,12 @@ describe("formatTokens", () => {
     expect(formatTokens(1_200_000)).toBe("1.2m")
     expect(formatTokens(2_000_000)).toBe("2m")
   })
+
+  test("promotes values near the 1m threshold to 'm' (no '1000k')", () => {
+    expect(formatTokens(949_999)).toBe("950k")
+    expect(formatTokens(950_000)).toBe("1m")
+    expect(formatTokens(999_500)).toBe("1m")
+  })
 })
 
 describe("formatResetIn", () => {
