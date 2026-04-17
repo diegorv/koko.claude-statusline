@@ -56,6 +56,33 @@ Manual test with mock input:
 echo '{"model":{"display_name":"Opus"},"context_window":{"used_percentage":45},"cost":{"total_cost_usd":0.05,"total_duration_ms":120000}}' | bun src/index.ts
 ```
 
+## What it shows
+
+The layout is split into a persistent header and conditional body rows. Rows that have no data are simply not emitted — the statusline shrinks to just the header when you're outside a git repo and before any tools, agents, or todos appear.
+
+### Header (always shown)
+
+A single line with content pinned to both edges and dashes filling the middle.
+
+| Side | Content |
+|---|---|
+| Left | Repo name (when inside a git repo) · model · context window gradient bar + `%` |
+| Right | Session cost (`¢` below `$0.10`, otherwise `$`) · session duration (shown when `≥ 1s`) · activity title (dim: `CLAUDE.md` / MCP / hook / rule counts + session name) |
+
+### Body rows (rendered only when the underlying data exists)
+
+Each row starts with a colored left gutter (`▎`) so categories stay visually distinct.
+
+| Gutter | Row | Content |
+|---|---|---|
+| green | **Git + workspace** | branch, dirty state, staged / modified / untracked, ahead / behind · worktree name · `+added` / `-removed` lines · vim mode |
+| yellow | **Rate limits** | 5h and 7d gradient bars with reset countdowns |
+| cyan | **Tools** | running tools with spinner · completed tools with counts |
+| magenta | **Agents** | spawned subagents with elapsed time |
+| yellow | **Todos** | current in-progress task · overall progress |
+
+Any row wider than the terminal is wrapped at separator boundaries; the available width is shrunk by `CLAUDE_STATUSLINE_RIGHT_MARGIN` (see [Tuning](#tuning)) to leave room for Claude Code's overlay indicators.
+
 ## Features
 
 - Model name, context window usage with gradient bar, cost, and session duration
