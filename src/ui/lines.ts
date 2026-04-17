@@ -4,6 +4,12 @@ import type { StdinData } from "../parsing/stdin"
 import type { RenderResult } from "./render"
 import { bold, c, dim, formatDuration, formatTokens, gradientBar, nbsp, pctColor, RESET, vlen } from "./format"
 import { SEP, inRuleColor } from "./constants"
+
+// Very faint gray — used for the dashes that fill the middle of the header.
+// Noticeably darker than RULE_COLOR so the filler stays secondary and the eye
+// jumps straight to the header content on either side.
+const FAINT_COLOR = "\x1b[38;2;60;60;70m"
+const faint = (s: string) => `${FAINT_COLOR}${s}${RESET}`
 import { getTerminalWidth } from "./terminal"
 
 const RULE_CHAR = "─"
@@ -78,7 +84,7 @@ function joinHeader(left: string, right: string, maxWidth: number): string {
     return left + SEP + right
   }
   const dashes = maxWidth - leftW - rightW - 2 * HEADER_GAP.length
-  return left + HEADER_GAP + dim(RULE_CHAR.repeat(dashes)) + HEADER_GAP + right
+  return left + HEADER_GAP + faint(RULE_CHAR.repeat(dashes)) + HEADER_GAP + right
 }
 
 /** Resolves the configured right margin (env override → default). */
