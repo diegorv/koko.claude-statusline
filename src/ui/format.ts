@@ -105,5 +105,18 @@ export function formatResetIn(epochSec: number): string {
   return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
 
+/**
+ * Formats a token count in compact form: `148k`, `1.2m`, `450`.
+ * Uses 1 decimal place only when the value isn't a whole multiple of the unit.
+ */
+export function formatTokens(n: number): string {
+  if (n >= 1_000_000) {
+    const v = n / 1_000_000
+    return v === Math.trunc(v) ? `${v}m` : `${v.toFixed(1)}m`
+  }
+  if (n >= 1_000) return `${Math.round(n / 1_000)}k`
+  return `${n}`
+}
+
 /** Replaces regular spaces with non-breaking spaces for terminal rendering. */
 export const nbsp = (s: string) => s.replace(/ /g, "\u00A0")

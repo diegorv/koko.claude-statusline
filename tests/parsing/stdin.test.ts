@@ -70,6 +70,25 @@ describe("mapRawToStdinData", () => {
     expect(result.rateLimit7d!.pct).toBe(67)
   })
 
+  test("sums contextTokens from current_usage (input + cache_creation + cache_read)", () => {
+    const raw = {
+      context_window: {
+        current_usage: {
+          input_tokens: 100,
+          cache_creation_input_tokens: 50,
+          cache_read_input_tokens: 25,
+          output_tokens: 9999,  // must be excluded per Claude Code's formula
+        },
+      },
+    }
+    expect(mapRawToStdinData(raw).contextTokens).toBe(175)
+  })
+
+  test("contextTokens is null when current_usage is absent", () => {
+    expect(mapRawToStdinData({}).contextTokens).toBeNull()
+    expect(mapRawToStdinData({ context_window: { used_percentage: 40 } }).contextTokens).toBeNull()
+  })
+
   test("compacts model display name '(1M context)' suffix to '1M'", () => {
     expect(mapRawToStdinData({ model: { display_name: "Opus 4.7 (1M context)" } }).model).toBe("Opus 4.7 1M")
     expect(mapRawToStdinData({ model: { display_name: "Sonnet 4.6 (200k context)" } }).model).toBe("Sonnet 4.6 200k")

@@ -3,6 +3,12 @@
 export interface StdinData {
   model: string
   contextPercent: number
+  /**
+   * Total tokens currently occupying the context window (input + cache_creation + cache_read),
+   * matching the input-only formula Claude Code uses for `used_percentage`.
+   * `null` before the first API call in a session.
+   */
+  contextTokens: number | null
   cost: number
   durationMs: number
   linesAdded: number
@@ -35,6 +41,11 @@ export function mapRawToStdinData(raw: any): StdinData {
   return {
     model:    compactModelName(raw.model?.display_name ?? "Unknown"),
     contextPercent: raw.context_window?.used_percentage ?? 0,
+    contextTokens: (() => {
+      const u = raw.context_window?.current_usage
+      if (!u) return null
+      return (u.input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0)
+    })(),
     cost:     raw.cost?.total_cost_usd ?? 0,
     durationMs: raw.cost?.total_duration_ms ?? 0,
     linesAdded:  raw.cost?.total_lines_added ?? 0,

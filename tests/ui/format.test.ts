@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { formatDuration, pctColor, gradientBar, formatResetIn, vlen, nbsp, c, bold, dim } from "../../src/ui/format"
+import { formatDuration, formatTokens, pctColor, gradientBar, formatResetIn, vlen, nbsp, c, bold, dim } from "../../src/ui/format"
 
 describe("formatDuration", () => {
   test("returns seconds for sub-minute durations", () => {
@@ -56,6 +56,25 @@ describe("gradientBar", () => {
     const bar = gradientBar(100, 5)
     expect(bar).not.toContain("\u2591") // no empty blocks
     expect(bar).toContain("\u2588")     // filled blocks present
+  })
+})
+
+describe("formatTokens", () => {
+  test("returns raw count under 1k", () => {
+    expect(formatTokens(0)).toBe("0")
+    expect(formatTokens(999)).toBe("999")
+  })
+
+  test("rounds to 'Nk' between 1k and 1m", () => {
+    expect(formatTokens(1000)).toBe("1k")
+    expect(formatTokens(148_500)).toBe("149k")
+    expect(formatTokens(200_000)).toBe("200k")
+  })
+
+  test("formats 'Nm' for millions, with 1 decimal only when fractional", () => {
+    expect(formatTokens(1_000_000)).toBe("1m")
+    expect(formatTokens(1_200_000)).toBe("1.2m")
+    expect(formatTokens(2_000_000)).toBe("2m")
   })
 })
 

@@ -2,7 +2,7 @@
 
 import type { StdinData } from "../parsing/stdin"
 import type { RenderResult } from "./render"
-import { bold, c, dim, formatDuration, gradientBar, nbsp, pctColor, RESET, vlen } from "./format"
+import { bold, c, dim, formatDuration, formatTokens, gradientBar, nbsp, pctColor, RESET, vlen } from "./format"
 import { SEP } from "./constants"
 import { getTerminalWidth } from "./terminal"
 
@@ -47,7 +47,10 @@ function buildHeaderLeft(data: StdinData, repoName: string | undefined, effort: 
   parts.push(c("cyan", data.model))
   if (effort) parts.push(effort)
   const pct = Math.round(data.contextPercent)
-  parts.push(`${gradientBar(data.contextPercent, 10)} ${pctColor(data.contextPercent)}${pct}%${RESET}`)
+  const tokensLabel = data.contextTokens != null && data.contextWindowSize
+    ? " " + dim(`${formatTokens(data.contextTokens)}/${formatTokens(data.contextWindowSize)}`)
+    : ""
+  parts.push(`${gradientBar(data.contextPercent, 10)} ${pctColor(data.contextPercent)}${pct}%${RESET}${tokensLabel}`)
   return parts.join(SEP)
 }
 
