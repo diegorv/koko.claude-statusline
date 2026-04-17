@@ -22,8 +22,18 @@ export const SEP = dim("  │  ")
  */
 export const RULE_COLOR = "\x1b[38;2;110;110;120m"
 
+/**
+ * Much darker gray used for the dashes that fill the middle of the header.
+ * Intentionally fainter than RULE_COLOR so the filler reads as background
+ * chrome and the eye jumps straight to the content on either side.
+ */
+export const FAINT_COLOR = "\x1b[38;2;60;60;70m"
+
 /** Wraps text in RULE_COLOR with an automatic reset. */
 export const inRuleColor = (s: string) => `${RULE_COLOR}${s}\x1b[0m`
+
+/** Wraps text in FAINT_COLOR with an automatic reset. */
+export const inFaintColor = (s: string) => `${FAINT_COLOR}${s}\x1b[0m`
 
 const SPINNER_FRAMES = ["◐", "◓", "◑", "◒"]
 
