@@ -122,7 +122,11 @@ export function formatDuration(ms: number): string {
 }
 
 /**
- * Formats the time remaining until a reset epoch as a human-readable countdown (e.g. "23m", "1h 15m").
+ * Formats the time remaining until a reset epoch as a human-readable countdown.
+ * Switches unit by magnitude so the result stays compact and readable:
+ *   < 60m  → "23m"
+ *   < 48h  → "1h 15m" / "47h"
+ *   >= 48h → "6d 5h" / "7d"  (minutes dropped — irrelevant at this scale)
  * Returns empty string if the reset time is in the past.
  * @param epochSec - Reset timestamp in seconds since Unix epoch.
  * @returns Formatted countdown string, or empty if already past.
@@ -134,6 +138,11 @@ export function formatResetIn(epochSec: number): string {
   if (mins < 60) return `${mins}m`
   const h = Math.floor(mins / 60)
   const m = mins % 60
+  if (h >= 48) {
+    const d = Math.floor(h / 24)
+    const hr = h % 24
+    return hr > 0 ? `${d}d ${hr}h` : `${d}d`
+  }
   return m > 0 ? `${h}h ${m}m` : `${h}h`
 }
 

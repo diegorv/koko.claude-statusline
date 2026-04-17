@@ -106,6 +106,23 @@ describe("formatResetIn", () => {
     const result = formatResetIn(futureEpoch)
     expect(result).toMatch(/^\d+h/)
   })
+
+  test("switches to days when >= 48h away", () => {
+    const epoch48h = Math.floor(Date.now() / 1000) + 48 * 3600 + 60  // +48h1m so ceiling lands at 48h
+    expect(formatResetIn(epoch48h)).toMatch(/^2d/)
+
+    const epoch7d = Math.floor(Date.now() / 1000) + 7 * 24 * 3600 + 60
+    expect(formatResetIn(epoch7d)).toMatch(/^7d/)
+
+    const epoch149h = Math.floor(Date.now() / 1000) + (149 * 3600 + 29 * 60)
+    // 149h 29m → 6 days + 5h (149/24=6r5), minutes dropped
+    expect(formatResetIn(epoch149h)).toBe("6d 5h")
+  })
+
+  test("stays in hours for values just under 48h", () => {
+    const epoch47h = Math.floor(Date.now() / 1000) + 47 * 3600 + 60
+    expect(formatResetIn(epoch47h)).toMatch(/^47h/)
+  })
 })
 
 describe("vlen", () => {
