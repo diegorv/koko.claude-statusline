@@ -4,7 +4,7 @@
 [![Bun](https://img.shields.io/badge/bun-%3E%3D1.0-f9f1e1?logo=bun)](https://bun.sh)
 [![TypeScript](https://img.shields.io/badge/typescript-strict-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![dependencies](https://img.shields.io/badge/runtime%20deps-0-success)](./package.json)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
 A rich terminal statusline for [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Single entry point, zero runtime dependencies, built with Bun and TypeScript.
 
