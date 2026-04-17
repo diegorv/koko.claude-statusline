@@ -94,6 +94,7 @@ describe("renderLines structure", () => {
       session: ["SESS"],
       activity: ["ACT"],
       activityTitle: "TITLE",
+      effort: null,
     }
     const lines = renderLines(MINIMAL_DATA, result).split("\n")
     // header, top rule, session, activity, bottom rule
