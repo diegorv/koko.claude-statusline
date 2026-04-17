@@ -1,4 +1,5 @@
-// /effort chip — label + colored level, glued to the model in the header.
+// /effort chip — dim label + colored level. Rendered as a sibling chip in the header,
+// joined by the standard SEP so it follows the same visual rhythm as other columns.
 
 import type { EffortLevel } from "../../collection/config"
 import { c, dim } from "../format"
@@ -13,11 +14,11 @@ const EFFORT_COLOR: Record<EffortLevel, string> = {
 }
 
 /**
- * Formats the /effort level as a dim-labeled, colored chip (e.g. ` | effort: high`).
- * Returns an empty string when the level is null so the caller can concatenate unconditionally.
+ * Formats the /effort level as `effort: <level>` (dim label + colored value).
+ * Returns `null` when the level is unset so the caller can skip the chip entirely.
  */
-export function renderEffort(level: EffortLevel | null): string {
-  if (!level) return ""
-  if (level === "low") return dim(" | effort: ") + dim(level)
-  return dim(" | effort: ") + c(EFFORT_COLOR[level], level)
+export function renderEffort(level: EffortLevel | null): string | null {
+  if (!level) return null
+  const value = level === "low" ? dim(level) : c(EFFORT_COLOR[level], level)
+  return dim("effort: ") + value
 }

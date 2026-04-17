@@ -26,8 +26,8 @@ export interface RenderResult {
   activity: string[]
   /** Right-side header content (config counts + session name). */
   activityTitle: string
-  /** /effort chip glued to the model in the header (empty if unset). */
-  effort: string
+  /** /effort chip for the header; null when the level is unset. */
+  effort: string | null
 }
 
 /** A colored left "gutter" anchors each row visually so categories don't blur together. */

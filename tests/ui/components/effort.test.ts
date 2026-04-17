@@ -2,8 +2,8 @@ import { describe, expect, test } from "bun:test"
 import { renderEffort } from "../../../src/ui/components/effort"
 
 describe("renderEffort", () => {
-  test("returns empty string when level is null", () => {
-    expect(renderEffort(null)).toBe("")
+  test("returns null when level is null", () => {
+    expect(renderEffort(null)).toBeNull()
   })
 
   test("includes the literal effort level text", () => {
@@ -12,8 +12,10 @@ describe("renderEffort", () => {
     }
   })
 
-  test("prefixes with a dim ' | effort: ' label", () => {
-    expect(renderEffort("high")).toContain("| effort: ")
+  test("prefixes with a dim 'effort: ' label (no pipe — SEP is added by the caller)", () => {
+    const out = renderEffort("high")!
+    expect(out).toContain("effort: ")
+    expect(out).not.toContain("|")
   })
 
   test("low is rendered dimmed, not colored", () => {
