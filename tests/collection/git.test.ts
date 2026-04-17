@@ -5,7 +5,7 @@ describe("getGitInfo", () => {
   test("returns valid info for current repo", () => {
     const cwd = import.meta.dir.replace(/\/tests\/collection$/, "")
     const git = getGitInfo(cwd)
-    expect(git.repo).toBe("claude-statusline")
+    expect(git.repo).toBe(cwd.split("/").pop() ?? "")
     expect(git.branch.length).toBeGreaterThan(0)
   })
 
