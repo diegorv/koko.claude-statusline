@@ -94,6 +94,10 @@ Zero runtime dependencies. Layout is rendered as plain ANSI rows with a horizont
 
 Dev dependency: `@types/bun` for TypeScript types.
 
+## Inspiration & Attribution
+
+This project was inspired by [claude-hud](https://github.com/jarrodwatts/claude-hud) by Jarrod Watts. No code was copied — everything was written from scratch in Bun + TypeScript, with a different layout (flat per-row output sized to the terminal width) and a different feature set.
+
 ## License
 
 MIT
