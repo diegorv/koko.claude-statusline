@@ -121,6 +121,22 @@ describe("vlen", () => {
   test("handles empty string", () => {
     expect(vlen("")).toBe(0)
   })
+
+  test("counts CJK ideographs as 2 cells each", () => {
+    expect(vlen("中文")).toBe(4)
+    expect(vlen("日本語")).toBe(6)
+    expect(vlen("한글")).toBe(4)
+  })
+
+  test("counts mixed ASCII + CJK correctly", () => {
+    expect(vlen("ab中")).toBe(4)
+    expect(vlen("prefix 中文 suffix")).toBe(18)  // 'prefix '=7 + 中文=4 + ' suffix'=7
+  })
+
+  test("box drawings and common ANSI glyphs stay narrow", () => {
+    expect(vlen("─│┌└▎")).toBe(5)
+    expect(vlen("✓×▸")).toBe(3)
+  })
 })
 
 describe("nbsp", () => {

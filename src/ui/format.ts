@@ -25,11 +25,39 @@ export const bold = (color: string, text: string) => `${BOLD}${ANSI[color] ?? ""
 /** Wraps text in dim (faint) ANSI style with an automatic reset. */
 export const dim = (text: string) => `${DIM}${text}${RESET}`
 
-/** Returns the visual length of a string, stripping ANSI escape codes. */
+/**
+ * Unicode codepoints that occupy two terminal cells (East Asian Wide + Fullwidth).
+ * Conservative set — covers the canonical CJK ranges but leaves ambiguous glyphs
+ * (most emoji, symbols) as width 1 since their rendering is terminal-dependent.
+ */
+function isWideCodepoint(cp: number): boolean {
+  return (
+    (cp >= 0x1100  && cp <= 0x115F)  ||  // Hangul Jamo
+    (cp >= 0x2E80  && cp <= 0x303E)  ||  // CJK Radicals Supplement — CJK Symbols and Punctuation
+    (cp >= 0x3041  && cp <= 0x33FF)  ||  // Hiragana, Katakana, Bopomofo, Hangul Compat, Enclosed CJK
+    (cp >= 0x3400  && cp <= 0x4DBF)  ||  // CJK Unified Ideographs Extension A
+    (cp >= 0x4E00  && cp <= 0x9FFF)  ||  // CJK Unified Ideographs
+    (cp >= 0xA000  && cp <= 0xA4CF)  ||  // Yi Syllables
+    (cp >= 0xAC00  && cp <= 0xD7A3)  ||  // Hangul Syllables
+    (cp >= 0xF900  && cp <= 0xFAFF)  ||  // CJK Compatibility Ideographs
+    (cp >= 0xFE30  && cp <= 0xFE4F)  ||  // CJK Compatibility Forms
+    (cp >= 0xFF00  && cp <= 0xFF60)  ||  // Halfwidth and Fullwidth Forms (fullwidth range)
+    (cp >= 0xFFE0  && cp <= 0xFFE6)  ||  // Fullwidth Signs
+    (cp >= 0x20000 && cp <= 0x2FFFD)     // CJK Unified Ideographs Extensions B–F
+  )
+}
+
+/**
+ * Returns the visual width of a string in terminal cells, stripping ANSI escape
+ * codes. Treats East Asian Wide and Fullwidth codepoints as 2 cells, everything
+ * else as 1. Used by the line-wrap logic so CJK content doesn't overflow.
+ */
 export function vlen(s: string): number {
   const stripped = s.replace(ANSI_RE, "")
   let count = 0
-  for (const _ of stripped) count++
+  for (const ch of stripped) {
+    count += isWideCodepoint(ch.codePointAt(0)!) ? 2 : 1
+  }
   return count
 }
 
