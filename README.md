@@ -88,6 +88,12 @@ CI runs on push and PR via GitHub Actions.
 | `src/ui/components/` | Per-row components (git, rate limits, tools, agents, todos, workspace, activity title) |
 | `tests/` | Mirrors `src/` structure |
 
+## Dependencies
+
+Zero runtime dependencies. Layout is rendered as plain ANSI rows with a horizontal rule between header and body — no box-drawing or color library. Git and terminal size are queried via `Bun.spawnSync`.
+
+Dev dependency: `@types/bun` for TypeScript types.
+
 ## License
 
 MIT
