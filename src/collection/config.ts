@@ -4,11 +4,21 @@ import { existsSync, readdirSync, readFileSync } from "fs"
 import { join } from "path"
 import { homedir } from "os"
 
+export type EffortLevel = "low" | "medium" | "high" | "xhigh" | "max"
+
+const VALID_EFFORT: readonly EffortLevel[] = ["low", "medium", "high", "xhigh", "max"] as const
+
 export interface ConfigCounts {
   claudeMd: number
   rules: number
   mcps: number
   hooks: number
+  /**
+   * Current /effort level. Resolved via cascade:
+   *   env CLAUDE_CODE_EFFORT_LEVEL > .claude/settings.local.json > .claude/settings.json > ~/.claude/settings.json.
+   * null when unset or the value doesn't match the known enum.
+   */
+  effortLevel: EffortLevel | null
 }
 
 function countMdFiles(dir: string): number {
@@ -101,5 +111,15 @@ export function getConfigCounts(cwd: string): ConfigCounts {
               + countHooks(projectSettings)
               + countHooks(join(cwd, ".claude", "settings.local.json"))
 
-  return { claudeMd, rules, mcps, hooks }
+  // effortLevel cascade — first valid value wins.
+  const localSettings = join(cwd, ".claude", "settings.local.json")
+  const effortCandidates: unknown[] = [
+    process.env.CLAUDE_CODE_EFFORT_LEVEL,
+    readJson(localSettings)?.effortLevel,
+    readJson(projectSettings)?.effortLevel,
+    readJson(claudeSettings)?.effortLevel,
+  ]
+  const effortLevel = (effortCandidates.find(v => typeof v === "string" && VALID_EFFORT.includes(v as EffortLevel)) ?? null) as EffortLevel | null
+
+  return { claudeMd, rules, mcps, hooks, effortLevel }
 }

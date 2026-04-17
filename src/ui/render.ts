@@ -16,6 +16,7 @@ import {
   renderAgents,
   renderTodos,
   renderActivityTitle,
+  renderEffort,
 } from "./components"
 
 export interface RenderResult {
@@ -25,6 +26,8 @@ export interface RenderResult {
   activity: string[]
   /** Right-side header content (config counts + session name). */
   activityTitle: string
+  /** /effort chip glued to the model in the header (empty if unset). */
+  effort: string
 }
 
 /** A colored left "gutter" anchors each row visually so categories don't blur together. */
@@ -87,6 +90,7 @@ export function render(data: StdinData, git: GitInfo | null, config: ConfigCount
   }
 
   const activityTitle = renderActivityTitle(config, transcript?.mcpStatus ?? null, data.sessionName)
+  const effort = renderEffort(config?.effortLevel ?? null)
 
-  return { session, activity, activityTitle }
+  return { session, activity, activityTitle, effort }
 }

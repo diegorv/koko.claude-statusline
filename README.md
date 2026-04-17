@@ -66,7 +66,7 @@ A single line with content pinned to both edges and dashes filling the middle.
 
 | Side | Content |
 |---|---|
-| Left | Repo name (when inside a git repo) · model · context window gradient bar + `%` |
+| Left | Repo name (when inside a git repo) · model (with an `effort: <level>` chip when `/effort` is set) · context window gradient bar + `%` |
 | Right | Session cost (`¢` below `$0.10`, otherwise `$`) · session duration (shown when `≥ 1s`) · activity title (dim: `CLAUDE.md` / MCP / hook / rule counts + session name) |
 
 ### Body rows (rendered only when the underlying data exists)
@@ -85,7 +85,7 @@ Any row wider than the terminal is wrapped at separator boundaries; the availabl
 
 ## Features
 
-- Model name, context window usage with gradient bar, cost, and session duration
+- Model name, current `/effort` level (`low` / `medium` / `high` / `xhigh` / `max`), context window usage with gradient bar, cost, and session duration
 - Git branch, dirty state, staged/modified/untracked counts, ahead/behind
 - Rate limits (5h and 7d) with gradient bars and reset countdowns
 - Running and completed tool usage from the session transcript
@@ -100,6 +100,7 @@ Any row wider than the terminal is wrapped at separator boundaries; the availabl
 | Env var | Description | Default |
 |---|---|---|
 | `CLAUDE_STATUSLINE_RIGHT_MARGIN` | Columns reserved on the right for Claude Code's overlay indicators (e.g. `0 tokens`, `@model /effort`). Lower it to use more width, raise it if output collides with the overlays. | `16` |
+| `CLAUDE_CODE_EFFORT_LEVEL` | Overrides the `/effort` level shown on the header. Accepts `low`, `medium`, `high`, `xhigh`, `max`. When unset, the value is read from `.claude/settings.local.json` → `.claude/settings.json` → `~/.claude/settings.json` (first valid wins). | — |
 
 ## Development
 

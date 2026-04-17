@@ -7,13 +7,13 @@ describe("renderActivityTitle", () => {
   })
 
   test("includes CLAUDE.md count", () => {
-    const config = { claudeMd: 2, mcps: 0, hooks: 0, rules: 0 }
+    const config = { claudeMd: 2, mcps: 0, hooks: 0, rules: 0, effortLevel: null }
     const result = renderActivityTitle(config, null, null)
     expect(result).toContain("2 CLAUDE.md")
   })
 
   test("includes MCP count with health status", () => {
-    const config = { claudeMd: 0, mcps: 3, hooks: 0, rules: 0 }
+    const config = { claudeMd: 0, mcps: 3, hooks: 0, rules: 0, effortLevel: null }
     const mcpStatus = { ok: new Set(["a", "b"]), errored: new Set<string>() }
     const result = renderActivityTitle(config, mcpStatus, null)
     expect(result).toContain("MCPs")
@@ -21,7 +21,7 @@ describe("renderActivityTitle", () => {
   })
 
   test("shows MCP errors", () => {
-    const config = { claudeMd: 0, mcps: 3, hooks: 0, rules: 0 }
+    const config = { claudeMd: 0, mcps: 3, hooks: 0, rules: 0, effortLevel: null }
     const mcpStatus = { ok: new Set(["a"]), errored: new Set(["b"]) }
     const result = renderActivityTitle(config, mcpStatus, null)
     expect(result).toContain("✗")
@@ -32,7 +32,7 @@ describe("renderActivityTitle", () => {
   })
 
   test("includes hooks and rules counts", () => {
-    const config = { claudeMd: 0, mcps: 0, hooks: 2, rules: 3 }
+    const config = { claudeMd: 0, mcps: 0, hooks: 2, rules: 3, effortLevel: null }
     const result = renderActivityTitle(config, null, null)
     expect(result).toContain("2 hooks")
     expect(result).toContain("3 rules")

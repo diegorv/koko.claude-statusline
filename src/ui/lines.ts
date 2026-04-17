@@ -40,11 +40,11 @@ function wrapLine(line: string, maxWidth: number, separator: string): string[] {
   return out
 }
 
-/** Left side of the header: repo (if any) · model · context bar · %. */
-function buildHeaderLeft(data: StdinData, repoName: string | undefined): string {
+/** Left side of the header: repo (if any) · model[ | effort: X] · context bar · %. */
+function buildHeaderLeft(data: StdinData, repoName: string | undefined, effort: string): string {
   const parts: string[] = []
   if (repoName) parts.push(bold("yellow", repoName))
-  parts.push(c("cyan", data.model))
+  parts.push(c("cyan", data.model) + effort)
   const pct = Math.round(data.contextPercent)
   parts.push(`${gradientBar(data.contextPercent, 10)} ${pctColor(data.contextPercent)}${pct}%${RESET}`)
   return parts.join(SEP)
@@ -101,7 +101,7 @@ export function renderLines(data: StdinData, result: RenderResult, repoName?: st
     ? Math.max(MIN_USABLE_WIDTH, terminalWidth - margin - LEFT_PAD.length)
     : Number.POSITIVE_INFINITY
 
-  const left = buildHeaderLeft(data, repoName)
+  const left = buildHeaderLeft(data, repoName, result.effort)
   const right = buildHeaderRight(data, result.activityTitle)
   const headerLine = Number.isFinite(usableWidth)
     ? joinHeader(left, right, usableWidth)

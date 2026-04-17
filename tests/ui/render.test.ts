@@ -123,7 +123,7 @@ describe("render", () => {
   })
 
   test("activityTitle includes config counts", () => {
-    const config = { claudeMd: 2, mcps: 3, hooks: 1, rules: 0 }
+    const config = { claudeMd: 2, mcps: 3, hooks: 1, rules: 0, effortLevel: null }
     const result = render(MINIMAL_DATA, null, config, null)
     expect(result.activityTitle).toContain("2 CLAUDE.md")
     expect(result.activityTitle).toContain("3 MCPs")
