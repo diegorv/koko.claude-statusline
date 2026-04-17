@@ -27,8 +27,15 @@ export interface TranscriptData {
   mcpStatus: McpStatus
 }
 
+/**
+ * Tools whose calls should not appear in the completed-tools counts or the
+ * running-tools list. TodoWrite has its own dedicated row; the Task* family
+ * and ToolSearch are Claude Code internals the user doesn't think of as tools.
+ */
 const HIDDEN_TOOLS = new Set([
-  "TodoWrite", "TaskCreate", "TaskUpdate", "ToolSearch",
+  "TodoWrite",
+  "ToolSearch",
+  "TaskCreate", "TaskUpdate", "TaskGet", "TaskList", "TaskOutput", "TaskStop",
 ])
 
 function mcpDisplayName(name: string): string {
