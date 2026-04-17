@@ -35,7 +35,7 @@ export function vlen(s: string): number {
 
 /**
  * Renders a gradient bar from green to red based on the given percentage.
- * Uses 256-color ANSI sequences for smooth color transitions.
+ * Uses 24-bit (true-color) ANSI sequences for smooth color transitions.
  * @param percent - Value from 0 to 100.
  * @param width - Number of characters in the bar (default: 20).
  * @returns ANSI-colored string of filled and empty block characters.
