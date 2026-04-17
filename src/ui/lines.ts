@@ -119,13 +119,14 @@ export function renderLines(data: StdinData, result: RenderResult, repoName?: st
     rows.push(...wrapLine(line, usableWidth, SEP))
   }
 
-  // Horizontal rule between header and body when there's body content.
-  // Starts with a ┌ corner so it forms a proper top-left junction with the │
-  // gutter on the rows below (same box-drawing family, clean visual hinge).
+  // Frame the body with box-drawing rules when there's content: ┌── on top and
+  // └── on bottom. The │ gutter on each row connects cleanly to both corners.
   if (rows.length > headerRowCount) {
     const widest = Math.max(...rows.map(vlen))
     const ruleWidth = Number.isFinite(usableWidth) ? Math.min(usableWidth, widest) : widest
-    rows.splice(headerRowCount, 0, rule("┌" + RULE_CHAR.repeat(Math.max(0, ruleWidth - 1))))
+    const dashes = RULE_CHAR.repeat(Math.max(0, ruleWidth - 1))
+    rows.splice(headerRowCount, 0, rule("┌" + dashes))
+    rows.push(rule("└" + dashes))
   }
 
   return rows.map(row => LEFT_PAD + nbsp(row)).join("\n")
