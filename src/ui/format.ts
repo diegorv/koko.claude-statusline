@@ -63,14 +63,18 @@ export function gradientBar(percent: number, width = 20): string {
   return parts.join("") + RESET
 }
 
+// True-color orange for the intermediate 70-89% bucket — no ANSI-16 equivalent between yellow and red.
+const ORANGE = "\x1b[38;2;255;170;60m"
+
 /**
- * Returns the ANSI color code for a percentage value (green < 70, yellow 70-89, red >= 90).
- * @param pct - Percentage value.
- * @returns ANSI color escape code string.
+ * Returns the ANSI color code for a percentage value.
+ * Four buckets: green < 50, yellow 50-69, orange 70-89, red >= 90.
+ * The extra step at 50% gives a more informative ramp as usage climbs.
  */
 export function pctColor(pct: number): string {
   if (pct >= 90) return ANSI.red
-  if (pct >= 70) return ANSI.yellow
+  if (pct >= 70) return ORANGE
+  if (pct >= 50) return ANSI.yellow
   return ANSI.green
 }
 

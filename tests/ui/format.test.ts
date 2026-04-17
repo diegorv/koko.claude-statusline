@@ -23,14 +23,19 @@ describe("formatDuration", () => {
 })
 
 describe("pctColor", () => {
-  test("returns green below 70%", () => {
+  test("returns green below 50%", () => {
     expect(pctColor(0)).toBe("\x1b[32m")
-    expect(pctColor(69)).toBe("\x1b[32m")
+    expect(pctColor(49)).toBe("\x1b[32m")
   })
 
-  test("returns yellow at 70-89%", () => {
-    expect(pctColor(70)).toBe("\x1b[33m")
-    expect(pctColor(89)).toBe("\x1b[33m")
+  test("returns yellow at 50-69%", () => {
+    expect(pctColor(50)).toBe("\x1b[33m")
+    expect(pctColor(69)).toBe("\x1b[33m")
+  })
+
+  test("returns true-color orange at 70-89%", () => {
+    expect(pctColor(70)).toBe("\x1b[38;2;255;170;60m")
+    expect(pctColor(89)).toBe("\x1b[38;2;255;170;60m")
   })
 
   test("returns red at >= 90%", () => {
