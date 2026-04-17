@@ -4,13 +4,13 @@ import type { StdinData } from "../parsing/stdin"
 import type { RenderResult } from "./render"
 import { bold, c, dim, formatDuration, formatTokens, gradientBar, nbsp, pctColor, RESET, vlen } from "./format"
 import { SEP, inRuleColor } from "./constants"
+import { getTerminalWidth } from "./terminal"
 
 // Very faint gray — used for the dashes that fill the middle of the header.
 // Noticeably darker than RULE_COLOR so the filler stays secondary and the eye
 // jumps straight to the header content on either side.
 const FAINT_COLOR = "\x1b[38;2;60;60;70m"
 const faint = (s: string) => `${FAINT_COLOR}${s}${RESET}`
-import { getTerminalWidth } from "./terminal"
 
 const RULE_CHAR = "─"
 const LEFT_PAD = " "
