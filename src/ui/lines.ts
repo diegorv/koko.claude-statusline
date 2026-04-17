@@ -3,7 +3,7 @@
 import type { StdinData } from "../parsing/stdin"
 import type { RenderResult } from "./render"
 import { bold, c, dim, formatDuration, formatTokens, gradientBar, nbsp, pctColor, RESET, vlen } from "./format"
-import { SEP } from "./constants"
+import { SEP, inRuleColor } from "./constants"
 import { getTerminalWidth } from "./terminal"
 
 const RULE_CHAR = "─"
@@ -12,9 +12,7 @@ const HEADER_GAP = " "
 const DEFAULT_RIGHT_MARGIN = 16
 const MIN_USABLE_WIDTH = 40
 
-/** Mid-gray that stays visible on both dark and light terminal themes. */
-const RULE_COLOR = "\x1b[38;2;110;110;120m"
-const rule = (s: string) => `${RULE_COLOR}${s}\x1b[0m`
+const rule = (s: string) => inRuleColor(s)
 
 /**
  * Wraps a line at separator boundaries so each output row fits maxWidth.
@@ -122,11 +120,12 @@ export function renderLines(data: StdinData, result: RenderResult, repoName?: st
   }
 
   // Horizontal rule between header and body when there's body content.
-  // Uses a mid-gray instead of dim so it stays visible on dark themes.
+  // Starts with a ┌ corner so it forms a proper top-left junction with the │
+  // gutter on the rows below (same box-drawing family, clean visual hinge).
   if (rows.length > headerRowCount) {
     const widest = Math.max(...rows.map(vlen))
     const ruleWidth = Number.isFinite(usableWidth) ? Math.min(usableWidth, widest) : widest
-    rows.splice(headerRowCount, 0, rule(RULE_CHAR.repeat(Math.max(1, ruleWidth))))
+    rows.splice(headerRowCount, 0, rule("┌" + RULE_CHAR.repeat(Math.max(0, ruleWidth - 1))))
   }
 
   return rows.map(row => LEFT_PAD + nbsp(row)).join("\n")

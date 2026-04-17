@@ -5,8 +5,7 @@ import type { StdinData } from "../parsing/stdin"
 import type { GitInfo } from "../collection/git"
 import type { ConfigCounts } from "../collection/config"
 import type { TranscriptData } from "../parsing/transcript"
-import { SEP, GAP } from "./constants"
-import { c } from "./format"
+import { SEP, GAP, inRuleColor } from "./constants"
 import {
   renderGitStatus,
   renderWorkspaceInfo,
@@ -30,17 +29,12 @@ export interface RenderResult {
   effort: string | null
 }
 
-/** A colored left "gutter" anchors each row visually so categories don't blur together. */
-const GUTTER_CHAR = "▎"
-const gutter = (color: string) => c(color, GUTTER_CHAR) + " "
-
-const GUTTER = {
-  git: gutter("green"),
-  rateLimit: gutter("yellow"),
-  tools: gutter("cyan"),
-  agents: gutter("magenta"),
-  todos: gutter("yellow"),
-} as const
+/**
+ * Left "gutter" marker shared by every body row. Uses the same mid-gray as the
+ * horizontal rule so the whole body reads as a unified block — per-row emphasis
+ * lives in the content (branch colors, spinners, etc.), not in this chrome.
+ */
+const GUTTER = inRuleColor("│") + " "
 
 /**
  * Composes status line rows. Each emitted row is a complete, standalone line —
@@ -62,13 +56,13 @@ export function render(data: StdinData, git: GitInfo | null, config: ConfigCount
     if (gitStr) gitRowParts.push(gitStr)
   }
   gitRowParts.push(...renderWorkspaceInfo(data))
-  if (gitRowParts.length > 0) session.push(GUTTER.git + gitRowParts.join(SEP))
+  if (gitRowParts.length > 0) session.push(GUTTER + gitRowParts.join(SEP))
 
   // Row: rate limits (5h and 7d on the same row — they're conceptually paired).
   const rateLimitParts: string[] = []
   if (data.rateLimit5h) rateLimitParts.push(renderRateLimit("5h", data.rateLimit5h))
   if (data.rateLimit7d) rateLimitParts.push(renderRateLimit("7d", data.rateLimit7d))
-  if (rateLimitParts.length > 0) session.push(GUTTER.rateLimit + rateLimitParts.join(SEP))
+  if (rateLimitParts.length > 0) session.push(GUTTER + rateLimitParts.join(SEP))
 
   const activity: string[] = []
 
@@ -78,15 +72,15 @@ export function render(data: StdinData, git: GitInfo | null, config: ConfigCount
       ...renderRunningTools(transcript.runningTools),
       ...renderCompletedTools(transcript.tools),
     ]
-    if (toolParts.length > 0) activity.push(GUTTER.tools + toolParts.join(GAP))
+    if (toolParts.length > 0) activity.push(GUTTER + toolParts.join(GAP))
 
     // Row: agents.
     const agentParts = renderAgents(transcript.agents)
-    if (agentParts.length > 0) activity.push(GUTTER.agents + agentParts.join(GAP))
+    if (agentParts.length > 0) activity.push(GUTTER + agentParts.join(GAP))
 
     // Row: todos.
     const todoLine = renderTodos(transcript.todos)
-    if (todoLine) activity.push(GUTTER.todos + todoLine)
+    if (todoLine) activity.push(GUTTER + todoLine)
   }
 
   const activityTitle = renderActivityTitle(config, transcript?.mcpStatus ?? null, data.sessionName)
