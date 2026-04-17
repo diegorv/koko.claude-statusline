@@ -70,6 +70,12 @@ describe("mapRawToStdinData", () => {
     expect(result.rateLimit7d!.pct).toBe(67)
   })
 
+  test("compacts model display name '(1M context)' suffix to '1M'", () => {
+    expect(mapRawToStdinData({ model: { display_name: "Opus 4.7 (1M context)" } }).model).toBe("Opus 4.7 1M")
+    expect(mapRawToStdinData({ model: { display_name: "Sonnet 4.6 (200k context)" } }).model).toBe("Sonnet 4.6 200k")
+    expect(mapRawToStdinData({ model: { display_name: "Opus" } }).model).toBe("Opus")
+  })
+
   test("returns null rate limits when used_percentage is missing", () => {
     const raw = {
       rate_limits: {

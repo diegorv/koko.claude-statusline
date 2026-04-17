@@ -23,12 +23,17 @@ export interface StdinData {
  * @param raw - Raw parsed JSON from stdin.
  * @returns Normalized StdinData object.
  */
+/** Collapses "(1M context)" style suffixes into a bare size (e.g. "Opus 4.7 (1M context)" → "Opus 4.7 1M"). */
+function compactModelName(name: string): string {
+  return name.replace(/\s*\(\s*([0-9.]+[kKmM])\s+context\s*\)/i, " $1")
+}
+
 export function mapRawToStdinData(raw: any): StdinData {
   const rateLimitFiveHour = raw.rate_limits?.five_hour
   const rateLimitSevenDay = raw.rate_limits?.seven_day
 
   return {
-    model:    raw.model?.display_name ?? "Unknown",
+    model:    compactModelName(raw.model?.display_name ?? "Unknown"),
     contextPercent: raw.context_window?.used_percentage ?? 0,
     cost:     raw.cost?.total_cost_usd ?? 0,
     durationMs: raw.cost?.total_duration_ms ?? 0,
