@@ -14,6 +14,12 @@ Built and tested on macOS. CI builds and tests pass on Linux, but it hasn't been
 
 Works on any terminal with true-color support (iTerm2, Ghostty, Kitty, Alacritty, WezTerm...).
 
+## Goals
+
+- **Small and simple.** A single entry point, one flat UI layer, no build step. The whole thing is ~20 TypeScript files.
+- **Zero runtime dependencies.** No color library, no box-drawing library, no argument parser. Plain ANSI strings and the standard library (via Bun).
+- **100% local and private.** No network I/O, no telemetry, no analytics, no tracking. The statusline only reads Claude Code's stdin, your local git state, your transcript file, and a couple of `~/.claude` config files. Nothing ever leaves your machine.
+
 ## Install
 
 Requires [Bun](https://bun.sh).
