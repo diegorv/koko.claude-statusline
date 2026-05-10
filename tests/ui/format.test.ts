@@ -154,6 +154,28 @@ describe("vlen", () => {
     expect(vlen("─│┌└▎")).toBe(5)
     expect(vlen("✓×▸")).toBe(3)
   })
+
+  test("counts emoji as 2 cells (matches terminal rendering)", () => {
+    expect(vlen("🚀")).toBe(2)
+    expect(vlen("✅")).toBe(2)
+    expect(vlen("👋")).toBe(2)
+    expect(vlen("⏱")).toBe(2)  // stopwatch — used in the header
+    expect(vlen("🇧🇷")).toBe(4) // flag = two regional indicators (rendered 2 cells, but conservative overcount is safer than under)
+    expect(vlen("hello 🚀 world")).toBe(14)
+  })
+
+  test("treats variation selectors and ZWJ as zero width", () => {
+    expect(vlen("‍")).toBe(0)  // ZWJ
+    expect(vlen("️")).toBe(0)  // VS-16 (emoji presentation)
+    expect(vlen("︎")).toBe(0)  // VS-15 (text presentation)
+    expect(vlen("❤️")).toBe(2) // heart + VS-16 — base promoted to 2 cells
+  })
+
+  test("treats combining marks as zero width", () => {
+    expect(vlen("café")).toBe(4)              // NFC
+    expect(vlen("café")).toBe(4)        // NFD with combining acute
+    expect(vlen("à́̂")).toBe(1) // a + 3 combining marks
+  })
 })
 
 describe("nbsp", () => {

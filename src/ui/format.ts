@@ -26,13 +26,48 @@ export const bold = (color: string, text: string) => `${BOLD}${ANSI[color] ?? ""
 export const dim = (text: string) => `${DIM}${text}${RESET}`
 
 /**
- * Unicode codepoints that occupy two terminal cells (East Asian Wide + Fullwidth).
- * Conservative set — covers the canonical CJK ranges but leaves ambiguous glyphs
- * (most emoji, symbols) as width 1 since their rendering is terminal-dependent.
+ * Codepoints in the BMP "Misc Symbols + Dingbats + Misc Technical" range that
+ * default to emoji presentation (Unicode Emoji_Presentation=Yes). Anything not
+ * in this set defaults to text presentation (1 cell) unless followed by VS-16.
+ *
+ * Stored as a compact range table — pairs of [start, end] (inclusive). A range
+ * with start === end is a single codepoint.
+ */
+// Ranges MUST stay sorted by `start` — `isInRangeTable` relies on this for
+// early termination. Run the unit tests after editing to catch ordering bugs.
+//
+// 0x23F1–0x23F2 (stopwatch / timer) have default text presentation per Unicode
+// but render as 2 cells in modern terminals (iTerm2, Ghostty, Kitty, etc.) when
+// the emoji font is preferred. ⏱ is used directly in this project's header, so
+// they are merged into the [0x23F0, 0x23F3] block here.
+const EMOJI_PRESENTATION_RANGES: ReadonlyArray<readonly [number, number]> = [
+  [0x231A, 0x231B], [0x23E9, 0x23EC], [0x23F0, 0x23F3],
+  [0x25FD, 0x25FE], [0x2614, 0x2615], [0x2648, 0x2653], [0x267F, 0x267F],
+  [0x2693, 0x2693], [0x26A1, 0x26A1], [0x26AA, 0x26AB], [0x26BD, 0x26BE],
+  [0x26C4, 0x26C5], [0x26CE, 0x26CE], [0x26D4, 0x26D4], [0x26EA, 0x26EA],
+  [0x26F2, 0x26F3], [0x26F5, 0x26F5], [0x26FA, 0x26FA], [0x26FD, 0x26FD],
+  [0x2705, 0x2705], [0x270A, 0x270B], [0x2728, 0x2728], [0x274C, 0x274C],
+  [0x274E, 0x274E], [0x2753, 0x2755], [0x2757, 0x2757], [0x2795, 0x2797],
+  [0x27B0, 0x27B0], [0x27BF, 0x27BF],
+]
+
+function isInRangeTable(cp: number, table: ReadonlyArray<readonly [number, number]>): boolean {
+  for (const [start, end] of table) {
+    if (cp < start) return false
+    if (cp <= end) return true
+  }
+  return false
+}
+
+/**
+ * Unicode codepoints that occupy two terminal cells (East Asian Wide + Fullwidth + emoji).
+ * Modern terminals (iTerm2, Ghostty, Kitty, Alacritty, WezTerm) render emoji as 2 cells,
+ * so we count them that way to keep wrap math aligned with what the terminal draws.
  */
 function isWideCodepoint(cp: number): boolean {
   return (
     (cp >= 0x1100  && cp <= 0x115F)  ||  // Hangul Jamo
+    isInRangeTable(cp, EMOJI_PRESENTATION_RANGES) ||  // Default-emoji codepoints in BMP
     (cp >= 0x2E80  && cp <= 0x303E)  ||  // CJK Radicals Supplement — CJK Symbols and Punctuation
     (cp >= 0x3041  && cp <= 0x33FF)  ||  // Hiragana, Katakana, Bopomofo, Hangul Compat, Enclosed CJK
     (cp >= 0x3400  && cp <= 0x4DBF)  ||  // CJK Unified Ideographs Extension A
@@ -43,20 +78,57 @@ function isWideCodepoint(cp: number): boolean {
     (cp >= 0xFE30  && cp <= 0xFE4F)  ||  // CJK Compatibility Forms
     (cp >= 0xFF00  && cp <= 0xFF60)  ||  // Halfwidth and Fullwidth Forms (fullwidth range)
     (cp >= 0xFFE0  && cp <= 0xFFE6)  ||  // Fullwidth Signs
+    (cp >= 0x1F000 && cp <= 0x1FFFD) ||  // Mahjong, Domino, Cards, Emoji blocks (Misc Symbols and Pictographs, Transport, Supplemental, Extended-A)
     (cp >= 0x20000 && cp <= 0x2FFFD)     // CJK Unified Ideographs Extensions B–F
   )
 }
 
 /**
+ * Codepoints that contribute zero cells: ZWJ, variation selectors, and combining
+ * marks. These either modify a preceding base character or are invisible joiners,
+ * so adding their own width would double-count the resulting glyph.
+ */
+function isZeroWidthCodepoint(cp: number): boolean {
+  return (
+    cp === 0x200B || cp === 0x200C || cp === 0x200D || // ZWSP, ZWNJ, ZWJ
+    cp === 0xFEFF                                   || // BOM
+    (cp >= 0x0300 && cp <= 0x036F) ||  // Combining Diacritical Marks
+    (cp >= 0x0483 && cp <= 0x0489) ||  // Cyrillic combining
+    (cp >= 0x1AB0 && cp <= 0x1AFF) ||  // Combining Diacritical Marks Extended
+    (cp >= 0x1DC0 && cp <= 0x1DFF) ||  // Combining Diacritical Marks Supplement
+    (cp >= 0x20D0 && cp <= 0x20FF) ||  // Combining Diacritical Marks for Symbols
+    (cp >= 0xFE00 && cp <= 0xFE0F) ||  // Variation Selectors (incl. VS-15/VS-16)
+    (cp >= 0xFE20 && cp <= 0xFE2F) ||  // Combining Half Marks
+    (cp >= 0xE0100 && cp <= 0xE01EF)   // Variation Selectors Supplement
+  )
+}
+
+/**
  * Returns the visual width of a string in terminal cells, stripping ANSI escape
- * codes. Treats East Asian Wide and Fullwidth codepoints as 2 cells, everything
- * else as 1. Used by the line-wrap logic so CJK content doesn't overflow.
+ * codes. Counts East Asian Wide, Fullwidth, and emoji codepoints as 2 cells;
+ * combining marks, variation selectors, and zero-width joiners as 0; everything
+ * else as 1. A text-presentation char followed by VS-16 (U+FE0F) is promoted to
+ * 2 cells (e.g. ❤️ = heart + VS-16). Used by the line-wrap logic so styled
+ * content doesn't overflow.
+ *
+ * Note: ZWJ-joined emoji sequences (e.g. 👨‍👩‍👧) overcount because each base
+ * emoji is counted as 2 cells while the terminal draws the whole sequence as
+ * one 2-cell glyph. Treated as acceptable: overcount is safer than undercount
+ * (lines wrap a bit early instead of overflowing), and these sequences are rare
+ * in the strings we render.
  */
 export function vlen(s: string): number {
   const stripped = s.replace(ANSI_RE, "")
+  const chars = [...stripped]
   let count = 0
-  for (const ch of stripped) {
-    count += isWideCodepoint(ch.codePointAt(0)!) ? 2 : 1
+  for (let i = 0; i < chars.length; i++) {
+    const cp = chars[i].codePointAt(0)!
+    if (isZeroWidthCodepoint(cp)) continue
+    if (isWideCodepoint(cp)) { count += 2; continue }
+    // VS-16 lookahead: a narrow base char followed by U+FE0F is rendered as
+    // emoji (2 cells) by terminals that support emoji presentation.
+    const next = i + 1 < chars.length ? chars[i + 1].codePointAt(0)! : 0
+    count += next === 0xFE0F ? 2 : 1
   }
   return count
 }

@@ -44,7 +44,7 @@ Configure in `~/.claude/settings.json`:
 ```
 
 - **`padding: 0`** (recommended) — removes the default whitespace Claude Code wraps around the statusline, letting the layout use the full terminal width. The project already reserves space for Claude Code's overlay indicators via `CLAUDE_STATUSLINE_RIGHT_MARGIN` (see [Tuning](#tuning)).
-- **`refreshInterval`** — how often (in milliseconds) Claude Code re-runs the command. `10` gives a near-live feel; raise it if you want less churn.
+- **`refreshInterval`** — how often (in seconds, minimum `1`) Claude Code re-runs the command. Useful for time-based fields (cost, duration, rate-limit countdowns) that change without an explicit Claude Code event. Omit it to refresh only on events.
 
 Claude Code pipes session JSON to stdin. The script writes a header row (model, context bar, cost, duration, config counts), a horizontal rule, and one or more body rows (git, rate limits, tools, agents, todos) to stdout. Rows wrap at separator boundaries to fit the terminal width.
 
