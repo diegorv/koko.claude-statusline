@@ -129,5 +129,9 @@ export function renderLines(data: StdinData, result: RenderResult, repoName?: st
     rows.push(rule("└" + dashes))
   }
 
-  return rows.map(row => LEFT_PAD + nbsp(row)).join("\n")
+  // Prepend RESET to every emitted line so each row starts in a clean ANSI
+  // state. Claude Code applies a dim style on the statusline area; without
+  // this, a row whose first character isn't already wrapped in its own color
+  // code would render dim. ccstatusline and claude-hud do the same.
+  return rows.map(row => RESET + LEFT_PAD + nbsp(row)).join("\n")
 }
