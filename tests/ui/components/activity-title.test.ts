@@ -58,4 +58,22 @@ describe("renderActivityTitle", () => {
     expect(succinctIdx).toBeGreaterThan(-1)
     expect(sessionIdx).toBeGreaterThan(succinctIdx)
   })
+
+  test("prepends ⚡ when skipPermissions is true", () => {
+    const result = renderActivityTitle(null, null, null, null, true)
+    expect(result).toContain("⚡")
+  })
+
+  test("hides ⚡ when skipPermissions is false", () => {
+    expect(renderActivityTitle(null, null, null, null, false)).toBe("")
+  })
+
+  test("⚡ leads the title even with other items", () => {
+    const config = { claudeMd: 1, mcps: 0, hooks: 0, rules: 0, effortLevel: null }
+    const result = renderActivityTitle(config, null, "my-session", null, true)
+    const boltIdx = result.indexOf("⚡")
+    const claudeMdIdx = result.indexOf("CLAUDE.md")
+    expect(boltIdx).toBeGreaterThan(-1)
+    expect(claudeMdIdx).toBeGreaterThan(boltIdx)
+  })
 })

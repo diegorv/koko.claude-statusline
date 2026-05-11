@@ -47,7 +47,13 @@ const GUTTER = inRuleColor("│") + " "
  * @param config - Config counts (null if no cwd).
  * @param transcript - Parsed transcript data (null if no transcript).
  */
-export function render(data: StdinData, git: GitInfo | null, config: ConfigCounts | null, transcript: TranscriptData | null = null): RenderResult {
+export function render(
+  data: StdinData,
+  git: GitInfo | null,
+  config: ConfigCounts | null,
+  transcript: TranscriptData | null = null,
+  skipPermissions: boolean = false,
+): RenderResult {
   const session: string[] = []
 
   // Row: git + workspace metadata (worktree, line changes, vim mode).
@@ -91,7 +97,7 @@ export function render(data: StdinData, git: GitInfo | null, config: ConfigCount
     if (todoLine) activity.push(GUTTER + todoLine)
   }
 
-  const activityTitle = renderActivityTitle(config, transcript?.mcpStatus ?? null, data.sessionName, data.outputStyle)
+  const activityTitle = renderActivityTitle(config, transcript?.mcpStatus ?? null, data.sessionName, data.outputStyle, skipPermissions)
   const effort = renderEffort(config?.effortLevel ?? null)
 
   return { session, activity, activityTitle, effort }

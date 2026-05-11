@@ -19,8 +19,13 @@ export function renderActivityTitle(
   mcpStatus: McpStatus | null,
   sessionName: string | null,
   outputStyle: string | null = null,
+  skipPermissions: boolean = false,
 ): string {
   const titleParts: string[] = []
+  // ⚡ leads when the parent process was launched with
+  // --dangerously-skip-permissions so the warning is the first thing the eye
+  // catches on the right side of the header.
+  if (skipPermissions) titleParts.push(c("yellow", "⚡"))
   if (config) {
     if (config.claudeMd > 0) titleParts.push(`${config.claudeMd} CLAUDE.md`)
 

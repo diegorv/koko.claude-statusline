@@ -8,6 +8,7 @@ import { parseStdin } from "./parsing/stdin"
 import { getGitInfo } from "./collection/git"
 import { getConfigCounts } from "./collection/config"
 import { parseTranscript } from "./parsing/transcript"
+import { detectSkipPermissions } from "./collection/parent-process"
 import { render } from "./ui/render"
 import { renderLines } from "./ui/lines"
 import { vlen } from "./ui/format"
@@ -17,7 +18,8 @@ const data = await parseStdin()
 const git = data.cwd ? getGitInfo(data.cwd) : null
 const config = data.cwd ? getConfigCounts(data.cwd) : null
 const transcript = data.transcriptPath ? parseTranscript(data.transcriptPath) : null
-const result = render(data, git, config, transcript)
+const skipPermissions = detectSkipPermissions()
+const result = render(data, git, config, transcript, skipPermissions)
 const output = renderLines(data, result, git?.repo)
 console.log(output)
 
