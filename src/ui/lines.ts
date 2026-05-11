@@ -109,25 +109,49 @@ export function renderLines(data: StdinData, result: RenderResult, repoName?: st
     ? joinHeader(left, right, usableWidth)
     : (right ? left + SEP + right : left)
 
-  const rows: string[] = [...wrapLine(headerLine, usableWidth, SEP)]
-  const headerRowCount = rows.length
+  // Box rule width aligns with where the header's right side starts (the
+  // column of "$"): everything to the LEFT of that column is wrapped in the
+  // box, the stats on the right (cost, duration, activity title) sit
+  // outside as floating annotations. When no right-side content exists, the
+  // box falls back to the widest body row.
+  const rightW = vlen(right)
+  const boxWidth = Number.isFinite(usableWidth) && rightW > 0
+    ? Math.max(MIN_USABLE_WIDTH, usableWidth - rightW - HEADER_GAP.length)
+    : null
 
-  for (const line of result.session) {
-    rows.push(...wrapLine(line, usableWidth, SEP))
-  }
-  for (const line of result.activity) {
-    rows.push(...wrapLine(line, usableWidth, SEP))
-  }
+  const headerLines = wrapLine(headerLine, usableWidth, SEP)
+  // Body lines wrap to box width (not full usableWidth) so they don't
+  // visually extend past the box's right edge.
+  const wrapTarget = boxWidth ?? usableWidth
+  const sessionLines: string[] = []
+  for (const line of result.session) sessionLines.push(...wrapLine(line, wrapTarget, SEP))
+  const activityLines: string[] = []
+  for (const line of result.activity) activityLines.push(...wrapLine(line, wrapTarget, SEP))
 
-  // Frame the body with box-drawing rules when there's content: ┌── on top and
-  // └── on bottom. The │ gutter on each row connects cleanly to both corners.
-  if (rows.length > headerRowCount) {
-    const widest = Math.max(...rows.map(vlen))
-    const ruleWidth = Number.isFinite(usableWidth) ? Math.min(usableWidth, widest) : widest
+  // Frame the body. A single box wraps everything; when BOTH session and
+  // activity rows are present, a ├── tee divides them visually as two
+  // sub-sections inside the same container — "session state" vs "activity
+  // history" — without the extra row that two separate boxes would cost.
+  const bodyLines = [...sessionLines, ...activityLines]
+  const rows: string[] = [...headerLines]
+
+  if (bodyLines.length > 0) {
+    const widest = Math.max(...bodyLines.map(vlen))
+    const ruleWidth = boxWidth
+      ?? (Number.isFinite(usableWidth) ? Math.min(usableWidth, widest) : widest)
     const dashes = RULE_CHAR.repeat(Math.max(0, ruleWidth - 1))
-    rows.splice(headerRowCount, 0, rule("┌" + dashes))
+    rows.push(rule("┌" + dashes))
+    rows.push(...sessionLines)
+    if (sessionLines.length > 0 && activityLines.length > 0) {
+      rows.push(rule("├" + dashes))
+    }
+    rows.push(...activityLines)
     rows.push(rule("└" + dashes))
   }
 
-  return rows.map(row => LEFT_PAD + nbsp(row)).join("\n")
+  // Prepend RESET to every emitted line so each row starts in a clean ANSI
+  // state. Claude Code applies a dim style on the statusline area; without
+  // this, a row whose first character isn't already wrapped in its own color
+  // code would render dim. ccstatusline and claude-hud do the same.
+  return rows.map(row => RESET + LEFT_PAD + nbsp(row)).join("\n")
 }

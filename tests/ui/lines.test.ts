@@ -97,18 +97,47 @@ describe("renderLines structure", () => {
       effort: null,
     }
     const lines = renderLines(MINIMAL_DATA, result).split("\n")
-    // header, top rule, session, activity, bottom rule
-    expect(lines).toHaveLength(5)
+    // header, ┌, session, ├, activity, └ — a single box with an internal
+    // tee divider when both session and activity have content.
+    expect(lines).toHaveLength(6)
     expect(lines[0]).toContain("TITLE")
+    expect(lines[1]).toContain("┌")
     expect(lines[2]).toContain("SESS")
-    expect(lines[3]).toContain("ACT")
-    expect(lines[4]).toContain("└")
+    expect(lines[3]).toContain("├")
+    expect(lines[4]).toContain("ACT")
+    expect(lines[5]).toContain("└")
   })
 
-  test("each row is left-padded with one space", () => {
+  test("emits a single box when only session rows are present", () => {
+    const result: RenderResult = { session: ["SESS"], activity: [], activityTitle: "", effort: null }
+    const lines = renderLines(MINIMAL_DATA, result).split("\n")
+    expect(lines).toHaveLength(4)  // header, ┌, SESS, └
+    expect(lines[1]).toContain("┌")
+    expect(lines[3]).toContain("└")
+  })
+
+  test("emits a single box when only activity rows are present", () => {
+    const result: RenderResult = { session: [], activity: ["ACT"], activityTitle: "", effort: null }
+    const lines = renderLines(MINIMAL_DATA, result).split("\n")
+    expect(lines).toHaveLength(4)
+    expect(lines[1]).toContain("┌")
+    expect(lines[3]).toContain("└")
+  })
+
+  test("each row is left-padded with one space (after the leading ANSI reset)", () => {
     const result: RenderResult = { session: ["x"], activity: [], activityTitle: "", effort: null }
     for (const line of renderLines(MINIMAL_DATA, result).split("\n")) {
-      expect(line.startsWith(" ")).toBe(true)
+      // Lines start with a leading "\x1b[0m" reset (introduced to defend
+      // against Claude Code's dim styling leaking into the first char of a
+      // row); skip it before checking the pad.
+      expect(line.startsWith("\x1b[0m ")).toBe(true)
+    }
+  })
+
+  test("each row starts with the ANSI reset escape", () => {
+    const result: RenderResult = { session: ["x"], activity: ["y"], activityTitle: "", effort: null }
+    for (const line of renderLines(MINIMAL_DATA, result).split("\n")) {
+      expect(line.startsWith("\x1b[0m")).toBe(true)
     }
   })
 

@@ -7,6 +7,8 @@ export const ICONS = {
   branch: "\ue0a0",  //
   gauge:  "\uf0e4",  //
   tree:   "\uf1bb",  //
+  tools:  "\uf013",  //  \u2014 cog, marks the completed-tools row
+  agents: "\uf135",  //  \u2014 rocket, marks the agents row
 } as const
 
 /** Gap between items on the same line. */
