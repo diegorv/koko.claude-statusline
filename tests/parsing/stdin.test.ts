@@ -16,6 +16,7 @@ describe("mapRawToStdinData", () => {
       vim: { mode: "NORMAL" },
       worktree: { name: "feature-branch" },
       transcript_path: "/tmp/transcript.jsonl",
+      output_style: { name: "explanatory" },
     }
     const result = mapRawToStdinData(raw)
 
@@ -33,6 +34,7 @@ describe("mapRawToStdinData", () => {
     expect(result.vimMode).toBe("NORMAL")
     expect(result.worktree).toBe("feature-branch")
     expect(result.transcriptPath).toBe("/tmp/transcript.jsonl")
+    expect(result.outputStyle).toBe("explanatory")
   })
 
   test("applies defaults for missing fields", () => {
@@ -51,6 +53,7 @@ describe("mapRawToStdinData", () => {
     expect(result.vimMode).toBeNull()
     expect(result.worktree).toBeNull()
     expect(result.transcriptPath).toBeNull()
+    expect(result.outputStyle).toBeNull()
   })
 
   test("falls back to raw.cwd when workspace.current_dir is missing", () => {

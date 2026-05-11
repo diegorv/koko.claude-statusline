@@ -37,4 +37,43 @@ describe("renderActivityTitle", () => {
     expect(result).toContain("2 hooks")
     expect(result).toContain("3 rules")
   })
+
+  test("includes a non-default output style", () => {
+    const result = renderActivityTitle(null, null, null, "explanatory")
+    expect(result).toContain("explanatory")
+  })
+
+  test("hides the default output style", () => {
+    expect(renderActivityTitle(null, null, null, "default")).toBe("")
+  })
+
+  test("treats a null output style as absent", () => {
+    expect(renderActivityTitle(null, null, null, null)).toBe("")
+  })
+
+  test("places output style before session name when both are present", () => {
+    const result = renderActivityTitle(null, null, "my-session", "succinct")
+    const succinctIdx = result.indexOf("succinct")
+    const sessionIdx = result.indexOf("my-session")
+    expect(succinctIdx).toBeGreaterThan(-1)
+    expect(sessionIdx).toBeGreaterThan(succinctIdx)
+  })
+
+  test("prepends ⚡ when skipPermissions is true", () => {
+    const result = renderActivityTitle(null, null, null, null, true)
+    expect(result).toContain("⚡")
+  })
+
+  test("hides ⚡ when skipPermissions is false", () => {
+    expect(renderActivityTitle(null, null, null, null, false)).toBe("")
+  })
+
+  test("⚡ leads the title even with other items", () => {
+    const config = { claudeMd: 1, mcps: 0, hooks: 0, rules: 0, effortLevel: null }
+    const result = renderActivityTitle(config, null, "my-session", null, true)
+    const boltIdx = result.indexOf("⚡")
+    const claudeMdIdx = result.indexOf("CLAUDE.md")
+    expect(boltIdx).toBeGreaterThan(-1)
+    expect(claudeMdIdx).toBeGreaterThan(boltIdx)
+  })
 })

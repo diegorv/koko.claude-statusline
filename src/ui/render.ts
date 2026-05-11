@@ -16,6 +16,8 @@ import {
   renderTodos,
   renderActivityTitle,
   renderEffort,
+  renderTokenBreakdown,
+  renderOutputSpeed,
 } from "./components"
 
 export interface RenderResult {
@@ -45,7 +47,13 @@ const GUTTER = inRuleColor("│") + " "
  * @param config - Config counts (null if no cwd).
  * @param transcript - Parsed transcript data (null if no transcript).
  */
-export function render(data: StdinData, git: GitInfo | null, config: ConfigCounts | null, transcript: TranscriptData | null = null): RenderResult {
+export function render(
+  data: StdinData,
+  git: GitInfo | null,
+  config: ConfigCounts | null,
+  transcript: TranscriptData | null = null,
+  skipPermissions: boolean = false,
+): RenderResult {
   const session: string[] = []
 
   // Row: git + workspace metadata (worktree, line changes, vim mode).
@@ -58,11 +66,17 @@ export function render(data: StdinData, git: GitInfo | null, config: ConfigCount
   gitRowParts.push(...renderWorkspaceInfo(data))
   if (gitRowParts.length > 0) session.push(GUTTER + gitRowParts.join(SEP))
 
-  // Row: rate limits (5h and 7d on the same row — they're conceptually paired).
-  const rateLimitParts: string[] = []
-  if (data.rateLimit5h) rateLimitParts.push(renderRateLimit("5h", data.rateLimit5h))
-  if (data.rateLimit7d) rateLimitParts.push(renderRateLimit("7d", data.rateLimit7d))
-  if (rateLimitParts.length > 0) session.push(GUTTER + rateLimitParts.join(SEP))
+  // Row: rate limits + token breakdown + output speed (all session-level
+  // consumption). Wrap logic in lines.ts splits at SEP boundaries when the row
+  // exceeds terminal width.
+  const consumptionParts: string[] = []
+  const tokenBreakdown = transcript ? renderTokenBreakdown(transcript.tokenTotals) : null
+  if (tokenBreakdown) consumptionParts.push(tokenBreakdown)
+  const outputSpeed = transcript ? renderOutputSpeed(transcript.assistantSamples) : null
+  if (outputSpeed) consumptionParts.push(outputSpeed)
+  if (data.rateLimit5h) consumptionParts.push(renderRateLimit("5h", data.rateLimit5h))
+  if (data.rateLimit7d) consumptionParts.push(renderRateLimit("7d", data.rateLimit7d))
+  if (consumptionParts.length > 0) session.push(GUTTER + consumptionParts.join(SEP))
 
   const activity: string[] = []
 
@@ -83,7 +97,7 @@ export function render(data: StdinData, git: GitInfo | null, config: ConfigCount
     if (todoLine) activity.push(GUTTER + todoLine)
   }
 
-  const activityTitle = renderActivityTitle(config, transcript?.mcpStatus ?? null, data.sessionName)
+  const activityTitle = renderActivityTitle(config, transcript?.mcpStatus ?? null, data.sessionName, data.outputStyle, skipPermissions)
   const effort = renderEffort(config?.effortLevel ?? null)
 
   return { session, activity, activityTitle, effort }

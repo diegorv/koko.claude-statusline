@@ -160,8 +160,21 @@ describe("vlen", () => {
     expect(vlen("✅")).toBe(2)
     expect(vlen("👋")).toBe(2)
     expect(vlen("⏱")).toBe(2)  // stopwatch — used in the header
-    expect(vlen("🇧🇷")).toBe(4) // flag = two regional indicators (rendered 2 cells, but conservative overcount is safer than under)
     expect(vlen("hello 🚀 world")).toBe(14)
+  })
+
+  test("counts flag emoji as a single 2-cell cluster", () => {
+    // Two regional indicators form one grapheme cluster that terminals render
+    // as a single 2-cell flag glyph.
+    expect(vlen("🇧🇷")).toBe(2)
+    expect(vlen("🇺🇸")).toBe(2)
+  })
+
+  test("counts ZWJ-joined emoji as a single 2-cell cluster", () => {
+    // 👨‍👩‍👧 = man + ZWJ + woman + ZWJ + girl. The pre-Intl.Segmenter
+    // implementation overcounted this as 6; correctly it's 2.
+    expect(vlen("👨‍👩‍👧")).toBe(2)
+    expect(vlen("👩‍💻")).toBe(2)
   })
 
   test("treats variation selectors and ZWJ as zero width", () => {

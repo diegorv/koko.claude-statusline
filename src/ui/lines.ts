@@ -97,7 +97,7 @@ function resolveRightMargin(): number {
  * Rows wider than the terminal are wrapped at separator boundaries.
  */
 export function renderLines(data: StdinData, result: RenderResult, repoName?: string): string {
-  const terminalWidth = getTerminalWidth()
+  const terminalWidth = getTerminalWidth({ stabilityKey: data.transcriptPath })
   const margin = resolveRightMargin()
   const usableWidth = terminalWidth
     ? Math.max(MIN_USABLE_WIDTH, terminalWidth - margin - LEFT_PAD.length)

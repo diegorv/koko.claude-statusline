@@ -19,13 +19,39 @@ export interface McpStatus {
   errored: Set<string> // servers with at least one error
 }
 
+export interface TokenTotals {
+  input: number
+  output: number
+  cacheCreate: number
+  cacheRead: number
+}
+
+/**
+ * One sample point from an assistant turn — used by the output-speed widget
+ * to compute Δtokens/Δtime across the tail of a sliding window.
+ * `output` is the session-cumulative output token count at this point.
+ */
+export interface AssistantSample {
+  t: number       // ms epoch (timestamp of the assistant turn)
+  output: number  // cumulative session output tokens at this sample
+}
+
 export interface TranscriptData {
   tools: Map<string, number>  // name → completed count
   runningTools: RunningTool[]  // currently running tools
   agents: AgentInfo[]
   todos: { total: number; completed: number; current: string | null }
   mcpStatus: McpStatus
+  /** Wall-clock time of the most recent assistant message, in ms epoch. Null if no assistant turns seen. */
+  lastAssistantTimestamp: number | null
+  /** Session-level token usage summed across all assistant turns, deduped by requestId. */
+  tokenTotals: TokenTotals
+  /** Up to 16 most recent assistant samples (for output-speed rate math). Oldest first. */
+  assistantSamples: AssistantSample[]
 }
+
+/** Cap on the sliding window of assistant samples kept in memory. */
+const SAMPLE_WINDOW = 16
 
 /**
  * Tools whose calls should not appear in the completed-tools counts or the
@@ -87,6 +113,14 @@ export function parseTranscript(path: string): TranscriptData | null {
   // Todos
   let todos: { content: string; status: string }[] = []
 
+  // Token usage tracking — dedupe by requestId because a single assistant turn
+  // is split across multiple JSONL records (thinking + text + tool_use), each
+  // carrying the SAME usage block. Summing naively would multi-count.
+  const seenRequestIds = new Set<string>()
+  const tokenTotals: TokenTotals = { input: 0, output: 0, cacheCreate: 0, cacheRead: 0 }
+  const assistantSamples: AssistantSample[] = []
+  let lastAssistantTimestamp: number | null = null
+
   for (const line of text.split("\n")) {
     if (!line) continue
     let entry: any
@@ -95,6 +129,33 @@ export function parseTranscript(path: string): TranscriptData | null {
     const blocks = entry?.message?.content
     if (!Array.isArray(blocks)) continue
     const ts = entry.timestamp ?? ""
+
+    // Capture per-turn usage from assistant messages. Each turn's usage is
+    // repeated across records sharing a requestId; only count the first.
+    if (entry?.type === "assistant" || entry?.message?.role === "assistant") {
+      const usage = entry?.message?.usage
+      const requestId = entry?.requestId ?? entry?.message?.id ?? ""
+      if (usage && requestId && !seenRequestIds.has(requestId)) {
+        seenRequestIds.add(requestId)
+        // Defensive: treat absent/non-numeric fields as 0 — Claude Code's
+        // transcript schema is undocumented and may rename fields per version.
+        const input = Number(usage.input_tokens) || 0
+        const output = Number(usage.output_tokens) || 0
+        const cacheCreate = Number(usage.cache_creation_input_tokens) || 0
+        const cacheRead = Number(usage.cache_read_input_tokens) || 0
+        tokenTotals.input += input
+        tokenTotals.output += output
+        tokenTotals.cacheCreate += cacheCreate
+        tokenTotals.cacheRead += cacheRead
+
+        const tsMs = ts ? new Date(ts).getTime() || 0 : 0
+        if (tsMs > 0) {
+          lastAssistantTimestamp = tsMs
+          assistantSamples.push({ t: tsMs, output: tokenTotals.output })
+          if (assistantSamples.length > SAMPLE_WINDOW) assistantSamples.shift()
+        }
+      }
+    }
 
     for (const block of blocks) {
       if (block.type === "tool_use") {
@@ -206,5 +267,8 @@ export function parseTranscript(path: string): TranscriptData | null {
     agents: agentInfos,
     todos: todoData,
     mcpStatus: { ok: mcpOk, errored: mcpErrored },
+    lastAssistantTimestamp,
+    tokenTotals,
+    assistantSamples,
   }
 }
