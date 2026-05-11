@@ -20,6 +20,9 @@ const EMPTY_TRANSCRIPT: TranscriptData = {
   tools: new Map(), runningTools: [], agents: [],
   todos: { total: 0, completed: 0, current: null },
   mcpStatus: { ok: new Set(), errored: new Set() },
+  lastAssistantTimestamp: null,
+  tokenTotals: { input: 0, output: 0, cacheCreate: 0, cacheRead: 0 },
+  assistantSamples: [],
 }
 
 describe("render", () => {

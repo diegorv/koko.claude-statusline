@@ -20,6 +20,25 @@ function toolResultEntry(toolUseId: string, isError = false, ts = "2025-01-01T00
   return { timestamp: ts, message: { content: [{ type: "tool_result", tool_use_id: toolUseId, is_error: isError }] } }
 }
 
+function assistantEntry(
+  requestId: string,
+  usage: {
+    input_tokens?: number
+    output_tokens?: number
+    cache_creation_input_tokens?: number
+    cache_read_input_tokens?: number
+  } | null,
+  ts = "2025-01-01T00:00:00Z",
+  contentBlock: any = { type: "text", text: "hi" },
+) {
+  return {
+    type: "assistant",
+    requestId,
+    timestamp: ts,
+    message: { role: "assistant", usage, content: [contentBlock] },
+  }
+}
+
 beforeEach(() => {
   mkdirSync(TMP_DIR, { recursive: true })
 })
@@ -190,5 +209,100 @@ describe("parseTranscript", () => {
     expect(keys[0]).toBe("read")  // 3 times
     expect(keys[1]).toBe("edit")  // 2 times
     expect(keys[2]).toBe("bash")  // 1 time
+  })
+
+  test("sums per-turn token usage into tokenTotals", () => {
+    const path = writeTmpTranscript([
+      assistantEntry("req-1", { input_tokens: 100, output_tokens: 50, cache_creation_input_tokens: 200, cache_read_input_tokens: 300 }),
+      assistantEntry("req-2", { input_tokens: 10, output_tokens: 5, cache_creation_input_tokens: 20, cache_read_input_tokens: 30 }, "2025-01-01T00:01:00Z"),
+    ])
+    const result = parseTranscript(path)!
+    expect(result.tokenTotals.input).toBe(110)
+    expect(result.tokenTotals.output).toBe(55)
+    expect(result.tokenTotals.cacheCreate).toBe(220)
+    expect(result.tokenTotals.cacheRead).toBe(330)
+  })
+
+  test("dedupes usage by requestId (multi-record turn counts once)", () => {
+    // A single assistant turn shows up across 3 JSONL records (thinking, text, tool_use),
+    // each carrying the same usage block. Summing must count it once.
+    const usage = { input_tokens: 100, output_tokens: 50, cache_creation_input_tokens: 200, cache_read_input_tokens: 300 }
+    const path = writeTmpTranscript([
+      assistantEntry("req-1", usage, "2025-01-01T00:00:00Z", { type: "thinking", thinking: "" }),
+      assistantEntry("req-1", usage, "2025-01-01T00:00:01Z", { type: "text", text: "hi" }),
+      assistantEntry("req-1", usage, "2025-01-01T00:00:02Z", { type: "tool_use", id: "x", name: "Read", input: {} }),
+    ])
+    const result = parseTranscript(path)!
+    expect(result.tokenTotals.input).toBe(100)
+    expect(result.tokenTotals.output).toBe(50)
+    expect(result.assistantSamples.length).toBe(1)
+  })
+
+  test("defaults missing usage fields to 0", () => {
+    const path = writeTmpTranscript([
+      assistantEntry("req-1", { input_tokens: 100 }),  // output, cache fields missing
+      assistantEntry("req-2", null, "2025-01-01T00:01:00Z"),  // entire usage missing
+    ])
+    const result = parseTranscript(path)!
+    expect(result.tokenTotals.input).toBe(100)
+    expect(result.tokenTotals.output).toBe(0)
+    expect(result.tokenTotals.cacheCreate).toBe(0)
+    expect(result.tokenTotals.cacheRead).toBe(0)
+  })
+
+  test("captures the most recent assistant timestamp", () => {
+    const path = writeTmpTranscript([
+      assistantEntry("req-1", { output_tokens: 10 }, "2025-01-01T00:00:00Z"),
+      assistantEntry("req-2", { output_tokens: 10 }, "2025-01-01T00:05:00Z"),
+      assistantEntry("req-3", { output_tokens: 10 }, "2025-01-01T00:02:00Z"),
+    ])
+    const result = parseTranscript(path)!
+    // Last entry processed wins, not the chronologically latest — parser order.
+    expect(result.lastAssistantTimestamp).toBe(new Date("2025-01-01T00:02:00Z").getTime())
+  })
+
+  test("caps assistantSamples sliding window at 16", () => {
+    const lines = Array.from({ length: 25 }, (_, i) =>
+      assistantEntry(`req-${i}`, { output_tokens: 10 }, `2025-01-01T00:${String(i).padStart(2, "0")}:00Z`),
+    )
+    const path = writeTmpTranscript(lines)
+    const result = parseTranscript(path)!
+    expect(result.assistantSamples.length).toBe(16)
+    // Oldest dropped — first sample should be from turn index 9 (25 - 16 = 9).
+    const expectedFirstTs = new Date("2025-01-01T00:09:00Z").getTime()
+    expect(result.assistantSamples[0].t).toBe(expectedFirstTs)
+  })
+
+  test("sample.output is cumulative across turns", () => {
+    const path = writeTmpTranscript([
+      assistantEntry("req-1", { output_tokens: 100 }, "2025-01-01T00:00:00Z"),
+      assistantEntry("req-2", { output_tokens: 50 }, "2025-01-01T00:01:00Z"),
+      assistantEntry("req-3", { output_tokens: 25 }, "2025-01-01T00:02:00Z"),
+    ])
+    const result = parseTranscript(path)!
+    expect(result.assistantSamples[0].output).toBe(100)
+    expect(result.assistantSamples[1].output).toBe(150)
+    expect(result.assistantSamples[2].output).toBe(175)
+  })
+
+  test("malformed timestamp does not crash and does not produce a sample", () => {
+    const path = writeTmpTranscript([
+      assistantEntry("req-1", { output_tokens: 50 }, "not-a-date"),
+      assistantEntry("req-2", { output_tokens: 30 }, "2025-01-01T00:00:00Z"),
+    ])
+    const result = parseTranscript(path)!
+    // The malformed-timestamp turn still contributes to totals (data is valid).
+    expect(result.tokenTotals.output).toBe(80)
+    // But only the well-timestamped one produces a sample.
+    expect(result.assistantSamples.length).toBe(1)
+    expect(result.lastAssistantTimestamp).toBe(new Date("2025-01-01T00:00:00Z").getTime())
+  })
+
+  test("empty transcript yields zeroed token totals and no samples", () => {
+    const path = writeTmpTranscript([])
+    const result = parseTranscript(path)!
+    expect(result.tokenTotals).toEqual({ input: 0, output: 0, cacheCreate: 0, cacheRead: 0 })
+    expect(result.assistantSamples).toEqual([])
+    expect(result.lastAssistantTimestamp).toBeNull()
   })
 })
