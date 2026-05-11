@@ -97,12 +97,31 @@ describe("renderLines structure", () => {
       effort: null,
     }
     const lines = renderLines(MINIMAL_DATA, result).split("\n")
-    // header, top rule, session, activity, bottom rule
-    expect(lines).toHaveLength(5)
+    // header, ┌, session, ├, activity, └ — a single box with an internal
+    // tee divider when both session and activity have content.
+    expect(lines).toHaveLength(6)
     expect(lines[0]).toContain("TITLE")
+    expect(lines[1]).toContain("┌")
     expect(lines[2]).toContain("SESS")
-    expect(lines[3]).toContain("ACT")
-    expect(lines[4]).toContain("└")
+    expect(lines[3]).toContain("├")
+    expect(lines[4]).toContain("ACT")
+    expect(lines[5]).toContain("└")
+  })
+
+  test("emits a single box when only session rows are present", () => {
+    const result: RenderResult = { session: ["SESS"], activity: [], activityTitle: "", effort: null }
+    const lines = renderLines(MINIMAL_DATA, result).split("\n")
+    expect(lines).toHaveLength(4)  // header, ┌, SESS, └
+    expect(lines[1]).toContain("┌")
+    expect(lines[3]).toContain("└")
+  })
+
+  test("emits a single box when only activity rows are present", () => {
+    const result: RenderResult = { session: [], activity: ["ACT"], activityTitle: "", effort: null }
+    const lines = renderLines(MINIMAL_DATA, result).split("\n")
+    expect(lines).toHaveLength(4)
+    expect(lines[1]).toContain("┌")
+    expect(lines[3]).toContain("└")
   })
 
   test("each row is left-padded with one space (after the leading ANSI reset)", () => {
