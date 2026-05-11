@@ -35,4 +35,25 @@ describe("getGitInfo", () => {
     expect(git.ahead).toBeGreaterThanOrEqual(0)
     expect(git.behind).toBeGreaterThanOrEqual(0)
   })
+
+  test("returns a short SHA for the current repo's HEAD", () => {
+    const cwd = import.meta.dir.replace(/\/tests\/collection$/, "")
+    const git = getGitInfo(cwd)
+    // Short SHAs are usually 7 chars but git auto-grows them when ambiguous;
+    // accept anything between 7 and 12 alphanumeric chars.
+    expect(git.sha).toMatch(/^[0-9a-f]{7,12}$/)
+  })
+
+  test("isFork is false for repos without an upstream remote", () => {
+    const cwd = import.meta.dir.replace(/\/tests\/collection$/, "")
+    const git = getGitInfo(cwd)
+    // The project itself has no `upstream` remote configured.
+    expect(git.isFork).toBe(false)
+  })
+
+  test("non-git directories report sha empty and isFork false", () => {
+    const git = getGitInfo("/tmp")
+    expect(git.sha).toBe("")
+    expect(git.isFork).toBe(false)
+  })
 })

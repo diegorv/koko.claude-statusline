@@ -9,12 +9,48 @@ export interface GitInfo {
   untracked: number
   ahead: number
   behind: number
+  /** Short SHA of HEAD (empty string when unavailable). */
+  sha: string
+  /** True when `origin` and `upstream` remotes belong to different owners. */
+  isFork: boolean
 }
 
 const EMPTY: GitInfo = {
   repo: "", branch: "", dirty: false,
   staged: 0, modified: 0, untracked: 0,
   ahead: 0, behind: 0,
+  sha: "", isFork: false,
+}
+
+/**
+ * Extracts the owner segment from a git remote URL. Handles both ssh
+ * (`git@host:owner/repo.git`) and https (`https://host/owner/repo.git`)
+ * shapes; returns empty string when no owner can be parsed.
+ */
+function extractRemoteOwner(url: string): string {
+  const match = url.match(/[:/]([^/:\s]+)\/[^/\s]+?(?:\.git)?\s*$/)
+  return match ? match[1]! : ""
+}
+
+/**
+ * Parses `git remote -v` output for the owners of `origin` and `upstream`.
+ * Lines look like:
+ *   origin\tgit@github.com:owner/repo.git (fetch)
+ *   upstream\thttps://github.com/owner/repo.git (push)
+ */
+function parseRemoteOwners(remoteOutput: string): { origin: string; upstream: string } {
+  let origin = ""
+  let upstream = ""
+  for (const line of remoteOutput.split("\n")) {
+    if (!line) continue
+    // Match either tab-separated or whitespace-separated remote/url pairs.
+    const match = line.match(/^(\S+)\s+(\S+)/)
+    if (!match) continue
+    const [, name, url] = match
+    if (name === "origin" && !origin) origin = extractRemoteOwner(url!)
+    else if (name === "upstream" && !upstream) upstream = extractRemoteOwner(url!)
+  }
+  return { origin, upstream }
 }
 
 /**
@@ -32,7 +68,11 @@ export function getGitInfo(cwd: string): GitInfo {
     }).stdout.toString().trim()
 
   try {
-    const repo = run("rev-parse", "--show-toplevel").split("/").pop() ?? ""
+    // Fold short SHA into the existing rev-parse call — both lines come back
+    // from one spawn, saving a round trip per refresh.
+    const revParseOut = run("rev-parse", "--show-toplevel", "--short", "HEAD")
+    const [toplevel, sha] = revParseOut.split("\n")
+    const repo = toplevel?.split("/").pop() ?? ""
     if (!repo) return EMPTY
 
     // Single command for branch, ahead/behind, and file status
@@ -70,11 +110,20 @@ export function getGitInfo(cwd: string): GitInfo {
       if (y && y !== " " && y !== "?") modified++
     }
 
+    // Fork detection: only meaningful when both `origin` and `upstream`
+    // exist and resolve to different owners.
+    const remoteOwners = parseRemoteOwners(run("remote", "-v"))
+    const isFork = !!remoteOwners.origin
+                && !!remoteOwners.upstream
+                && remoteOwners.origin !== remoteOwners.upstream
+
     return {
       repo, branch,
       dirty: staged + modified + untracked > 0,
       staged, modified, untracked,
       ahead, behind,
+      sha: sha ?? "",
+      isFork,
     }
   } catch {
     return EMPTY

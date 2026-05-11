@@ -14,7 +14,10 @@ export function renderGitStatus(git: GitInfo): string {
   if (!git.repo) return ""
 
   const branchDisplay = git.branch.length > 25 ? git.branch.slice(0, 22) + "..." : git.branch
-  let str = `${c("green", `${ICONS.branch} ${branchDisplay}`)}`
+  // Fork marker (⑂) precedes the branch icon so the user notices the repo
+  // isn't the canonical upstream before reading anything else on the row.
+  const forkPrefix = git.isFork ? c("magenta", "⑂ ") : ""
+  let str = `${forkPrefix}${c("green", `${ICONS.branch} ${branchDisplay}`)}`
   if (git.dirty) str += c("yellow", "*")
 
   const stats: string[] = []
@@ -27,6 +30,10 @@ export function renderGitStatus(git: GitInfo): string {
   if (git.ahead > 0)  sync.push(c("green", `↑${git.ahead}`))
   if (git.behind > 0) sync.push(c("red", `↓${git.behind}`))
   if (sync.length > 0) str += `  ${sync.join(" ")}`
+
+  // Short SHA tail — dim so it reads as a low-importance breadcrumb next to
+  // the colored branch / status section.
+  if (git.sha) str += `  ${dim(git.sha)}`
 
   return str
 }

@@ -14,6 +14,7 @@ const MINIMAL_DATA: StdinData = {
 const CLEAN_GIT: GitInfo = {
   repo: "myrepo", branch: "main", dirty: false,
   staged: 0, modified: 0, untracked: 0, ahead: 0, behind: 0,
+  sha: "", isFork: false,
 }
 
 const EMPTY_TRANSCRIPT: TranscriptData = {
