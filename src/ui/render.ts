@@ -5,6 +5,7 @@ import type { StdinData } from "../parsing/stdin"
 import type { GitInfo } from "../collection/git"
 import type { ConfigCounts } from "../collection/config"
 import type { TranscriptData } from "../parsing/transcript"
+import type { CavemanState } from "../collection/caveman"
 import { SEP, GAP, ICONS } from "./constants"
 import { c } from "./format"
 import {
@@ -20,6 +21,7 @@ import {
   renderTokenBreakdown,
   renderOutputSpeed,
   renderSessionDiff,
+  renderCaveman,
 } from "./components"
 
 export interface RenderResult {
@@ -31,6 +33,8 @@ export interface RenderResult {
   activityTitle: string
   /** /effort chip for the header; null when the level is unset. */
   effort: string | null
+  /** caveman chip for the header; null/absent when caveman isn't active/installed. */
+  caveman?: string | null
 }
 
 /**
@@ -61,6 +65,7 @@ export function render(
   config: ConfigCounts | null,
   transcript: TranscriptData | null = null,
   skipPermissions: boolean = false,
+  caveman: CavemanState | null = null,
 ): RenderResult {
   const session: string[] = []
 
@@ -113,6 +118,7 @@ export function render(
 
   const activityTitle = renderActivityTitle(config, transcript?.mcpStatus ?? null, data.sessionName, data.outputStyle, skipPermissions)
   const effort = renderEffort(config?.effortLevel ?? null)
+  const cavemanChip = renderCaveman(caveman)
 
-  return { session, activity, activityTitle, effort }
+  return { session, activity, activityTitle, effort, caveman: cavemanChip }
 }

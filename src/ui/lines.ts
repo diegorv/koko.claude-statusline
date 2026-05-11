@@ -38,12 +38,13 @@ function wrapLine(line: string, maxWidth: number, separator: string): string[] {
   return out
 }
 
-/** Left side of the header: repo (if any) · model · [effort] · context bar · %. */
-function buildHeaderLeft(data: StdinData, repoName: string | undefined, effort: string | null): string {
+/** Left side of the header: repo (if any) · model · [effort] · [caveman] · context bar · %. */
+function buildHeaderLeft(data: StdinData, repoName: string | undefined, effort: string | null, caveman: string | null): string {
   const parts: string[] = []
   if (repoName) parts.push(bold("yellow", repoName))
   parts.push(c("cyan", data.model))
   if (effort) parts.push(effort)
+  if (caveman) parts.push(caveman)
   const pct = Math.round(data.contextPercent)
   const tokensLabel = data.contextTokens != null && data.contextWindowSize
     ? " " + dim(`${formatTokens(data.contextTokens)}/${formatTokens(data.contextWindowSize)}`)
@@ -103,7 +104,7 @@ export function renderLines(data: StdinData, result: RenderResult, repoName?: st
     ? Math.max(MIN_USABLE_WIDTH, terminalWidth - margin - LEFT_PAD.length)
     : Number.POSITIVE_INFINITY
 
-  const left = buildHeaderLeft(data, repoName, result.effort)
+  const left = buildHeaderLeft(data, repoName, result.effort, result.caveman ?? null)
   const right = buildHeaderRight(data, result.activityTitle)
   const headerLine = Number.isFinite(usableWidth)
     ? joinHeader(left, right, usableWidth)
