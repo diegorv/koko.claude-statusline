@@ -103,32 +103,40 @@ function isZeroWidthCodepoint(cp: number): boolean {
   )
 }
 
+// Cached at module scope — constructing a Segmenter on every vlen() call would
+// allocate per-render. Locale pinned to "en" for deterministic clustering.
+const GRAPHEME_SEGMENTER = new Intl.Segmenter("en", { granularity: "grapheme" })
+
 /**
  * Returns the visual width of a string in terminal cells, stripping ANSI escape
- * codes. Counts East Asian Wide, Fullwidth, and emoji codepoints as 2 cells;
- * combining marks, variation selectors, and zero-width joiners as 0; everything
- * else as 1. A text-presentation char followed by VS-16 (U+FE0F) is promoted to
- * 2 cells (e.g. ❤️ = heart + VS-16). Used by the line-wrap logic so styled
- * content doesn't overflow.
+ * codes. Iterates grapheme clusters (via Intl.Segmenter) so ZWJ sequences like
+ * 👨‍👩‍👧 and regional indicator flags 🇧🇷 count as a single 2-cell glyph
+ * instead of being multiplied by their component count.
  *
- * Note: ZWJ-joined emoji sequences (e.g. 👨‍👩‍👧) overcount because each base
- * emoji is counted as 2 cells while the terminal draws the whole sequence as
- * one 2-cell glyph. Treated as acceptable: overcount is safer than undercount
- * (lines wrap a bit early instead of overflowing), and these sequences are rare
- * in the strings we render.
+ * Per-cluster rule: a cluster reads as 2 cells when it contains any East
+ * Asian Wide / emoji codepoint OR any VS-16 (which forces emoji presentation
+ * on otherwise narrow base chars). A cluster made entirely of zero-width
+ * codepoints contributes 0. Everything else is 1.
  */
 export function vlen(s: string): number {
   const stripped = s.replace(ANSI_RE, "")
-  const chars = [...stripped]
   let count = 0
-  for (let i = 0; i < chars.length; i++) {
-    const cp = chars[i].codePointAt(0)!
-    if (isZeroWidthCodepoint(cp)) continue
-    if (isWideCodepoint(cp)) { count += 2; continue }
-    // VS-16 lookahead: a narrow base char followed by U+FE0F is rendered as
-    // emoji (2 cells) by terminals that support emoji presentation.
-    const next = i + 1 < chars.length ? chars[i + 1].codePointAt(0)! : 0
-    count += next === 0xFE0F ? 2 : 1
+  for (const { segment } of GRAPHEME_SEGMENTER.segment(stripped)) {
+    let isWideCluster = false
+    let allZeroWidth = true
+    let hasVS16 = false
+    for (const ch of segment) {
+      const cp = ch.codePointAt(0)!
+      // VS-16 only promotes the cluster when paired with a real base char;
+      // a stray VS-16 alone is zero-width.
+      if (cp === 0xFE0F) { hasVS16 = true; continue }
+      if (isZeroWidthCodepoint(cp)) continue
+      allZeroWidth = false
+      if (isWideCodepoint(cp)) isWideCluster = true
+    }
+    if (hasVS16 && !allZeroWidth) isWideCluster = true
+    if (isWideCluster) count += 2
+    else if (!allZeroWidth) count += 1
   }
   return count
 }
