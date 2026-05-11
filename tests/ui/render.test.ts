@@ -98,6 +98,36 @@ describe("render", () => {
     expect(result.session[0]).toContain("5h")
   })
 
+  test("output speed joins the consumption row when samples are fresh and spread", () => {
+    const now = Date.now()
+    const transcript: TranscriptData = {
+      ...EMPTY_TRANSCRIPT,
+      tokenTotals: { input: 100, output: 1400, cacheCreate: 0, cacheRead: 0 },
+      // Δ400 output tokens in 4s = 100 tok/s. Most recent sample within freshness window.
+      assistantSamples: [
+        { t: now - 5000, output: 1000 },
+        { t: now - 1000, output: 1400 },
+      ],
+    }
+    const result = render(MINIMAL_DATA, null, null, transcript)
+    expect(result.session.length).toBe(1)
+    expect(result.session[0]).toContain("tok/s")
+  })
+
+  test("output speed is omitted when samples are stale", () => {
+    const transcript: TranscriptData = {
+      ...EMPTY_TRANSCRIPT,
+      tokenTotals: { input: 100, output: 1400, cacheCreate: 0, cacheRead: 0 },
+      // Both samples are over a minute old — output speed gates out.
+      assistantSamples: [
+        { t: Date.now() - 120_000, output: 1000 },
+        { t: Date.now() - 60_000, output: 1400 },
+      ],
+    }
+    const result = render(MINIMAL_DATA, null, null, transcript)
+    expect(result.session.join(" ")).not.toContain("tok/s")
+  })
+
   test("activity emits separate rows for tools, agents, todos", () => {
     const transcript: TranscriptData = {
       ...EMPTY_TRANSCRIPT,

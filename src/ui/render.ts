@@ -17,6 +17,7 @@ import {
   renderActivityTitle,
   renderEffort,
   renderTokenBreakdown,
+  renderOutputSpeed,
 } from "./components"
 
 export interface RenderResult {
@@ -59,11 +60,14 @@ export function render(data: StdinData, git: GitInfo | null, config: ConfigCount
   gitRowParts.push(...renderWorkspaceInfo(data))
   if (gitRowParts.length > 0) session.push(GUTTER + gitRowParts.join(SEP))
 
-  // Row: rate limits + token breakdown (all session-level consumption).
-  // Wrap logic in lines.ts splits at SEP boundaries when the row exceeds width.
+  // Row: rate limits + token breakdown + output speed (all session-level
+  // consumption). Wrap logic in lines.ts splits at SEP boundaries when the row
+  // exceeds terminal width.
   const consumptionParts: string[] = []
   const tokenBreakdown = transcript ? renderTokenBreakdown(transcript.tokenTotals) : null
   if (tokenBreakdown) consumptionParts.push(tokenBreakdown)
+  const outputSpeed = transcript ? renderOutputSpeed(transcript.assistantSamples) : null
+  if (outputSpeed) consumptionParts.push(outputSpeed)
   if (data.rateLimit5h) consumptionParts.push(renderRateLimit("5h", data.rateLimit5h))
   if (data.rateLimit7d) consumptionParts.push(renderRateLimit("7d", data.rateLimit7d))
   if (consumptionParts.length > 0) session.push(GUTTER + consumptionParts.join(SEP))
