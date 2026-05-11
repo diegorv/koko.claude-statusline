@@ -5,7 +5,8 @@ import type { StdinData } from "../parsing/stdin"
 import type { GitInfo } from "../collection/git"
 import type { ConfigCounts } from "../collection/config"
 import type { TranscriptData } from "../parsing/transcript"
-import { SEP, GAP, inRuleColor } from "./constants"
+import { SEP, GAP, ICONS } from "./constants"
+import { c } from "./format"
 import {
   renderGitStatus,
   renderWorkspaceInfo,
@@ -18,6 +19,7 @@ import {
   renderEffort,
   renderTokenBreakdown,
   renderOutputSpeed,
+  renderSessionDiff,
 } from "./components"
 
 export interface RenderResult {
@@ -32,11 +34,17 @@ export interface RenderResult {
 }
 
 /**
- * Left "gutter" marker shared by every body row. Uses the same mid-gray as the
- * horizontal rule so the whole body reads as a unified block — per-row emphasis
- * lives in the content (branch colors, spinners, etc.), not in this chrome.
+ * Per-domain gutters. Each body row starts with a colored Nerd Font icon that
+ * marks its domain — git (branch), consumption (gauge), tools (cog), agents
+ * (rocket). The icon replaces the previous neutral `│` so the row is
+ * self-labeling: a glance at the gutter is enough to know what's on the line.
  */
-const GUTTER = inRuleColor("│") + " "
+const GUTTERS = {
+  git:         c("green",   ICONS.branch) + "  ",
+  consumption: c("yellow",  ICONS.gauge)  + "  ",
+  tools:       c("cyan",    ICONS.tools)  + "  ",
+  agents:      c("magenta", ICONS.agents) + "  ",
+}
 
 /**
  * Composes status line rows. Each emitted row is a complete, standalone line —
@@ -56,45 +64,51 @@ export function render(
 ): RenderResult {
   const session: string[] = []
 
-  // Row: git + workspace metadata (worktree, line changes, vim mode).
-  // Both describe the working tree, so they share a row.
+  // Row 1 (git, green): branch / dirty / stats / ahead-behind / SHA / fork +
+  // workspace context (worktree, vim mode). The +/- session diff lives on
+  // the consumption row instead, since it's a session-output tally.
   const gitRowParts: string[] = []
   if (git) {
     const gitStr = renderGitStatus(git)
     if (gitStr) gitRowParts.push(gitStr)
   }
   gitRowParts.push(...renderWorkspaceInfo(data))
-  if (gitRowParts.length > 0) session.push(GUTTER + gitRowParts.join(SEP))
+  if (gitRowParts.length > 0) session.push(GUTTERS.git + gitRowParts.join(SEP))
 
-  // Row: rate limits + token breakdown + output speed (all session-level
-  // consumption). Wrap logic in lines.ts splits at SEP boundaries when the row
-  // exceeds terminal width.
+  // Row 2 (consumption, yellow): rate limits → tok/s → +/- → tokens.
+  // Ordered most-stable to most-variable in character width so the items the
+  // eye anchors on (rate limits with fixed-shape bars/countdowns) don't shift
+  // horizontally as token totals and session diff grow over the session.
+  // Wrap logic in lines.ts splits at SEP boundaries when the row exceeds
+  // terminal width.
   const consumptionParts: string[] = []
-  const tokenBreakdown = transcript ? renderTokenBreakdown(transcript.tokenTotals) : null
-  if (tokenBreakdown) consumptionParts.push(tokenBreakdown)
-  const outputSpeed = transcript ? renderOutputSpeed(transcript.assistantSamples) : null
-  if (outputSpeed) consumptionParts.push(outputSpeed)
   if (data.rateLimit5h) consumptionParts.push(renderRateLimit("5h", data.rateLimit5h))
   if (data.rateLimit7d) consumptionParts.push(renderRateLimit("7d", data.rateLimit7d))
-  if (consumptionParts.length > 0) session.push(GUTTER + consumptionParts.join(SEP))
+  const outputSpeed = transcript ? renderOutputSpeed(transcript.assistantSamples) : null
+  if (outputSpeed) consumptionParts.push(outputSpeed)
+  const sessionDiff = renderSessionDiff(data)
+  if (sessionDiff) consumptionParts.push(sessionDiff)
+  const tokenBreakdown = transcript ? renderTokenBreakdown(transcript.tokenTotals) : null
+  if (tokenBreakdown) consumptionParts.push(tokenBreakdown)
+  if (consumptionParts.length > 0) session.push(GUTTERS.consumption + consumptionParts.join(SEP))
 
   const activity: string[] = []
 
   if (transcript) {
-    // Row: tools (running with spinner + completed with counts).
+    // Row 3 (tools, cyan): running with spinner + completed with counts.
     const toolParts = [
       ...renderRunningTools(transcript.runningTools),
       ...renderCompletedTools(transcript.tools),
     ]
-    if (toolParts.length > 0) activity.push(GUTTER + toolParts.join(GAP))
+    if (toolParts.length > 0) activity.push(GUTTERS.tools + toolParts.join(GAP))
 
-    // Row: agents.
+    // Row 4 (agents, magenta): agent execution + todo progress share the
+    // domain "ongoing work" — both surface state of in-flight or recent work.
     const agentParts = renderAgents(transcript.agents)
-    if (agentParts.length > 0) activity.push(GUTTER + agentParts.join(GAP))
+    if (agentParts.length > 0) activity.push(GUTTERS.agents + agentParts.join(GAP))
 
-    // Row: todos.
     const todoLine = renderTodos(transcript.todos)
-    if (todoLine) activity.push(GUTTER + todoLine)
+    if (todoLine) activity.push(GUTTERS.agents + todoLine)
   }
 
   const activityTitle = renderActivityTitle(config, transcript?.mcpStatus ?? null, data.sessionName, data.outputStyle, skipPermissions)

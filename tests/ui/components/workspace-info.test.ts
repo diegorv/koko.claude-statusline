@@ -20,10 +20,9 @@ describe("renderWorkspaceInfo", () => {
     expect(parts.some(p => p.includes("feature-branch"))).toBe(true)
   })
 
-  test("includes line change counts", () => {
+  test("no longer renders +/- line counts (moved to session-diff component)", () => {
     const data = { ...MINIMAL_DATA, linesAdded: 10, linesRemoved: 5 }
-    const parts = renderWorkspaceInfo(data)
-    expect(parts.some(p => p.includes("+10") && p.includes("-5"))).toBe(true)
+    expect(renderWorkspaceInfo(data)).toEqual([])
   })
 
   test("includes vim mode", () => {
