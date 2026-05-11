@@ -1,4 +1,5 @@
 name: CI
+
 on:
   push:
     branches: [main]
@@ -9,8 +10,41 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - run: bun install --frozen-lockfile
-      - run: bun run typecheck
-      - run: bun test
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          # Pinned to the runtime version reflected in @types/bun and the
+          # author's local environment. Bump deliberately when upgrading.
+          bun-version: 1.3.13
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Unit tests
+        run: bun test
+
+      - name: Smoke test (entry point end-to-end)
+        # Pipes a minimal valid stdin payload into src/index.ts and asserts
+        # the statusline runs to completion and emits non-empty output. This
+        # catches runtime bugs that the unit tests miss because they exercise
+        # individual components rather than the parseStdin → render → log
+        # pipeline (e.g. broken Intl.Segmenter usage, git subprocess spawn
+        # errors, parent-process detection on Linux).
+        run: |
+          output=$(echo '{"model":{"display_name":"Opus 4.7 (1M context)"},"context_window":{"used_percentage":42},"cost":{"total_cost_usd":1.50,"total_duration_ms":60000}}' | bun src/index.ts)
+          if [ -z "$output" ]; then
+            echo "Smoke test failed: statusline produced no output"
+            exit 1
+          fi
+          echo "$output" | grep -q "Opus" || {
+            echo "Smoke test failed: output is missing the model name"
+            echo "Got: $output"
+            exit 1
+          }
+          echo "Smoke test passed"
