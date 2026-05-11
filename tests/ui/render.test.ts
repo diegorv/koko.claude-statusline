@@ -75,6 +75,29 @@ describe("render", () => {
     expect(result.session[0]).toContain("7d")
   })
 
+  test("token breakdown joins the consumption row when transcript has totals", () => {
+    const transcript: TranscriptData = {
+      ...EMPTY_TRANSCRIPT,
+      tokenTotals: { input: 1200, output: 300, cacheCreate: 0, cacheRead: 0 },
+    }
+    const result = render(MINIMAL_DATA, null, null, transcript)
+    expect(result.session.length).toBe(1)
+    expect(result.session[0]).toContain("↑")
+    expect(result.session[0]).toContain("↓")
+  })
+
+  test("token breakdown shares its row with rate limits", () => {
+    const data = { ...MINIMAL_DATA, rateLimit5h: { pct: 30, resetsAt: 0 } }
+    const transcript: TranscriptData = {
+      ...EMPTY_TRANSCRIPT,
+      tokenTotals: { input: 1000, output: 200, cacheCreate: 0, cacheRead: 0 },
+    }
+    const result = render(data, null, null, transcript)
+    expect(result.session.length).toBe(1)
+    expect(result.session[0]).toContain("↑")
+    expect(result.session[0]).toContain("5h")
+  })
+
   test("activity emits separate rows for tools, agents, todos", () => {
     const transcript: TranscriptData = {
       ...EMPTY_TRANSCRIPT,
