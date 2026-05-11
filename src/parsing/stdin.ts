@@ -21,6 +21,12 @@ export interface StdinData {
   vimMode: string | null
   worktree: string | null
   transcriptPath: string | null
+  /**
+   * Output style preset name (e.g. "explanatory", "succinct"). `null` when
+   * unset; `"default"` when the user is on the built-in style — the renderer
+   * may choose to hide that case to keep the header uncluttered.
+   */
+  outputStyle: string | null
 }
 
 /**
@@ -62,6 +68,7 @@ export function mapRawToStdinData(raw: any): StdinData {
     vimMode:  raw.vim?.mode ?? null,
     worktree: raw.worktree?.name ?? null,
     transcriptPath: raw.transcript_path ?? null,
+    outputStyle: raw.output_style?.name ?? null,
   }
 }
 

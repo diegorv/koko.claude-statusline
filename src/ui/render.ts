@@ -91,7 +91,7 @@ export function render(data: StdinData, git: GitInfo | null, config: ConfigCount
     if (todoLine) activity.push(GUTTER + todoLine)
   }
 
-  const activityTitle = renderActivityTitle(config, transcript?.mcpStatus ?? null, data.sessionName)
+  const activityTitle = renderActivityTitle(config, transcript?.mcpStatus ?? null, data.sessionName, data.outputStyle)
   const effort = renderEffort(config?.effortLevel ?? null)
 
   return { session, activity, activityTitle, effort }

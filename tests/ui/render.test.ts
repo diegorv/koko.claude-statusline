@@ -8,7 +8,7 @@ const MINIMAL_DATA: StdinData = {
   model: "Opus", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,
   linesAdded: 0, linesRemoved: 0, cwd: "/tmp", contextWindowSize: null,
   sessionName: null, rateLimit5h: null, rateLimit7d: null,
-  vimMode: null, worktree: null, transcriptPath: null,
+  vimMode: null, worktree: null, transcriptPath: null, outputStyle: null,
 }
 
 const CLEAN_GIT: GitInfo = {
