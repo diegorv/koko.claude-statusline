@@ -2,7 +2,6 @@
 
 import type { GitInfo } from "../../collection/git"
 import { c, dim } from "../format"
-import { ICONS } from "../constants"
 
 /**
  * Renders git branch and working tree status as a formatted string.
@@ -13,11 +12,15 @@ import { ICONS } from "../constants"
 export function renderGitStatus(git: GitInfo): string {
   if (!git.repo) return ""
 
-  const branchDisplay = git.branch.length > 25 ? git.branch.slice(0, 22) + "..." : git.branch
-  // Fork marker (⑂) precedes the branch icon so the user notices the repo
+  // Only truncate pathologically long names; the row wraps at SEP boundaries
+  // when needed, so a normal branch like `feat/table-of-contents-plugin`
+  // should pass through intact.
+  const branchDisplay = git.branch.length > 80 ? git.branch.slice(0, 77) + "..." : git.branch
+  // Fork marker (⑂) precedes the branch name so the user notices the repo
   // isn't the canonical upstream before reading anything else on the row.
+  // Branch icon comes from the row's gutter (see render.ts), not here.
   const forkPrefix = git.isFork ? c("magenta", "⑂ ") : ""
-  let str = `${forkPrefix}${c("green", `${ICONS.branch} ${branchDisplay}`)}`
+  let str = `${forkPrefix}${c("green", branchDisplay)}`
   if (git.dirty) str += c("yellow", "*")
 
   const stats: string[] = []
