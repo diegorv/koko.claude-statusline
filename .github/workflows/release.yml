@@ -121,8 +121,11 @@ jobs:
           TAG="${{ github.ref_name }}"
           # Restrict PREV_TAG lookup to semver-shaped tags so any mutable
           # channel tags (e.g. a future `nightly`) never get picked as
-          # the previous release.
-          PREV_TAG=$(git tag --list '[0-9]*.[0-9]*.[0-9]*' --sort=-version:refname | grep -v "^${TAG}$" | head -n 1)
+          # the previous release. `grep -v` exits 1 when the current tag
+          # is the only one, and `pipefail` would propagate that — wrap
+          # the grep in `{ ... || true; }` so the first-release case
+          # produces an empty PREV_TAG rather than killing the step.
+          PREV_TAG=$(git tag --list '[0-9]*.[0-9]*.[0-9]*' --sort=-version:refname | { grep -v "^${TAG}$" || true; } | head -n 1)
           if [ -z "$PREV_TAG" ]; then
             RANGE="$TAG"
           else
