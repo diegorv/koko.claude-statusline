@@ -64,12 +64,26 @@ if [ -n "$(git status --porcelain)" ]; then
   exit 1
 fi
 
-# ─── Get latest tag ──────────────────────────────────────────────────
+# ─── Get latest tag (or seed from package.json on first release) ─────
 LATEST_TAG=$(git tag --sort=-v:refname | grep -v '^nightly$' | head -1)
+BOOTSTRAP=0
 
 if [ -z "$LATEST_TAG" ]; then
-  echo "No tags found. Starting from 0.1.0${SUFFIX}"
-  LATEST_TAG="0.0.0${SUFFIX}"
+  # Bootstrap: no tags yet, so derive the baseline from package.json.
+  # This avoids the "regress to 0.0.1" pitfall when the project has been
+  # carrying an in-repo version (e.g. 0.1.0) before the first git tag.
+  # The chosen patch/minor/major bump is applied on top of this base.
+  PKG_VERSION=$(node -p "require('./package.json').version")
+  if ! [[ "$PKG_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+    echo "Error: package.json version '$PKG_VERSION' is not a valid semver baseline."
+    exit 1
+  fi
+  echo "No tags found. Seeding baseline from package.json: ${PKG_VERSION}"
+  # Strip any pre-existing suffix so the bump math below operates on the
+  # bare X.Y.Z and re-applies $SUFFIX consistently.
+  BASE_VERSION=$(echo "$PKG_VERSION" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')
+  LATEST_TAG="${BASE_VERSION}${SUFFIX}"
+  BOOTSTRAP=1
 fi
 
 echo "Latest tag: $LATEST_TAG"
@@ -94,7 +108,9 @@ echo "  $LATEST_TAG → $NEW_VERSION ($BUMP)"
 echo "──────────────────────────────────────"
 echo ""
 
-if [ "$LATEST_TAG" = "0.0.0${SUFFIX}" ]; then
+if [ "$BOOTSTRAP" = "1" ]; then
+  # First release: no prior tag to anchor the range, so include the
+  # full history.
   COMMITS=$(git log --oneline --no-decorate)
 else
   COMMITS=$(git log "${LATEST_TAG}..HEAD" --oneline --no-decorate)
