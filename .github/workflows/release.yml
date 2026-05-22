@@ -1,0 +1,205 @@
+name: Release
+
+# Triggers on any semver tag push (`X.Y.Z` or `X.Y.Z-suffix`). The
+# trigger pattern is intentionally permissive; the actual channel
+# allowlist lives in the `validate` job below, where it can be updated
+# without touching the workflow trigger and surfaces a clear error
+# message when a tag falls outside accepted channels. Today the
+# allowed channels are bare semver (stable), `alpha`, `beta`, and
+# `rc.N`. Edit the regex in `validate` to add or remove a channel.
+on:
+  push:
+    tags:
+      - "*.*.*"
+      - "*.*.*-*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate tag matches an accepted release channel
+        run: |
+          set -euo pipefail
+          TAG="${{ github.ref_name }}"
+          channel_re='^[0-9]+\.[0-9]+\.[0-9]+(-(alpha|beta|rc\.[0-9]+))?$'
+          if ! [[ "$TAG" =~ $channel_re ]]; then
+            echo "::error::Tag '$TAG' does not match an accepted release channel pattern."
+            echo "::error::Accepted: X.Y.Z (stable), X.Y.Z-alpha, X.Y.Z-beta, X.Y.Z-rc.N"
+            exit 1
+          fi
+          echo "Tag '$TAG' matches accepted channel pattern."
+
+      - name: Validate tag is on main branch
+        run: |
+          set -euo pipefail
+          TAG_COMMIT=$(git rev-parse HEAD)
+          if ! git merge-base --is-ancestor "$TAG_COMMIT" origin/main; then
+            echo "::error::Release tag ${{ github.ref_name }} is not on the main branch. Aborting."
+            exit 1
+          fi
+          echo "Validated: ${{ github.ref_name }} is on main branch"
+
+      - name: Validate package.json version matches tag
+        # Catches the "forgot to run scripts/release.sh, pushed a tag by
+        # hand" case before the release artifacts go out the door. The
+        # tag is authoritative for the release name; package.json must
+        # agree so `bun src/index.ts` reports the right version at runtime.
+        run: |
+          set -euo pipefail
+          TAG="${{ github.ref_name }}"
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$TAG" != "$PKG_VERSION" ]; then
+            echo "::error::Tag '$TAG' does not match package.json version '$PKG_VERSION'."
+            echo "::error::Run scripts/release.sh to bump both atomically."
+            exit 1
+          fi
+          echo "package.json version matches tag: $PKG_VERSION"
+
+  # Re-run the full CI suite on the tagged SHA. If CI fails here, the
+  # release job never starts and no GitHub Release is created.
+  ci:
+    name: CI
+    needs: validate
+    uses: ./.github/workflows/ci.yml
+
+  # Security audit on the tagged SHA. Wired here because security.yml
+  # also runs on push:main — a release tag is the post-merge resurfacing
+  # point that catches an advisory slipping past the PR check.
+  security:
+    name: Security
+    needs: validate
+    uses: ./.github/workflows/security.yml
+
+  publish:
+    name: Publish GitHub Release
+    needs: [ci, security]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build single-file bundle
+        # Produces `dist/statusline.js` — a self-contained CLI bundle
+        # users can `curl` and run with `bun dist/statusline.js` without
+        # cloning the repo. Source files in src/ are still the canonical
+        # entry point; this is just a convenience artifact.
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          bun build src/index.ts --target=bun --outfile=dist/statusline.js
+          ls -la dist/
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          set -euo pipefail
+          TAG="${{ github.ref_name }}"
+          # Restrict PREV_TAG lookup to semver-shaped tags so any mutable
+          # channel tags (e.g. a future `nightly`) never get picked as
+          # the previous release.
+          PREV_TAG=$(git tag --list '[0-9]*.[0-9]*.[0-9]*' --sort=-version:refname | grep -v "^${TAG}$" | head -n 1)
+          if [ -z "$PREV_TAG" ]; then
+            RANGE="$TAG"
+          else
+            RANGE="${PREV_TAG}..${TAG}"
+          fi
+          # `grep -v` exits 1 when no lines match, which under `set -e`
+          # would kill the step for a release whose only commit is the
+          # version bump. Append `|| true` so an empty changelog is
+          # treated as a valid (if uninteresting) outcome.
+          COMMITS=$(git log --pretty=format:"- %s (%h)" "$RANGE" | grep -v "^- chore: bump version" || true)
+          {
+            echo "commits<<CHANGELOG_EOF"
+            echo "$COMMITS"
+            echo "CHANGELOG_EOF"
+            echo "prev_tag=${PREV_TAG:-}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Generate SHA-256 checksums
+        run: |
+          set -euo pipefail
+          cd dist
+          shasum -a 256 statusline.js > checksums-sha256.txt
+          echo "--- Checksums ---"
+          cat checksums-sha256.txt
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+          PREV_TAG: ${{ steps.changelog.outputs.prev_tag }}
+          COMMITS: ${{ steps.changelog.outputs.commits }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          # Build the body as a file (--notes-file) so commit-message
+          # metacharacters from $COMMITS never enter a shell-evaluated
+          # context. `printf '%s\n' "$VAR"` writes the variable verbatim.
+          {
+            printf '%s\n' "## What's Changed"
+            printf '\n'
+            printf '%s\n' "$COMMITS"
+            printf '\n'
+            if [ -n "$PREV_TAG" ]; then
+              printf '**Full diff:** [%s...%s](https://github.com/%s/compare/%s...%s)\n' \
+                "$PREV_TAG" "$TAG" "$REPO" "$PREV_TAG" "$TAG"
+              printf '\n'
+            fi
+            printf '%s\n' "## Install"
+            printf '\n'
+            printf '%s\n' '```bash'
+            printf 'curl -fL -o ~/.claude-statusline.js \\\n'
+            printf '  https://github.com/%s/releases/download/%s/statusline.js\n' "$REPO" "$TAG"
+            printf '# then point your Claude Code statusline config at:\n'
+            printf '#   bun ~/.claude-statusline.js\n'
+            printf '%s\n' '```'
+            printf '\n'
+            printf '%s\n' "## Verify download integrity"
+            printf '\n'
+            printf '%s\n' '```bash'
+            printf 'shasum -a 256 statusline.js\n'
+            printf '%s\n' '```'
+            printf '\n'
+            printf 'Compare against `checksums-sha256.txt`.\n'
+          } > release-body.md
+          echo "--- release-body.md ---"
+          cat release-body.md
+          echo "------------------------"
+
+          # Pre-release if the tag carries a suffix.
+          if [[ "$TAG" == *-* ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          else
+            PRERELEASE_FLAG=""
+          fi
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes-file release-body.md \
+            $PRERELEASE_FLAG \
+            dist/statusline.js \
+            dist/checksums-sha256.txt

@@ -1,0 +1,58 @@
+name: Security
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+  workflow_dispatch:
+  # Reusable: invoked by `.github/workflows/release.yml` and
+  # `.github/workflows/run-all.yml`.
+  workflow_call:
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  bun-audit:
+    name: Bun audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Audit dependencies
+        # `bun audit` exits non-zero on any moderate-or-higher advisory.
+        # The project ships only dev dependencies (@types/bun, typescript),
+        # so a real advisory here is rare; when one surfaces, treat it as
+        # an action item rather than a silent warning.
+        run: bun audit --audit-level=moderate
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Review dependencies
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
