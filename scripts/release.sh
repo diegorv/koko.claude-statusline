@@ -65,7 +65,7 @@ if [ -n "$(git status --porcelain)" ]; then
 fi
 
 # ─── Get latest tag (or seed from package.json on first release) ─────
-LATEST_TAG=$(git tag --sort=-v:refname | grep -v '^nightly$' | head -1)
+LATEST_TAG=$(git tag --sort=-v:refname | { grep -v '^nightly$' || true; } | head -1)
 BOOTSTRAP=0
 
 if [ -z "$LATEST_TAG" ]; then
