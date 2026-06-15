@@ -1,0 +1,9 @@
+[install]
+# Supply-chain cooldown: only install versions published at least 3 days ago,
+# shrinking the window for a freshly-compromised package to enter the tree.
+# Affects resolution (bun update / Dependabot); installs with --frozen-lockfile
+# use the versions already pinned in bun.lock and are not blocked.
+minimumReleaseAge = 259200       # seconds (3 days)
+
+# Direct, high-trust dev dependencies allowed to bypass the cooldown.
+minimumReleaseAgeExcludes = ["@types/bun", "typescript"]
