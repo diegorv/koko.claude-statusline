@@ -4,6 +4,7 @@
 // in-memory cache is needed across refreshes.
 
 import { readFileSync } from "node:fs"
+import { spawnSync } from "node:child_process"
 
 const SKIP_PERMISSIONS_FLAG = "--dangerously-skip-permissions"
 const SPAWN_TIMEOUT_MS = 500
@@ -16,13 +17,11 @@ const SPAWN_TIMEOUT_MS = 500
 function readParentCmdline(pid: number): string {
   try {
     if (process.platform === "darwin") {
-      const result = Bun.spawnSync({
-        cmd: ["ps", "-p", String(pid), "-o", "command="],
-        stdout: "pipe",
-        stderr: "ignore",
+      const result = spawnSync("ps", ["-p", String(pid), "-o", "command="], {
+        stdio: ["ignore", "pipe", "ignore"],
         timeout: SPAWN_TIMEOUT_MS,
       })
-      if (result.exitCode !== 0) return ""
+      if (result.status !== 0) return ""
       return new TextDecoder().decode(result.stdout).trim()
     }
     if (process.platform === "linux") {

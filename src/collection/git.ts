@@ -1,5 +1,7 @@
 // Git repository info
 
+import { spawnSync } from "node:child_process"
+
 export interface GitInfo {
   repo: string
   branch: string
@@ -61,11 +63,11 @@ function parseRemoteOwners(remoteOutput: string): { origin: string; upstream: st
  */
 export function getGitInfo(cwd: string): GitInfo {
   const run = (...args: string[]) =>
-    Bun.spawnSync({
-      cmd: ["git", "--no-optional-locks", "-C", cwd, ...args],
-      stdout: "pipe",
-      stderr: "ignore",  // suppress git warnings so they don't pollute the statusline
-    }).stdout.toString().trim()
+    (spawnSync("git", ["--no-optional-locks", "-C", cwd, ...args], {
+      // suppress git warnings so they don't pollute the statusline
+      stdio: ["ignore", "pipe", "ignore"],
+      encoding: "utf8",
+    }).stdout ?? "").trim()
 
   try {
     // Fold short SHA into the existing rev-parse call — both lines come back

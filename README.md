@@ -22,7 +22,7 @@ Works on any terminal with true-color support (iTerm2, Ghostty, Kitty, Alacritty
 
 ## Quick install
 
-Requires [Bun](https://bun.sh) `>= 1.0`.
+Recommended runtime: [Bun](https://bun.sh) `>= 1.0` — runs the TypeScript entry point directly, no build step.
 
 ```sh
 git clone https://github.com/diegorv/koko.claude-statusline.git
@@ -51,6 +51,8 @@ echo '{"model":{"display_name":"Opus"},"context_window":{"used_percentage":45},"
 ```
 
 Restart Claude Code (or open a new session). For prerequisites, the absolute-path lookup, the verify step, update instructions, and troubleshooting, see **[docs/INSTALL.md](docs/INSTALL.md)**.
+
+> **Prefer another runtime?** The entry point is plain TypeScript with no build step and zero `Bun.*` API calls, so any bundler-style TS runner works too — e.g. [tsx](https://tsx.is): just use `tsx /absolute/path/.../src/index.ts` as the `command` and run the smoke test with `tsx` instead of `bun`. Plain `node src/index.ts` is **not** supported: Node's ESM loader requires explicit `.ts` extensions on the internal imports. Bun stays the recommended path — it needs no extra install and keeps the [supply-chain cooldown](docs/DEVELOPMENT.md) in `bunfig.toml`.
 
 ## Documentation
 

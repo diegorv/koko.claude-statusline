@@ -1,6 +1,7 @@
 // Terminal width detection — works even when stdout is piped (statusline mode).
 
 import { closeSync, openSync, readFileSync, writeFileSync } from "node:fs"
+import { spawnSync } from "node:child_process"
 
 function fromStream(stream: NodeJS.WriteStream | undefined): number | null {
   const cols = stream?.columns
@@ -21,13 +22,10 @@ function fromDevTty(): number | null {
   let fd: number | undefined
   try {
     fd = openSync("/dev/tty", "r")
-    const result = Bun.spawnSync({
-      cmd: ["stty", "size"],
-      stdin: fd,
-      stdout: "pipe",
-      stderr: "ignore",
+    const result = spawnSync("stty", ["size"], {
+      stdio: [fd, "pipe", "ignore"],
     })
-    if (result.exitCode !== 0) return null
+    if (result.status !== 0) return null
     const parts = new TextDecoder().decode(result.stdout).trim().split(/\s+/)
     const cols = Number.parseInt(parts[1] ?? "", 10)
     return Number.isFinite(cols) && cols > 0 ? cols : null

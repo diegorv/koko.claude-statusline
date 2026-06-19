@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- [Bun](https://bun.sh) `>= 1.0` — runs the script directly from TypeScript, no build step.
+- [Bun](https://bun.sh) `>= 1.0` (recommended) — runs the script directly from TypeScript, no build step. Any bundler-style TS runner also works (e.g. [tsx](https://tsx.is)); plain `node src/index.ts` does **not**, because Node's ESM loader needs explicit `.ts` import extensions. See [Other runtimes](#other-runtimes) below.
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed and configured.
 - A terminal with true-color (24-bit) support (iTerm2, Ghostty, Kitty, Alacritty, WezTerm, modern Terminal.app, modern GNOME Terminal).
 - Tested on macOS. CI passes on Linux but has not been manually validated there.
@@ -88,6 +88,29 @@ bun install
 ```
 
 No restart of Claude Code is required — the script is re-read on the next refresh.
+
+## Other runtimes
+
+Bun is the recommended runtime, but the entry point is plain TypeScript with no build step and makes zero `Bun.*` API calls — every system call goes through Node-compatible `node:` modules. So any **bundler-style** TypeScript runner can run it:
+
+- **[tsx](https://tsx.is)** — install it (`bun add -g tsx`, `npm i -g tsx`, etc.) and use `tsx` wherever this guide uses `bun`:
+
+  ```json
+  {
+    "statusLine": {
+      "type": "command",
+      "command": "tsx /absolute/path/to/koko.claude-statusline/src/index.ts",
+      "padding": 0,
+      "refreshInterval": 10
+    }
+  }
+  ```
+
+  Verify the same way: `echo '{"model":{"display_name":"Opus"}}' | tsx src/index.ts`.
+
+Plain **`node src/index.ts` is not supported.** Node already strips TypeScript types on recent versions, but its ESM loader requires explicit `.ts` extensions on relative imports, which this project omits (bundler-style resolution). Use `tsx` — or Bun — instead.
+
+Choosing Bun keeps things simplest: no extra global install, and it honors the supply-chain cooldown configured in `bunfig.toml` (see [Development](DEVELOPMENT.md)).
 
 ## Troubleshooting
 

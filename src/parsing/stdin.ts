@@ -1,5 +1,7 @@
 // Parse JSON from Claude Code stdin
 
+import { readFileSync } from "node:fs"
+
 export interface StdinData {
   model: string
   contextPercent: number
@@ -73,14 +75,16 @@ export function mapRawToStdinData(raw: any): StdinData {
 }
 
 /**
- * Reads and parses JSON from Bun stdin, returning a normalized StdinData object.
- * Exits the process silently if stdin cannot be parsed.
+ * Reads and parses JSON from stdin (fd 0), returning a normalized StdinData object.
+ * Exits the process silently if stdin cannot be parsed. Reads synchronously from
+ * the stdin pipe, which works under any runtime (Bun, Node, tsx) — Claude Code
+ * always pipes the JSON payload in.
  * @returns Promise resolving to the parsed StdinData.
  */
 export async function parseStdin(): Promise<StdinData> {
   let raw: any
   try {
-    raw = await Bun.stdin.json()
+    raw = JSON.parse(readFileSync(0, "utf8"))
   } catch {
     process.exit(0)
   }
