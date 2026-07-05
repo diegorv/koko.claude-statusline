@@ -1,8 +1,8 @@
 // Component: agent execution status
 
-import type { AgentInfo } from "../../parsing/transcript"
-import { c, dim, formatDuration } from "../format"
-import { spin } from "../constants"
+import type { AgentInfo } from "../../parsing/transcript.ts"
+import { c, dim, formatDuration } from "../format.ts"
+import { spin } from "../constants.ts"
 
 /**
  * Renders agent execution status with spinner (running) or checkmark (completed) and elapsed time.

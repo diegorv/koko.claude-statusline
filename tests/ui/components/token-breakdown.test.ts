@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { renderTokenBreakdown } from "../../../src/ui/components/token-breakdown"
+import { renderTokenBreakdown } from "../../../src/ui/components/token-breakdown.ts"
 
 describe("renderTokenBreakdown", () => {
   test("returns null when every total is zero", () => {

@@ -1,13 +1,13 @@
 // Layout compositor — emits one row per semantic category so each line is
 // visually self-contained (git, rate limits, tools, agents, todos).
 
-import type { StdinData } from "../parsing/stdin"
-import type { GitInfo } from "../collection/git"
-import type { ConfigCounts } from "../collection/config"
-import type { TranscriptData } from "../parsing/transcript"
-import type { CavemanState } from "../collection/caveman"
-import { SEP, GAP, ICONS } from "./constants"
-import { c } from "./format"
+import type { StdinData } from "../parsing/stdin.ts"
+import type { GitInfo } from "../collection/git.ts"
+import type { ConfigCounts } from "../collection/config.ts"
+import type { TranscriptData } from "../parsing/transcript.ts"
+import type { CavemanState } from "../collection/caveman.ts"
+import { SEP, GAP, ICONS } from "./constants.ts"
+import { c } from "./format.ts"
 import {
   renderGitStatus,
   renderWorkspaceInfo,
@@ -22,7 +22,7 @@ import {
   renderOutputSpeed,
   renderSessionDiff,
   renderCaveman,
-} from "./components"
+} from "./components/index.ts"
 
 export interface RenderResult {
   /** One row per session category (git+workspace, rate limits). */

@@ -1,7 +1,7 @@
 // Component: per-session token breakdown (input / output / cache total)
 
-import type { TokenTotals } from "../../parsing/transcript"
-import { c, dim, formatTokens } from "../format"
+import type { TokenTotals } from "../../parsing/transcript.ts"
+import { c, dim, formatTokens } from "../format.ts"
 
 /**
  * Renders a compact session-level token breakdown:

@@ -1,7 +1,7 @@
 // Component: git branch and working tree status
 
-import type { GitInfo } from "../../collection/git"
-import { c, dim } from "../format"
+import type { GitInfo } from "../../collection/git.ts"
+import { c, dim } from "../format.ts"
 
 /**
  * Renders git branch and working tree status as a formatted string.

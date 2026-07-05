@@ -52,7 +52,17 @@ echo '{"model":{"display_name":"Opus"},"context_window":{"used_percentage":45},"
 
 Restart Claude Code (or open a new session). For prerequisites, the absolute-path lookup, the verify step, update instructions, and troubleshooting, see **[docs/INSTALL.md](docs/INSTALL.md)**.
 
-> **Prefer another runtime?** The entry point is plain TypeScript with no build step and zero `Bun.*` API calls, so any bundler-style TS runner works too — e.g. [tsx](https://tsx.is): just use `tsx /absolute/path/.../src/index.ts` as the `command` and run the smoke test with `tsx` instead of `bun`. Plain `node src/index.ts` is **not** supported: Node's ESM loader requires explicit `.ts` extensions on the internal imports. Bun stays the recommended path — it needs no extra install and keeps the [supply-chain cooldown](docs/DEVELOPMENT.md) in `bunfig.toml`.
+### Run it with any runtime
+
+The entry point is plain TypeScript with no build step and zero `Bun.*` calls — every system call goes through `node:` modules, and internal imports carry explicit `.ts` extensions. So you pick the runtime: swap the leading `bun` in the `command` above (and in the smoke test) for any of these.
+
+| Runtime | `command` | Notes |
+|---|---|---|
+| **[Bun](https://bun.sh)** `>= 1.0` _(recommended)_ | `bun /abs/…/src/index.ts` | No extra install; honors the supply-chain cooldown in `bunfig.toml`. |
+| **[Node](https://nodejs.org)** `>= 22.18` / `>= 23.6` | `node /abs/…/src/index.ts` | Built-in TypeScript type stripping — no flags, no build. Nothing to install: zero runtime deps. |
+| **[tsx](https://tsx.is)** | `tsx /abs/…/src/index.ts` | Any bundler-style TS runner works; tsx is the common one. |
+
+Every option runs the same source — you are never locked in. Full details and version caveats in **[docs/INSTALL.md](docs/INSTALL.md)**.
 
 ## Documentation
 

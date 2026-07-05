@@ -1,9 +1,9 @@
 // Component: activity box title (config counts + output style + session name)
 
-import type { ConfigCounts } from "../../collection/config"
-import type { McpStatus } from "../../parsing/transcript"
-import { c } from "../format"
-import { GAP } from "../constants"
+import type { ConfigCounts } from "../../collection/config.ts"
+import type { McpStatus } from "../../parsing/transcript.ts"
+import { c } from "../format.ts"
+import { GAP } from "../constants.ts"
 
 /**
  * Renders the activity box title with config counts, optional output style,

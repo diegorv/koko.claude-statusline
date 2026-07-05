@@ -1,6 +1,6 @@
 // Component: completed tool usage counts
 
-import { c } from "../format"
+import { c } from "../format.ts"
 
 /**
  * Renders completed tool usage counts, sorted by frequency.

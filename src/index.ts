@@ -4,16 +4,16 @@
 
 import { appendFileSync } from "node:fs"
 import { basename } from "node:path"
-import { parseStdin } from "./parsing/stdin"
-import { getGitInfo } from "./collection/git"
-import { getConfigCounts } from "./collection/config"
-import { parseTranscript } from "./parsing/transcript"
-import { detectSkipPermissions } from "./collection/parent-process"
-import { getCavemanState } from "./collection/caveman"
-import { render } from "./ui/render"
-import { renderLines } from "./ui/lines"
-import { vlen } from "./ui/format"
-import { getTerminalWidth } from "./ui/terminal"
+import { parseStdin } from "./parsing/stdin.ts"
+import { getGitInfo } from "./collection/git.ts"
+import { getConfigCounts } from "./collection/config.ts"
+import { parseTranscript } from "./parsing/transcript.ts"
+import { detectSkipPermissions } from "./collection/parent-process.ts"
+import { getCavemanState } from "./collection/caveman.ts"
+import { render } from "./ui/render.ts"
+import { renderLines } from "./ui/lines.ts"
+import { vlen } from "./ui/format.ts"
+import { getTerminalWidth } from "./ui/terminal.ts"
 
 const data = await parseStdin()
 const git = data.cwd ? getGitInfo(data.cwd) : null

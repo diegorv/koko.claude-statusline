@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { renderAgents } from "../../../src/ui/components/agents"
+import { renderAgents } from "../../../src/ui/components/agents.ts"
 
 describe("renderAgents", () => {
   test("returns empty array for no agents", () => {

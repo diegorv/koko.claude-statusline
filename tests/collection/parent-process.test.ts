@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { detectSkipPermissions } from "../../src/collection/parent-process"
+import { detectSkipPermissions } from "../../src/collection/parent-process.ts"
 
 // These tests exercise the real platform shell-out rather than mocking. The
 // parent of the test process is `bun test`, which is never launched with the

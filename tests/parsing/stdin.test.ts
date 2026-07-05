@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { mapRawToStdinData } from "../../src/parsing/stdin"
+import { mapRawToStdinData } from "../../src/parsing/stdin.ts"
 
 describe("mapRawToStdinData", () => {
   test("maps complete raw input correctly", () => {

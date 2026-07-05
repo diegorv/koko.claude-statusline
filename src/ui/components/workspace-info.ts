@@ -5,9 +5,9 @@
 // renderSessionDiff. This component covers only the spatial context: where
 // I'm working (worktree) and how I'm editing (vim mode).
 
-import type { StdinData } from "../../parsing/stdin"
-import { c, dim } from "../format"
-import { ICONS } from "../constants"
+import type { StdinData } from "../../parsing/stdin.ts"
+import { c, dim } from "../format.ts"
+import { ICONS } from "../constants.ts"
 
 /**
  * Renders workspace metadata: worktree name and vim mode.

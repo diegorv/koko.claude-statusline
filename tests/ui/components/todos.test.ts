@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import { renderTodos } from "../../../src/ui/components/todos"
-import { vlen } from "../../../src/ui/format"
+import { renderTodos } from "../../../src/ui/components/todos.ts"
+import { vlen } from "../../../src/ui/format.ts"
 
 describe("renderTodos", () => {
   test("returns null for no todos", () => {

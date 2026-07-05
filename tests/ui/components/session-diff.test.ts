@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import { renderSessionDiff } from "../../../src/ui/components/session-diff"
-import type { StdinData } from "../../../src/parsing/stdin"
+import { renderSessionDiff } from "../../../src/ui/components/session-diff.ts"
+import type { StdinData } from "../../../src/parsing/stdin.ts"
 
 const MINIMAL_DATA: StdinData = {
   model: "Opus", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,

@@ -1,5 +1,5 @@
 import { describe, expect, test, beforeEach, afterEach } from "bun:test"
-import { parseTranscript } from "../../src/parsing/transcript"
+import { parseTranscript } from "../../src/parsing/transcript.ts"
 import { writeFileSync, mkdirSync, rmSync } from "fs"
 import { join } from "path"
 import { tmpdir } from "os"

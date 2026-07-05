@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test"
-import { render } from "../../src/ui/render"
-import type { StdinData } from "../../src/parsing/stdin"
-import type { GitInfo } from "../../src/collection/git"
-import type { TranscriptData } from "../../src/parsing/transcript"
+import { render } from "../../src/ui/render.ts"
+import type { StdinData } from "../../src/parsing/stdin.ts"
+import type { GitInfo } from "../../src/collection/git.ts"
+import type { TranscriptData } from "../../src/parsing/transcript.ts"
 
 const MINIMAL_DATA: StdinData = {
   model: "Opus", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,

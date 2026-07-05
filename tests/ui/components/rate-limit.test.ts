@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { renderRateLimit } from "../../../src/ui/components/rate-limit"
+import { renderRateLimit } from "../../../src/ui/components/rate-limit.ts"
 
 describe("renderRateLimit", () => {
   test("renders the 5h rate limit without an internal gauge icon (gutter owns it)", () => {

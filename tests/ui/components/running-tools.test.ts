@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { renderRunningTools } from "../../../src/ui/components/running-tools"
+import { renderRunningTools } from "../../../src/ui/components/running-tools.ts"
 
 describe("renderRunningTools", () => {
   test("returns empty array for no tools", () => {

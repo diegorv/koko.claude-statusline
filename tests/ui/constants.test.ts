@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import { ICONS, GAP, SEP, spin } from "../../src/ui/constants"
-import { vlen } from "../../src/ui/format"
+import { ICONS, GAP, SEP, spin } from "../../src/ui/constants.ts"
+import { vlen } from "../../src/ui/format.ts"
 
 describe("ICONS", () => {
   test("contains expected nerd font icons", () => {

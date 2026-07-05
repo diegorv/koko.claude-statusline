@@ -17,7 +17,7 @@ CI runs on push and PR via GitHub Actions.
 | `src/index.ts` | Entry point, orchestration only |
 | `src/parsing/stdin.ts` | Parse Claude Code JSON from stdin |
 | `src/parsing/transcript.ts` | Parse session transcript JSONL — tool/agent tracking, per-turn token usage, assistant samples for rate math |
-| `src/collection/git.ts` | Git repo info via `Bun.spawnSync` (branch, dirty, SHA, fork detection) |
+| `src/collection/git.ts` | Git repo info via `node:child_process` `spawnSync` (branch, dirty, SHA, fork detection) |
 | `src/collection/config.ts` | Count `CLAUDE.md`, MCPs, hooks, rules |
 | `src/collection/parent-process.ts` | Inspect parent process cmdline for `--dangerously-skip-permissions` |
 | `src/ui/terminal.ts` | Terminal width detection (stdout / stderr / env / `/dev/tty`) with per-session cache to defuse transient glitches |
@@ -30,7 +30,7 @@ CI runs on push and PR via GitHub Actions.
 
 ## Dependencies
 
-Zero runtime dependencies. Layout is rendered as plain ANSI rows with a horizontal rule between header and body — no box-drawing or color library. Git and terminal size are queried via `Bun.spawnSync`.
+Zero runtime dependencies. Layout is rendered as plain ANSI rows with a horizontal rule between header and body — no box-drawing or color library. Git and terminal size are queried via `node:child_process` `spawnSync`.
 
 Dev dependency: `@types/bun` for TypeScript types.
 

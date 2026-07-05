@@ -1,10 +1,10 @@
 // Flat-line layout — header (left + right) with horizontal rule and content rows.
 
-import type { StdinData } from "../parsing/stdin"
-import type { RenderResult } from "./render"
-import { bold, c, dim, formatDuration, formatTokens, gradientBar, nbsp, pctColor, RESET, vlen } from "./format"
-import { SEP, inRuleColor, inFaintColor } from "./constants"
-import { getTerminalWidth } from "./terminal"
+import type { StdinData } from "../parsing/stdin.ts"
+import type { RenderResult } from "./render.ts"
+import { bold, c, dim, formatDuration, formatTokens, gradientBar, nbsp, pctColor, RESET, vlen } from "./format.ts"
+import { SEP, inRuleColor, inFaintColor } from "./constants.ts"
+import { getTerminalWidth } from "./terminal.ts"
 
 const RULE_CHAR = "─"
 const LEFT_PAD = " "

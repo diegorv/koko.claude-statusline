@@ -1,8 +1,8 @@
 // Component: currently running tools with spinner
 
-import type { RunningTool } from "../../parsing/transcript"
-import { c } from "../format"
-import { spin } from "../constants"
+import type { RunningTool } from "../../parsing/transcript.ts"
+import { c } from "../format.ts"
+import { spin } from "../constants.ts"
 
 /**
  * Renders currently running tools with a spinner animation and optional target info.

@@ -1,6 +1,6 @@
 // Component: rate limit display with gradient bar
 
-import { gradientBar, pctColor, formatResetIn, dim, RESET } from "../format"
+import { gradientBar, pctColor, formatResetIn, dim, RESET } from "../format.ts"
 
 /**
  * Renders a single rate limit as a formatted string with gradient bar,

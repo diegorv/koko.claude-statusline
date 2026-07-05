@@ -1,6 +1,6 @@
 // Component: todo progress display
 
-import { c, dim } from "../format"
+import { c, dim } from "../format.ts"
 
 /**
  * Renders todo progress: current in-progress task or "All complete" message.

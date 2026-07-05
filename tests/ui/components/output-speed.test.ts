@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { renderOutputSpeed } from "../../../src/ui/components/output-speed"
+import { renderOutputSpeed } from "../../../src/ui/components/output-speed.ts"
 
 const NOW = 1_700_000_000_000  // arbitrary fixed clock for deterministic tests
 

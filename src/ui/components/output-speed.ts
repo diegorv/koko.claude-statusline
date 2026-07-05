@@ -1,7 +1,7 @@
 // Component: live output speed (tokens/second) from the assistant samples window.
 
-import type { AssistantSample } from "../../parsing/transcript"
-import { c, dim } from "../format"
+import type { AssistantSample } from "../../parsing/transcript.ts"
+import { c, dim } from "../format.ts"
 
 /**
  * If the most recent assistant turn is older than this (ms), the rate is

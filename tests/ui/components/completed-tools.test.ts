@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { renderCompletedTools } from "../../../src/ui/components/completed-tools"
+import { renderCompletedTools } from "../../../src/ui/components/completed-tools.ts"
 
 describe("renderCompletedTools", () => {
   test("returns empty array for empty map", () => {

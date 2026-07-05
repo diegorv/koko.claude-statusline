@@ -4,8 +4,8 @@
 // conceptual family: "how much output did this session produce" — tokens
 // being the unit cost, +/- lines being the visible work product.
 
-import type { StdinData } from "../../parsing/stdin"
-import { c } from "../format"
+import type { StdinData } from "../../parsing/stdin.ts"
+import { c } from "../format.ts"
 
 /**
  * Renders `+N -M` for lines added/removed in the current session, or null

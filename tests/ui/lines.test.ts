@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test"
-import { renderLines } from "../../src/ui/lines"
-import { vlen } from "../../src/ui/format"
-import { SEP } from "../../src/ui/constants"
-import type { StdinData } from "../../src/parsing/stdin"
-import type { RenderResult } from "../../src/ui/render"
+import { renderLines } from "../../src/ui/lines.ts"
+import { vlen } from "../../src/ui/format.ts"
+import { SEP } from "../../src/ui/constants.ts"
+import type { StdinData } from "../../src/parsing/stdin.ts"
+import type { RenderResult } from "../../src/ui/render.ts"
 
 const ORIGINAL_STDOUT_COLS = process.stdout.columns
 const ORIGINAL_STDERR_COLS = process.stderr.columns

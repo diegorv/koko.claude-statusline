@@ -2,8 +2,8 @@
 // savings suffix. Renders only when caveman is active; the caller (render.ts)
 // passes null when caveman isn't installed.
 
-import type { CavemanState } from "../../collection/caveman"
-import { RESET } from "../format"
+import type { CavemanState } from "../../collection/caveman.ts"
+import { RESET } from "../format.ts"
 
 // 256-color orange — matches the bash statusline shipped with caveman so the
 // brand stays consistent whether the user runs the upstream script or this one.

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { renderEffort } from "../../../src/ui/components/effort"
+import { renderEffort } from "../../../src/ui/components/effort.ts"
 
 describe("renderEffort", () => {
   test("returns null when level is null", () => {

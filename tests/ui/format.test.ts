@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { formatDuration, formatTokens, pctColor, gradientBar, formatResetIn, vlen, nbsp, c, bold, dim } from "../../src/ui/format"
+import { formatDuration, formatTokens, pctColor, gradientBar, formatResetIn, vlen, nbsp, c, bold, dim } from "../../src/ui/format.ts"
 
 describe("formatDuration", () => {
   test("returns seconds for sub-minute durations", () => {

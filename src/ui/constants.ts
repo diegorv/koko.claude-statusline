@@ -1,6 +1,6 @@
 // Shared UI constants — icons, separators, spinner
 
-import { dim } from "./format"
+import { dim } from "./format.ts"
 
 /** Nerd Font icons used across components. */
 export const ICONS = {

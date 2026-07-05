@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { renderActivityTitle } from "../../../src/ui/components/activity-title"
+import { renderActivityTitle } from "../../../src/ui/components/activity-title.ts"
 
 describe("renderActivityTitle", () => {
   test("returns empty string with no config and no session", () => {

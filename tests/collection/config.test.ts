@@ -1,5 +1,5 @@
 import { describe, expect, test, beforeEach, afterEach } from "bun:test"
-import { getConfigCounts } from "../../src/collection/config"
+import { getConfigCounts } from "../../src/collection/config.ts"
 import { mkdirSync, writeFileSync, rmSync } from "fs"
 import { join } from "path"
 import { tmpdir } from "os"

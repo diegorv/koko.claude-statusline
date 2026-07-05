@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- [Bun](https://bun.sh) `>= 1.0` (recommended) — runs the script directly from TypeScript, no build step. Any bundler-style TS runner also works (e.g. [tsx](https://tsx.is)); plain `node src/index.ts` does **not**, because Node's ESM loader needs explicit `.ts` import extensions. See [Other runtimes](#other-runtimes) below.
+- A TypeScript runtime — **[Bun](https://bun.sh) `>= 1.0`** (recommended), **[Node](https://nodejs.org) `>= 22.18`/`>= 23.6`**, or **[tsx](https://tsx.is)**. The script runs directly from TypeScript with no build step; pick whichever you already have. See [Other runtimes](#other-runtimes) for the tradeoffs.
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed and configured.
 - A terminal with true-color (24-bit) support (iTerm2, Ghostty, Kitty, Alacritty, WezTerm, modern Terminal.app, modern GNOME Terminal).
 - Tested on macOS. CI passes on Linux but has not been manually validated there.
@@ -91,26 +91,50 @@ No restart of Claude Code is required — the script is re-read on the next refr
 
 ## Other runtimes
 
-Bun is the recommended runtime, but the entry point is plain TypeScript with no build step and makes zero `Bun.*` API calls — every system call goes through Node-compatible `node:` modules. So any **bundler-style** TypeScript runner can run it:
+The entry point is plain TypeScript with no build step and makes zero `Bun.*` API calls — every system call goes through Node-compatible `node:` modules, and every internal import carries an explicit `.ts` extension. So you choose the runtime: replace `bun` in the `command` (and in the smoke test) with any of these.
 
-- **[tsx](https://tsx.is)** — install it (`bun add -g tsx`, `npm i -g tsx`, etc.) and use `tsx` wherever this guide uses `bun`:
+### Node
 
-  ```json
-  {
-    "statusLine": {
-      "type": "command",
-      "command": "tsx /absolute/path/to/koko.claude-statusline/src/index.ts",
-      "padding": 0,
-      "refreshInterval": 10
-    }
+Node runs the entry point directly using its built-in TypeScript **type stripping** — no build step, no flags:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "node /absolute/path/to/koko.claude-statusline/src/index.ts",
+    "padding": 0,
+    "refreshInterval": 10
   }
-  ```
+}
+```
 
-  Verify the same way: `echo '{"model":{"display_name":"Opus"}}' | tsx src/index.ts`.
+Requires **Node `>= 23.6`**, or **`>= 22.18`** on the 22 LTS line, where type stripping is on by default. On Node 22.6–22.17 it works with the `--experimental-strip-types` flag. Type stripping only *removes* type annotations — it does not transpile — which is fine here: the source uses no enums, namespaces, decorators, or constructor parameter properties. And because there are zero runtime dependencies, Node users can skip `bun install` entirely — clone and run.
 
-Plain **`node src/index.ts` is not supported.** Node already strips TypeScript types on recent versions, but its ESM loader requires explicit `.ts` extensions on relative imports, which this project omits (bundler-style resolution). Use `tsx` — or Bun — instead.
+### tsx
 
-Choosing Bun keeps things simplest: no extra global install, and it honors the supply-chain cooldown configured in `bunfig.toml` (see [Development](DEVELOPMENT.md)).
+[tsx](https://tsx.is) (and other bundler-style TS runners) also work. Install it (`bun add -g tsx`, `npm i -g tsx`, etc.) and use `tsx` wherever this guide uses `bun`:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "tsx /absolute/path/to/koko.claude-statusline/src/index.ts",
+    "padding": 0,
+    "refreshInterval": 10
+  }
+}
+```
+
+Verify any of them the same way, e.g. `echo '{"model":{"display_name":"Opus"}}' | node src/index.ts`.
+
+### Supply-chain note
+
+Running the statusline installs **no package** — there are zero runtime dependencies, so the code that executes is exactly what you cloned, nothing resolved from a registry at run time. The runtimes differ in what *they* pull in:
+
+- **Bun / Node** add nothing beyond the runtime itself. Node users can even skip `bun install` — clone and run.
+- **tsx** is the exception: it is an npm package (tsx + esbuild + its tree), so `npm i -g tsx` installs a dependency tree globally, resolved by npm **outside** the cooldown in `bunfig.toml`.
+
+Bun stays the recommended path: no extra global install, and its `bun install` (dev types only) honors that cooldown (see [Development](DEVELOPMENT.md)). But every option runs the same source — you are never locked in.
 
 ## Troubleshooting
 

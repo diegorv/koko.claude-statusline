@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { getGitInfo } from "../../src/collection/git"
+import { getGitInfo } from "../../src/collection/git.ts"
 
 describe("getGitInfo", () => {
   test("returns valid info for current repo", () => {

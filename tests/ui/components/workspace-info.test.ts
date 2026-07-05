@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import { renderWorkspaceInfo } from "../../../src/ui/components/workspace-info"
-import type { StdinData } from "../../../src/parsing/stdin"
+import { renderWorkspaceInfo } from "../../../src/ui/components/workspace-info.ts"
+import type { StdinData } from "../../../src/parsing/stdin.ts"
 
 const MINIMAL_DATA: StdinData = {
   model: "Opus", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,
