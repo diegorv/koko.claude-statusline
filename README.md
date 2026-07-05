@@ -64,11 +64,22 @@ The entry point is plain TypeScript with no build step and zero `Bun.*` calls �
 
 Every option runs the same source — you are never locked in. Full details and version caveats in **[docs/INSTALL.md](docs/INSTALL.md)**.
 
+### Or grab a prebuilt bundle (no clone)
+
+Don't want to clone? Every [release](https://github.com/diegorv/koko.claude-statusline/releases) ships `statusline.mjs` — the whole thing bundled into one self-contained file you run with `node` or `bun`, no repo and no build:
+
+```sh
+curl -fL -o ~/.claude-statusline.mjs \
+  https://github.com/diegorv/koko.claude-statusline/releases/latest/download/statusline.mjs
+```
+
+Point your `command` at it — `node /Users/<you>/.claude-statusline.mjs`. Checksum verification and the full walkthrough are in **[docs/INSTALL.md](docs/INSTALL.md#install-from-a-prebuilt-bundle-no-clone)**.
+
 ## Documentation
 
 | Doc | Contents |
 |---|---|
-| [docs/INSTALL.md](docs/INSTALL.md) | Full installation: prerequisites, clone, configure, verify, update, troubleshoot |
+| [docs/INSTALL.md](docs/INSTALL.md) | Full installation: clone or prebuilt bundle, configure, verify, update, other runtimes, troubleshoot |
 | [docs/LAYOUT.md](docs/LAYOUT.md) | What the statusline shows — header, body rows, and the full feature list |
 | [docs/TUNING.md](docs/TUNING.md) | Environment variables (`CLAUDE_STATUSLINE_RIGHT_MARGIN`, `CLAUDE_CODE_EFFORT_LEVEL`, `CLAUDE_STATUSLINE_DEBUG_LOG`) |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Testing, project structure, dependencies, inspiration & attribution |

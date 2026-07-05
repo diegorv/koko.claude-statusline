@@ -1,5 +1,7 @@
 # Installation
 
+Two ways to install: **clone the repo** and point Claude Code at the TypeScript entry point (the numbered steps below), or **[download a prebuilt bundle](#install-from-a-prebuilt-bundle-no-clone)** — a single `statusline.mjs` file you run with `node` or `bun`, no clone and no build.
+
 ## Prerequisites
 
 - A TypeScript runtime — **[Bun](https://bun.sh) `>= 1.0`** (recommended), **[Node](https://nodejs.org) `>= 22.18`/`>= 23.6`**, or **[tsx](https://tsx.is)**. The script runs directly from TypeScript with no build step; pick whichever you already have. See [Other runtimes](#other-runtimes) for the tradeoffs.
@@ -88,6 +90,40 @@ bun install
 ```
 
 No restart of Claude Code is required — the script is re-read on the next refresh.
+
+## Install from a prebuilt bundle (no clone)
+
+Every [release](https://github.com/diegorv/koko.claude-statusline/releases) ships `statusline.mjs` — the whole statusline bundled into a single self-contained ESM file (still zero dependencies). Download it and point Claude Code at it: no clone, no `bun install`, no build step. It runs on **any runtime** — `node` (any version with ESM support, no type-stripping floor) or `bun`. This is the lightest path if you do not want the repo or are on an older Node.
+
+Download the latest bundle to a stable location (do not move it afterward — the path goes into your settings):
+
+```sh
+curl -fL -o ~/.claude-statusline.mjs \
+  https://github.com/diegorv/koko.claude-statusline/releases/latest/download/statusline.mjs
+```
+
+Optionally verify its integrity against the checksum published on the release:
+
+```sh
+shasum -a 256 ~/.claude-statusline.mjs
+# compare the hash against the statusline.mjs line in that release's
+# checksums-sha256.txt (attached to the release on GitHub)
+```
+
+Add a `statusLine` block to `~/.claude/settings.json`, pointing `command` at the file with `node` (or `bun`). Use an **absolute** path — Claude Code does not expand `~`:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "node /Users/<you>/.claude-statusline.mjs",
+    "padding": 0,
+    "refreshInterval": 10
+  }
+}
+```
+
+`padding` and `refreshInterval` behave exactly as in [Configure Claude Code](#3-configure-claude-code) above. To update, re-run the `curl` command — it overwrites the file in place, and Claude Code re-reads it on the next refresh.
 
 ## Other runtimes
 
