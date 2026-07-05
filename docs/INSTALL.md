@@ -125,6 +125,8 @@ Requires **Node `>= 23.6`**, or **`>= 22.18`** on the 22 LTS line, where type st
 }
 ```
 
+CI covers tsx by proxy rather than with a dedicated job: tsx runs on esbuild — bundler-style resolution like Bun, and it *transpiles* rather than only stripping types, so it is strictly more permissive than the Node path. The Bun and Node smoke tests bracket it (Bun exercises the bundler-style `.ts` resolution, Node the stricter type-strip-only path), so a separate tsx job adds no new signal — only an npm dependency tree pulled into CI outside the `bunfig.toml` cooldown.
+
 Verify any of them the same way, e.g. `echo '{"model":{"display_name":"Opus"}}' | node src/index.ts`.
 
 ### Supply-chain note
