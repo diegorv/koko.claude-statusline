@@ -104,14 +104,17 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build single-file bundle
-        # Produces `dist/statusline.js` — a self-contained CLI bundle
-        # users can `curl` and run with `bun dist/statusline.js` without
-        # cloning the repo. Source files in src/ are still the canonical
-        # entry point; this is just a convenience artifact.
+        # Produces `dist/statusline.mjs` — a self-contained ESM bundle users
+        # can `curl` and run with `node` OR `bun` (any runtime, no clone). It
+        # is plain JS with no type stripping needed, so even older Node runs
+        # it, and the `.mjs` extension forces ESM regardless of where it is
+        # downloaded. CJS is not an option: src/index.ts uses top-level await.
+        # Source files in src/ stay the canonical entry point; this is just a
+        # convenience artifact.
         run: |
           set -euo pipefail
           mkdir -p dist
-          bun build src/index.ts --target=bun --outfile=dist/statusline.js
+          bun build src/index.ts --target=node --outfile=dist/statusline.mjs
           ls -la dist/
 
       - name: Generate changelog
@@ -147,7 +150,7 @@ jobs:
         run: |
           set -euo pipefail
           cd dist
-          shasum -a 256 statusline.js > checksums-sha256.txt
+          shasum -a 256 statusline.mjs > checksums-sha256.txt
           echo "--- Checksums ---"
           cat checksums-sha256.txt
 
@@ -176,16 +179,16 @@ jobs:
             printf '%s\n' "## Install"
             printf '\n'
             printf '%s\n' '```bash'
-            printf 'curl -fL -o ~/.claude-statusline.js \\\n'
-            printf '  https://github.com/%s/releases/download/%s/statusline.js\n' "$REPO" "$TAG"
-            printf '# then point your Claude Code statusline config at:\n'
-            printf '#   bun ~/.claude-statusline.js\n'
+            printf 'curl -fL -o ~/.claude-statusline.mjs \\\n'
+            printf '  https://github.com/%s/releases/download/%s/statusline.mjs\n' "$REPO" "$TAG"
+            printf '# then point your Claude Code statusline config at (any runtime):\n'
+            printf '#   node ~/.claude-statusline.mjs   (or: bun ~/.claude-statusline.mjs)\n'
             printf '%s\n' '```'
             printf '\n'
             printf '%s\n' "## Verify download integrity"
             printf '\n'
             printf '%s\n' '```bash'
-            printf 'shasum -a 256 statusline.js\n'
+            printf 'shasum -a 256 statusline.mjs\n'
             printf '%s\n' '```'
             printf '\n'
             printf 'Compare against `checksums-sha256.txt`.\n'
@@ -204,5 +207,5 @@ jobs:
             --title "$TAG" \
             --notes-file release-body.md \
             $PRERELEASE_FLAG \
-            dist/statusline.js \
+            dist/statusline.mjs \
             dist/checksums-sha256.txt
