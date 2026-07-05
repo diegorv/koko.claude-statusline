@@ -71,12 +71,51 @@ jobs:
           }
           echo "Smoke test passed"
 
+  node-smoke:
+    name: Node smoke (${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        # Node runs the TypeScript entry point directly via built-in type
+        # stripping: 22 is the LTS floor (>= 22.18), 24 is current. Guards the
+        # "any runtime" compatibility documented in docs/INSTALL.md.
+        node-version: [22, 24]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Smoke test (entry point under Node, no build, no install)
+        # Runs src/index.ts with `node` directly — no bun install, zero runtime
+        # deps, no build step. Node strips the TypeScript types in place, so this
+        # proves the documented Node path actually executes. Unit tests stay
+        # Bun-only (they import bun:test), so this is a smoke test of the
+        # parseStdin -> render -> log pipeline, not the full suite.
+        run: |
+          output=$(echo '{"model":{"display_name":"Opus 4.7 (1M context)"},"context_window":{"used_percentage":42},"cost":{"total_cost_usd":1.50,"total_duration_ms":60000}}' | node src/index.ts)
+          if [ -z "$output" ]; then
+            echo "Node smoke test failed: statusline produced no output"
+            exit 1
+          fi
+          echo "$output" | grep -q "Opus" || {
+            echo "Node smoke test failed: output is missing the model name"
+            echo "Got: $output"
+            exit 1
+          }
+          echo "Node smoke test passed on $(node --version)"
+
   # Aggregate gate. Wire this as the single required status check for
   # branch protection so the rule doesn't need updating whenever the
   # job matrix changes.
   ci-success:
     name: CI success
-    needs: [test]
+    needs: [test, node-smoke]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 1
@@ -85,9 +124,14 @@ jobs:
         run: |
           set -euo pipefail
           test_result="${{ needs.test.result }}"
-          echo "test=$test_result"
+          node_smoke_result="${{ needs.node-smoke.result }}"
+          echo "test=$test_result node-smoke=$node_smoke_result"
           if [ "$test_result" != "success" ]; then
             echo "::error::test job did not succeed (result=$test_result)"
+            exit 1
+          fi
+          if [ "$node_smoke_result" != "success" ]; then
+            echo "::error::node-smoke job did not succeed (result=$node_smoke_result)"
             exit 1
           fi
           echo "All gates passed."
