@@ -1,6 +1,6 @@
 {
   "name": "claude-statusline",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "devDependencies": {
     "@types/bun": "^1.4.2",
     "typescript": "^7.0.2"
