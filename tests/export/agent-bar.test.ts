@@ -47,7 +47,7 @@ describe("exportAgentBar", () => {
     expect(existsSync(TMP_DIR)).toBe(false)
   })
 
-  test("does nothing outside kitty (no KITTY_WINDOW_ID)", () => {
+  test("does nothing outside kitty and herdr (no window or pane id)", () => {
     exportAgentBar({ AGENT_BAR_DIR: TMP_DIR }, data, null)
     expect(existsSync(TMP_DIR)).toBe(false)
   })
@@ -68,6 +68,24 @@ describe("exportAgentBar", () => {
     exportAgentBar({ AGENT_BAR_DIR: TMP_DIR, KITTY_WINDOW_ID: "7" }, data, null)
     expect(statSync(TMP_DIR).mode & 0o777).toBe(0o700)
     expect(statSync(join(TMP_DIR, "7.json")).mode & 0o777).toBe(0o600)
+  })
+
+  test("writes herdr-<pane id>.json inside a herdr pane", () => {
+    exportAgentBar({ AGENT_BAR_DIR: TMP_DIR, HERDR_PANE_ID: "w15:p1" }, data, "high")
+    expect(readdirSync(TMP_DIR)).toEqual(["herdr-w15_p1.json"])
+    const snap = JSON.parse(readFileSync(join(TMP_DIR, "herdr-w15_p1.json"), "utf8"))
+    expect(snap.effort).toBe("high")
+  })
+
+  test("writes both files when both ids are present", () => {
+    exportAgentBar({ AGENT_BAR_DIR: TMP_DIR, KITTY_WINDOW_ID: "7", HERDR_PANE_ID: "w1:p2" }, data, null)
+    expect(readdirSync(TMP_DIR).sort()).toEqual(["7.json", "herdr-w1_p2.json"])
+  })
+
+  test("ignores a herdr pane id with path characters", () => {
+    mkdirSync(TMP_DIR, { recursive: true })
+    exportAgentBar({ AGENT_BAR_DIR: TMP_DIR, HERDR_PANE_ID: "../w1" }, data, null)
+    expect(readdirSync(TMP_DIR)).toEqual([])
   })
 
   test("ignores a window id that is not a number", () => {
