@@ -1,7 +1,8 @@
-import { describe, expect, test, beforeEach, afterEach } from "bun:test"
+import { describe, expect, test, beforeEach, afterEach, spyOn } from "bun:test"
 import { getConfigCounts } from "../../src/collection/config.ts"
 import { mkdirSync, writeFileSync, rmSync } from "fs"
 import { join } from "path"
+import * as os from "os"
 import { tmpdir } from "os"
 
 const TMP_DIR = join(tmpdir(), "claude-statusline-config-tests")
@@ -61,8 +62,16 @@ describe("getConfigCounts", () => {
       mcpServers: { server1: {}, server2: {}, server3: {} },
       disabledMcpServers: ["server1"],
     }))
-    const result = getConfigCounts(TMP_DIR)
-    expect(result.mcps).toBe(2)
+    // Isolate from the real ~/.claude config so the exact count holds on any machine
+    const fakeHome = join(TMP_DIR, "home")
+    mkdirSync(fakeHome, { recursive: true })
+    const homedirSpy = spyOn(os, "homedir").mockReturnValue(fakeHome)
+    try {
+      const result = getConfigCounts(TMP_DIR)
+      expect(result.mcps).toBe(2)
+    } finally {
+      homedirSpy.mockRestore()
+    }
   })
 
   test("counts hooks from .claude/settings.json", () => {
