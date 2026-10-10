@@ -20,6 +20,7 @@ CI runs on push and PR via GitHub Actions.
 | `src/collection/git.ts` | Git repo info via `node:child_process` `spawnSync` (branch, dirty, SHA, fork detection) |
 | `src/collection/config.ts` | Count `CLAUDE.md`, MCPs, hooks, rules |
 | `src/collection/parent-process.ts` | Inspect parent process cmdline for `--dangerously-skip-permissions` |
+| `src/export/agent-bar.ts` | Optional session snapshot for a terminal-side agent bar (`AGENT_BAR_DIR`) |
 | `src/ui/terminal.ts` | Terminal width detection (stdout / stderr / env / `/dev/tty`) with per-session cache to defuse transient glitches |
 | `src/ui/format.ts` | ANSI colors, gradient bar, `Intl.Segmenter`-based grapheme width, duration formatting |
 | `src/ui/render.ts` | Compositor — assembles per-row components and assigns domain gutters |
