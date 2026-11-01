@@ -6,6 +6,7 @@ import type { GitInfo } from "../collection/git.ts"
 import type { ConfigCounts } from "../collection/config.ts"
 import type { TranscriptData } from "../parsing/transcript.ts"
 import type { CavemanState } from "../collection/caveman.ts"
+import type { WorktrunkInfo } from "../collection/worktrunk.ts"
 import { SEP, GAP, ICONS } from "./constants.ts"
 import { c } from "./format.ts"
 import {
@@ -66,6 +67,7 @@ export function render(
   transcript: TranscriptData | null = null,
   skipPermissions: boolean = false,
   caveman: CavemanState | null = null,
+  worktrunk: WorktrunkInfo | null = null,
 ): RenderResult {
   const session: string[] = []
 
@@ -74,10 +76,10 @@ export function render(
   // the consumption row instead, since it's a session-output tally.
   const gitRowParts: string[] = []
   if (git) {
-    const gitStr = renderGitStatus(git)
+    const gitStr = renderGitStatus(git, worktrunk)
     if (gitStr) gitRowParts.push(gitStr)
   }
-  gitRowParts.push(...renderWorkspaceInfo(data))
+  gitRowParts.push(...renderWorkspaceInfo(data, git?.worktree))
   if (gitRowParts.length > 0) session.push(GUTTERS.git + gitRowParts.join(SEP))
 
   // Row 2 (consumption, yellow): rate limits → tok/s → +/- → tokens.

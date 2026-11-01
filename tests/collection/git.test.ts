@@ -57,3 +57,31 @@ describe("getGitInfo", () => {
     expect(git.isFork).toBe(false)
   })
 })
+
+describe("getGitInfo worktree detection", () => {
+  const { mkdtempSync, rmSync } = require("node:fs") as typeof import("node:fs")
+  const { spawnSync } = require("node:child_process") as typeof import("node:child_process")
+  const { join } = require("node:path") as typeof import("node:path")
+  const { tmpdir } = require("node:os") as typeof import("node:os")
+
+  const git = (cwd: string, ...args: string[]) =>
+    spawnSync("git", ["-C", cwd, "-c", "user.name=t", "-c", "user.email=t@t", ...args], { stdio: "ignore" })
+
+  test("main checkout has empty worktree; linked worktree reports its folder name", () => {
+    const root = mkdtempSync(join(tmpdir(), "sl-wt-"))
+    try {
+      const main = join(root, "repo")
+      git(root, "init", "-q", "-b", "main", main)
+      git(main, "commit", "-q", "--allow-empty", "-m", "init")
+      const linked = join(root, "repo.feature")
+      git(main, "worktree", "add", "-q", "-b", "feature", linked)
+
+      expect(getGitInfo(main).worktree).toBe("")
+      const info = getGitInfo(linked)
+      expect(info.worktree).toBe("repo.feature")
+      expect(info.branch).toBe("feature")
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
+})

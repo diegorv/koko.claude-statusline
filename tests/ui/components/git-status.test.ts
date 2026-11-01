@@ -5,7 +5,7 @@ import type { GitInfo } from "../../../src/collection/git.ts"
 const BASE: GitInfo = {
   repo: "myrepo", branch: "main", dirty: false,
   staged: 0, modified: 0, untracked: 0, ahead: 0, behind: 0,
-  sha: "", isFork: false,
+  sha: "", isFork: false, worktree: "",
 }
 
 describe("renderGitStatus", () => {
@@ -52,5 +52,20 @@ describe("renderGitStatus", () => {
 
   test("hides fork marker when isFork is false", () => {
     expect(renderGitStatus(BASE)).not.toContain("⑂")
+  })
+})
+
+describe("renderGitStatus with worktrunk info", () => {
+  test("renders agent marker and ahead/behind vs default branch", () => {
+    const result = renderGitStatus(BASE, { marker: "🤖", ahead: 2, behind: 1, defaultBranch: "main" }).replace(/\x1b\[[0-9;]*m/g, "")
+    expect(result).toContain("🤖")
+    expect(result).toContain("main↑2")
+    expect(result).toContain("↓1")
+  })
+
+  test("omits default-branch sync when in step with it", () => {
+    const result = renderGitStatus(BASE, { marker: "", ahead: 0, behind: 0, defaultBranch: "main" })
+    expect(result).not.toContain("main↑")
+    expect(result).not.toContain("↓")
   })
 })

@@ -15,13 +15,15 @@ export interface GitInfo {
   sha: string
   /** True when `origin` and `upstream` remotes belong to different owners. */
   isFork: boolean
+  /** Folder name of a linked worktree; empty string in the main checkout. */
+  worktree: string
 }
 
 const EMPTY: GitInfo = {
   repo: "", branch: "", dirty: false,
   staged: 0, modified: 0, untracked: 0,
   ahead: 0, behind: 0,
-  sha: "", isFork: false,
+  sha: "", isFork: false, worktree: "",
 }
 
 /**
@@ -57,7 +59,7 @@ function parseRemoteOwners(remoteOutput: string): { origin: string; upstream: st
 
 /**
  * Collects git repository status for the given working directory.
- * Uses 2 git spawns: rev-parse (repo name) and status -b --porcelain (branch + status + ahead/behind).
+ * Uses 3 git spawns: rev-parse (repo name, worktree, SHA) and status -b --porcelain (branch + status + ahead/behind), remote -v (fork).
  * @param cwd - Working directory path.
  * @returns Git info object, or empty defaults if not a git repo.
  */
@@ -72,8 +74,12 @@ export function getGitInfo(cwd: string): GitInfo {
   try {
     // Fold short SHA into the existing rev-parse call — both lines come back
     // from one spawn, saving a round trip per refresh.
-    const revParseOut = run("rev-parse", "--show-toplevel", "--short", "HEAD")
-    const [toplevel, sha] = revParseOut.split("\n")
+    // A linked worktree has its own git-dir under the shared common-dir.
+    const revParseOut = run(
+      "rev-parse", "--path-format=absolute", "--show-toplevel", "--git-dir", "--git-common-dir",
+      "--short", "HEAD",
+    )
+    const [toplevel, gitDir, commonDir, sha] = revParseOut.split("\n")
     const repo = toplevel?.split("/").pop() ?? ""
     if (!repo) return EMPTY
 
@@ -126,6 +132,7 @@ export function getGitInfo(cwd: string): GitInfo {
       ahead, behind,
       sha: sha ?? "",
       isFork,
+      worktree: gitDir && gitDir !== commonDir ? repo : "",
     }
   } catch {
     return EMPTY

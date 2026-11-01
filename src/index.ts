@@ -10,6 +10,7 @@ import { getConfigCounts } from "./collection/config.ts"
 import { parseTranscript } from "./parsing/transcript.ts"
 import { detectSkipPermissions } from "./collection/parent-process.ts"
 import { getCavemanState } from "./collection/caveman.ts"
+import { getWorktrunkInfo } from "./collection/worktrunk.ts"
 import { render } from "./ui/render.ts"
 import { renderLines } from "./ui/lines.ts"
 import { vlen } from "./ui/format.ts"
@@ -22,7 +23,9 @@ const config = data.cwd ? getConfigCounts(data.cwd) : null
 const transcript = data.transcriptPath ? parseTranscript(data.transcriptPath) : null
 const skipPermissions = detectSkipPermissions()
 const caveman = getCavemanState()
-const result = render(data, git, config, transcript, skipPermissions, caveman)
+// wt costs ~100ms, so only ask it inside linked worktrees.
+const worktrunk = data.cwd && git?.worktree ? getWorktrunkInfo(data.cwd) : null
+const result = render(data, git, config, transcript, skipPermissions, caveman, worktrunk)
 const output = renderLines(data, result, git?.repo)
 console.log(output)
 

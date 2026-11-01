@@ -31,3 +31,16 @@ describe("renderWorkspaceInfo", () => {
     expect(parts.some(p => p.includes("NORMAL"))).toBe(true)
   })
 })
+
+describe("renderWorkspaceInfo git worktree fallback", () => {
+  test("shows git worktree name when Claude Code reports none", () => {
+    const parts = renderWorkspaceInfo(MINIMAL_DATA, "repo.feature")
+    expect(parts.some(p => p.includes("repo.feature"))).toBe(true)
+  })
+
+  test("prefers Claude Code's worktree name and does not duplicate", () => {
+    const parts = renderWorkspaceInfo({ ...MINIMAL_DATA, worktree: "cc-wt" }, "repo.feature")
+    expect(parts.join(" ")).toContain("cc-wt")
+    expect(parts.join(" ")).not.toContain("repo.feature")
+  })
+})

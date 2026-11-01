@@ -1,15 +1,17 @@
 // Component: git branch and working tree status
 
 import type { GitInfo } from "../../collection/git.ts"
+import type { WorktrunkInfo } from "../../collection/worktrunk.ts"
 import { c, dim } from "../format.ts"
 
 /**
  * Renders git branch and working tree status as a formatted string.
  * Includes branch name, dirty indicator, staged/modified/untracked counts, and ahead/behind.
  * @param git - Git repository information.
+ * @param wt - Worktrunk info (agent marker, sync vs default branch), when available.
  * @returns Formatted git status string, or empty string if no repo.
  */
-export function renderGitStatus(git: GitInfo): string {
+export function renderGitStatus(git: GitInfo, wt: WorktrunkInfo | null = null): string {
   if (!git.repo) return ""
 
   // Only truncate pathologically long names; the row wraps at SEP boundaries
@@ -33,6 +35,16 @@ export function renderGitStatus(git: GitInfo): string {
   if (git.ahead > 0)  sync.push(c("green", `↑${git.ahead}`))
   if (git.behind > 0) sync.push(c("red", `↓${git.behind}`))
   if (sync.length > 0) str += `  ${sync.join(" ")}`
+
+  // Sync vs the default branch (worktrunk), prefixed with its name so it
+  // isn't confused with the upstream ↑/↓ above.
+  if (wt && (wt.ahead > 0 || wt.behind > 0)) {
+    let base = dim(wt.defaultBranch || "base")
+    if (wt.ahead > 0)  base += c("green", `↑${wt.ahead}`)
+    if (wt.behind > 0) base += c("red", `↓${wt.behind}`)
+    str += `  ${base}`
+  }
+  if (wt?.marker) str += `  ${wt.marker}`
 
   // Short SHA tail — dim so it reads as a low-importance breadcrumb next to
   // the colored branch / status section.
