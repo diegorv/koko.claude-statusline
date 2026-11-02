@@ -3,6 +3,7 @@
 // agent-agnostic summary to:
 //   <AGENT_BAR_DIR>/<KITTY_WINDOW_ID>.json        inside a kitty window
 //   <AGENT_BAR_DIR>/herdr-<HERDR_PANE_ID>.json    inside a herdr pane (":" → "_")
+//   <AGENT_BAR_DIR>/hc-<HC_TERMINAL_ID>.json      inside a herdr-core terminal (herdr-app)
 // Other agents can write the same schema, so the bar does not care who wrote it.
 
 import { chmodSync, mkdirSync, renameSync, writeFileSync } from "node:fs"
@@ -54,12 +55,16 @@ function snapshotNames(env: Record<string, string | undefined>): string[] {
   if (windowId && /^\d+$/.test(windowId)) names.push(`${windowId}.json`)
   const paneId = env.HERDR_PANE_ID
   if (paneId && /^[A-Za-z0-9_:-]+$/.test(paneId)) names.push(`herdr-${paneId.replaceAll(":", "_")}.json`)
+  // Remote terminals are "machine/t7": the slash rules them out.
+  const terminalId = env.HC_TERMINAL_ID
+  if (terminalId && /^[A-Za-z0-9_-]+$/.test(terminalId)) names.push(`hc-${terminalId}.json`)
   return names
 }
 
 /**
  * Writes the snapshot when AGENT_BAR_DIR is set and the statusline runs inside
- * a kitty window (numeric KITTY_WINDOW_ID) and/or a herdr pane (HERDR_PANE_ID);
+ * a kitty window (numeric KITTY_WINDOW_ID), a herdr pane (HERDR_PANE_ID) and/or a
+ * herdr-core terminal (HC_TERMINAL_ID);
  * otherwise does nothing. Never throws — the statusline must render regardless.
  * Each file is written to a temp name and renamed, so readers never see half a file.
  * @param env - Environment (process.env in production).

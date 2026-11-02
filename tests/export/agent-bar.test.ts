@@ -88,6 +88,19 @@ describe("exportAgentBar", () => {
     expect(readdirSync(TMP_DIR)).toEqual([])
   })
 
+  test("writes hc-<terminal>.json inside a herdr-core terminal", () => {
+    exportAgentBar({ AGENT_BAR_DIR: TMP_DIR, HC_TERMINAL_ID: "t7" }, data, "high")
+    expect(readdirSync(TMP_DIR)).toEqual(["hc-t7.json"])
+    const snap = JSON.parse(readFileSync(join(TMP_DIR, "hc-t7.json"), "utf8"))
+    expect(snap.model).toBe(data.model)
+  })
+
+  test("ignores a herdr-core terminal id with path characters (remote vps/t7)", () => {
+    mkdirSync(TMP_DIR, { recursive: true })
+    exportAgentBar({ AGENT_BAR_DIR: TMP_DIR, HC_TERMINAL_ID: "vps/t7" }, data, null)
+    expect(readdirSync(TMP_DIR)).toEqual([])
+  })
+
   test("ignores a window id that is not a number", () => {
     mkdirSync(TMP_DIR, { recursive: true })
     exportAgentBar({ AGENT_BAR_DIR: TMP_DIR, KITTY_WINDOW_ID: "../evil" }, data, null)
