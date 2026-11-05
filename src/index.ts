@@ -19,7 +19,7 @@ import { exportAgentBar } from "./export/agent-bar.ts"
 
 const data = await parseStdin()
 const git = data.cwd ? getGitInfo(data.cwd) : null
-const config = data.cwd ? getConfigCounts(data.cwd) : null
+const config = data.cwd ? getConfigCounts(data.cwd, data.modelId) : null
 const transcript = data.transcriptPath ? parseTranscript(data.transcriptPath) : null
 const skipPermissions = detectSkipPermissions()
 const caveman = getCavemanState()

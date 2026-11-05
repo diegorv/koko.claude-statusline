@@ -16,6 +16,7 @@ export interface ConfigCounts {
   /**
    * Current /effort level. Resolved via cascade:
    *   env CLAUDE_CODE_EFFORT_LEVEL > .claude/settings.local.json > .claude/settings.json > ~/.claude/settings.json.
+   * Within a file, modelSettings["<model id>"].effortLevel beats its top-level effortLevel.
    * null when unset or the value doesn't match the known enum.
    */
   effortLevel: EffortLevel | null
@@ -35,9 +36,10 @@ function countMdFiles(dir: string): number {
  * Counts CLAUDE.md files, rules, enabled MCP servers, and hooks from the filesystem.
  * Caches parsed JSON per file path to avoid redundant reads.
  * @param cwd - Current working directory of the Claude Code session.
+ * @param modelId - The session's model id, for its modelSettings entry.
  * @returns Configuration counts for display in the status line.
  */
-export function getConfigCounts(cwd: string): ConfigCounts {
+export function getConfigCounts(cwd: string, modelId = ""): ConfigCounts {
   const home = homedir()
   const claude = join(home, ".claude")
 
@@ -113,11 +115,17 @@ export function getConfigCounts(cwd: string): ConfigCounts {
 
   // effortLevel cascade — first valid value wins.
   const localSettings = join(cwd, ".claude", "settings.local.json")
+  // A 1M-context id ends in "[1m]"; settings are keyed by the plain id.
+  const plainModelId = modelId.replace(/\[[^\]]*\]$/, "")
+  const effortsIn = (path: string): unknown[] => {
+    const settings = readJson(path)
+    return [settings?.modelSettings?.[plainModelId]?.effortLevel, settings?.effortLevel]
+  }
   const effortCandidates: unknown[] = [
     process.env.CLAUDE_CODE_EFFORT_LEVEL,
-    readJson(localSettings)?.effortLevel,
-    readJson(projectSettings)?.effortLevel,
-    readJson(claudeSettings)?.effortLevel,
+    ...effortsIn(localSettings),
+    ...effortsIn(projectSettings),
+    ...effortsIn(claudeSettings),
   ]
   const effortLevel = (effortCandidates.find(v => typeof v === "string" && VALID_EFFORT.includes(v as EffortLevel)) ?? null) as EffortLevel | null
 

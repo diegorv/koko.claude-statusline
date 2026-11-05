@@ -117,6 +117,52 @@ describe("getConfigCounts", () => {
       expect(getConfigCounts(TMP_DIR).effortLevel).toBe("xhigh")
     })
 
+    test("a model's own effort beats the same file's top-level one", () => {
+      delete process.env.CLAUDE_CODE_EFFORT_LEVEL
+      const claudeDir = join(TMP_DIR, ".claude")
+      mkdirSync(claudeDir, { recursive: true })
+      writeFileSync(join(claudeDir, "settings.json"), JSON.stringify({
+        effortLevel: "high",
+        modelSettings: { "claude-opus-5-5": { effortLevel: "medium" } },
+      }))
+      expect(getConfigCounts(TMP_DIR, "claude-opus-5-5").effortLevel).toBe("medium")
+      expect(getConfigCounts(TMP_DIR, "claude-sonnet-5-5").effortLevel).toBe("high")
+      expect(getConfigCounts(TMP_DIR).effortLevel).toBe("high")
+    })
+
+    test("a model id's [1m] suffix still finds its settings", () => {
+      delete process.env.CLAUDE_CODE_EFFORT_LEVEL
+      const claudeDir = join(TMP_DIR, ".claude")
+      mkdirSync(claudeDir, { recursive: true })
+      writeFileSync(join(claudeDir, "settings.json"), JSON.stringify({
+        effortLevel: "high",
+        modelSettings: { "claude-opus-5-5": { effortLevel: "low" } },
+      }))
+      expect(getConfigCounts(TMP_DIR, "claude-opus-5-5[1m]").effortLevel).toBe("low")
+    })
+
+    test("a closer file's top-level effort beats a farther file's model effort", () => {
+      delete process.env.CLAUDE_CODE_EFFORT_LEVEL
+      const claudeDir = join(TMP_DIR, ".claude")
+      mkdirSync(claudeDir, { recursive: true })
+      writeFileSync(join(claudeDir, "settings.json"), JSON.stringify({
+        modelSettings: { "claude-opus-5-5": { effortLevel: "medium" } },
+      }))
+      writeFileSync(join(claudeDir, "settings.local.json"), JSON.stringify({ effortLevel: "xhigh" }))
+      expect(getConfigCounts(TMP_DIR, "claude-opus-5-5").effortLevel).toBe("xhigh")
+    })
+
+    test("an invalid model effort falls back to the top-level one", () => {
+      delete process.env.CLAUDE_CODE_EFFORT_LEVEL
+      const claudeDir = join(TMP_DIR, ".claude")
+      mkdirSync(claudeDir, { recursive: true })
+      writeFileSync(join(claudeDir, "settings.json"), JSON.stringify({
+        effortLevel: "high",
+        modelSettings: { "claude-opus-5-5": { effortLevel: "turbo" } },
+      }))
+      expect(getConfigCounts(TMP_DIR, "claude-opus-5-5").effortLevel).toBe("high")
+    })
+
     test("env var CLAUDE_CODE_EFFORT_LEVEL wins over settings files", () => {
       process.env.CLAUDE_CODE_EFFORT_LEVEL = "low"
       const claudeDir = join(TMP_DIR, ".claude")

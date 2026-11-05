@@ -4,6 +4,8 @@ import { readFileSync } from "node:fs"
 
 export interface StdinData {
   model: string
+  /** The model's id ("claude-opus-5-5"); "" when Claude Code doesn't send it. */
+  modelId: string
   contextPercent: number
   /**
    * Total tokens currently occupying the context window (input + cache_creation + cache_read),
@@ -48,6 +50,7 @@ export function mapRawToStdinData(raw: any): StdinData {
 
   return {
     model:    compactModelName(raw.model?.display_name ?? "Unknown"),
+    modelId:  raw.model?.id ?? "",
     contextPercent: raw.context_window?.used_percentage ?? 0,
     contextTokens: (() => {
       const u = raw.context_window?.current_usage

@@ -92,6 +92,11 @@ describe("mapRawToStdinData", () => {
     expect(mapRawToStdinData({ context_window: { used_percentage: 40 } }).contextTokens).toBeNull()
   })
 
+  test("keeps the model id, which settings are keyed by", () => {
+    expect(mapRawToStdinData({ model: { id: "claude-opus-5-5", display_name: "Opus" } }).modelId).toBe("claude-opus-5-5")
+    expect(mapRawToStdinData({}).modelId).toBe("")
+  })
+
   test("compacts model display name '(1M context)' suffix to '1M'", () => {
     expect(mapRawToStdinData({ model: { display_name: "Opus 4.7 (1M context)" } }).model).toBe("Opus 4.7 1M")
     expect(mapRawToStdinData({ model: { display_name: "Sonnet 4.6 (200k context)" } }).model).toBe("Sonnet 4.6 200k")
