@@ -15,7 +15,7 @@ import { render } from "./ui/render.ts"
 import { renderLines } from "./ui/lines.ts"
 import { vlen } from "./ui/format.ts"
 import { getTerminalWidth } from "./ui/terminal.ts"
-import { exportAgentBar } from "./export/agent-bar.ts"
+import { exportPaneHeader } from "./export/pane-header.ts"
 
 const data = await parseStdin()
 const git = data.cwd ? getGitInfo(data.cwd) : null
@@ -29,8 +29,8 @@ const result = render(data, git, config, transcript, skipPermissions, caveman, w
 const output = renderLines(data, result, git?.repo)
 console.log(output)
 
-// Optional session snapshot for a terminal-side agent bar (see src/export/agent-bar.ts).
-exportAgentBar(process.env, data, config?.effortLevel ?? null)
+// Optional session snapshot for a terminal-side pane header (see src/export/pane-header.ts).
+exportPaneHeader(process.env, data, config?.effortLevel ?? null)
 
 // Optional debug log: when CLAUDE_STATUSLINE_DEBUG_LOG is set to a file path,
 // append one JSON line per invocation describing the rendered output. Useful

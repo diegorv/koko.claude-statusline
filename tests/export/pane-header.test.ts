@@ -1,11 +1,11 @@
 import { describe, expect, test, beforeEach, afterEach } from "bun:test"
-import { buildSnapshot, exportAgentBar } from "../../src/export/agent-bar.ts"
+import { buildSnapshot, exportPaneHeader } from "../../src/export/pane-header.ts"
 import { mapRawToStdinData } from "../../src/parsing/stdin.ts"
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "fs"
 import { join } from "path"
 import { tmpdir } from "os"
 
-const TMP_DIR = join(tmpdir(), "claude-statusline-agent-bar-tests")
+const TMP_DIR = join(tmpdir(), "claude-statusline-pane-header-tests")
 
 const data = mapRawToStdinData({
   model: { display_name: "Opus 5.5 (1M context)" },
@@ -23,7 +23,7 @@ afterEach(() => {
 })
 
 describe("buildSnapshot", () => {
-  test("maps the session data into the agent-bar schema", () => {
+  test("maps the session data into the pane-header schema", () => {
     expect(buildSnapshot(data, "high", 1234)).toEqual({
       agent: "claude",
       model: "Opus 5.5 1M",
@@ -41,55 +41,55 @@ describe("buildSnapshot", () => {
   })
 })
 
-describe("exportAgentBar", () => {
-  test("does nothing without AGENT_BAR_DIR", () => {
-    exportAgentBar({ KITTY_WINDOW_ID: "7" }, data, null)
+describe("exportPaneHeader", () => {
+  test("does nothing without PANE_HEADER_DIR", () => {
+    exportPaneHeader({ KITTY_WINDOW_ID: "7" }, data, null)
     expect(existsSync(TMP_DIR)).toBe(false)
   })
 
   test("does nothing outside kitty and herdr (no window or pane id)", () => {
-    exportAgentBar({ AGENT_BAR_DIR: TMP_DIR }, data, null)
+    exportPaneHeader({ PANE_HEADER_DIR: TMP_DIR }, data, null)
     expect(existsSync(TMP_DIR)).toBe(false)
   })
 
   test("writes <window id>.json with the snapshot", () => {
-    exportAgentBar({ AGENT_BAR_DIR: TMP_DIR, KITTY_WINDOW_ID: "7" }, data, "max")
+    exportPaneHeader({ PANE_HEADER_DIR: TMP_DIR, KITTY_WINDOW_ID: "7" }, data, "max")
     const snap = JSON.parse(readFileSync(join(TMP_DIR, "7.json"), "utf8"))
     expect(snap.model).toBe("Opus 5.5 1M")
     expect(snap.effort).toBe("max")
   })
 
   test("leaves no temp files behind", () => {
-    exportAgentBar({ AGENT_BAR_DIR: TMP_DIR, KITTY_WINDOW_ID: "7" }, data, null)
+    exportPaneHeader({ PANE_HEADER_DIR: TMP_DIR, KITTY_WINDOW_ID: "7" }, data, null)
     expect(readdirSync(TMP_DIR)).toEqual(["7.json"])
   })
 
   test("keeps the directory and file private to the user", () => {
-    exportAgentBar({ AGENT_BAR_DIR: TMP_DIR, KITTY_WINDOW_ID: "7" }, data, null)
+    exportPaneHeader({ PANE_HEADER_DIR: TMP_DIR, KITTY_WINDOW_ID: "7" }, data, null)
     expect(statSync(TMP_DIR).mode & 0o777).toBe(0o700)
     expect(statSync(join(TMP_DIR, "7.json")).mode & 0o777).toBe(0o600)
   })
 
   test("writes herdr-<pane id>.json inside a herdr pane", () => {
-    exportAgentBar({ AGENT_BAR_DIR: TMP_DIR, HERDR_PANE_ID: "w15:p1" }, data, "high")
+    exportPaneHeader({ PANE_HEADER_DIR: TMP_DIR, HERDR_PANE_ID: "w15:p1" }, data, "high")
     expect(readdirSync(TMP_DIR)).toEqual(["herdr-w15_p1.json"])
     const snap = JSON.parse(readFileSync(join(TMP_DIR, "herdr-w15_p1.json"), "utf8"))
     expect(snap.effort).toBe("high")
   })
 
   test("writes both files when both ids are present", () => {
-    exportAgentBar({ AGENT_BAR_DIR: TMP_DIR, KITTY_WINDOW_ID: "7", HERDR_PANE_ID: "w1:p2" }, data, null)
+    exportPaneHeader({ PANE_HEADER_DIR: TMP_DIR, KITTY_WINDOW_ID: "7", HERDR_PANE_ID: "w1:p2" }, data, null)
     expect(readdirSync(TMP_DIR).sort()).toEqual(["7.json", "herdr-w1_p2.json"])
   })
 
   test("ignores a herdr pane id with path characters", () => {
     mkdirSync(TMP_DIR, { recursive: true })
-    exportAgentBar({ AGENT_BAR_DIR: TMP_DIR, HERDR_PANE_ID: "../w1" }, data, null)
+    exportPaneHeader({ PANE_HEADER_DIR: TMP_DIR, HERDR_PANE_ID: "../w1" }, data, null)
     expect(readdirSync(TMP_DIR)).toEqual([])
   })
 
   test("writes hc-<terminal>.json inside a herdr-core terminal", () => {
-    exportAgentBar({ AGENT_BAR_DIR: TMP_DIR, HC_TERMINAL_ID: "t7" }, data, "high")
+    exportPaneHeader({ PANE_HEADER_DIR: TMP_DIR, HC_TERMINAL_ID: "t7" }, data, "high")
     expect(readdirSync(TMP_DIR)).toEqual(["hc-t7.json"])
     const snap = JSON.parse(readFileSync(join(TMP_DIR, "hc-t7.json"), "utf8"))
     expect(snap.model).toBe(data.model)
@@ -97,13 +97,13 @@ describe("exportAgentBar", () => {
 
   test("ignores a herdr-core terminal id with path characters (remote vps/t7)", () => {
     mkdirSync(TMP_DIR, { recursive: true })
-    exportAgentBar({ AGENT_BAR_DIR: TMP_DIR, HC_TERMINAL_ID: "vps/t7" }, data, null)
+    exportPaneHeader({ PANE_HEADER_DIR: TMP_DIR, HC_TERMINAL_ID: "vps/t7" }, data, null)
     expect(readdirSync(TMP_DIR)).toEqual([])
   })
 
   test("ignores a window id that is not a number", () => {
     mkdirSync(TMP_DIR, { recursive: true })
-    exportAgentBar({ AGENT_BAR_DIR: TMP_DIR, KITTY_WINDOW_ID: "../evil" }, data, null)
+    exportPaneHeader({ PANE_HEADER_DIR: TMP_DIR, KITTY_WINDOW_ID: "../evil" }, data, null)
     expect(readdirSync(TMP_DIR)).toEqual([])
   })
 })

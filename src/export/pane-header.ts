@@ -1,9 +1,9 @@
-// Optional snapshot of the session for a terminal-side "agent bar" (e.g. the
-// kitty title bar). When AGENT_BAR_DIR is set, each invocation writes a small,
+// Optional snapshot of the session for a terminal-side "pane header" (e.g. the
+// kitty title bar). When PANE_HEADER_DIR is set, each invocation writes a small,
 // agent-agnostic summary to:
-//   <AGENT_BAR_DIR>/<KITTY_WINDOW_ID>.json        inside a kitty window
-//   <AGENT_BAR_DIR>/herdr-<HERDR_PANE_ID>.json    inside a herdr pane (":" → "_")
-//   <AGENT_BAR_DIR>/hc-<HC_TERMINAL_ID>.json      inside a herdr-core terminal (herdr-app)
+//   <PANE_HEADER_DIR>/<KITTY_WINDOW_ID>.json        inside a kitty window
+//   <PANE_HEADER_DIR>/herdr-<HERDR_PANE_ID>.json    inside a herdr pane (":" → "_")
+//   <PANE_HEADER_DIR>/hc-<HC_TERMINAL_ID>.json      inside a herdr-core terminal (herdr-app)
 // Other agents can write the same schema, so the bar does not care who wrote it.
 
 import { chmodSync, mkdirSync, renameSync, writeFileSync } from "node:fs"
@@ -11,7 +11,7 @@ import { join } from "node:path"
 import type { StdinData } from "../parsing/stdin.ts"
 import type { EffortLevel } from "../collection/config.ts"
 
-export interface AgentBarSnapshot {
+export interface PaneHeaderSnapshot {
   agent: "claude"
   model: string
   effort: EffortLevel | null
@@ -25,12 +25,12 @@ export interface AgentBarSnapshot {
 }
 
 /**
- * Maps the parsed session data into the agent-bar schema.
+ * Maps the parsed session data into the pane-header schema.
  * @param data - Parsed Claude Code stdin.
  * @param effort - Resolved /effort level, or null when unset.
  * @param now - Timestamp for `updated_at` (injectable for tests).
  */
-export function buildSnapshot(data: StdinData, effort: EffortLevel | null, now = Date.now()): AgentBarSnapshot {
+export function buildSnapshot(data: StdinData, effort: EffortLevel | null, now = Date.now()): PaneHeaderSnapshot {
   return {
     agent: "claude",
     model: data.model,
@@ -62,7 +62,7 @@ function snapshotNames(env: Record<string, string | undefined>): string[] {
 }
 
 /**
- * Writes the snapshot when AGENT_BAR_DIR is set and the statusline runs inside
+ * Writes the snapshot when PANE_HEADER_DIR is set and the statusline runs inside
  * a kitty window (numeric KITTY_WINDOW_ID), a herdr pane (HERDR_PANE_ID) and/or a
  * herdr-core terminal (HC_TERMINAL_ID);
  * otherwise does nothing. Never throws — the statusline must render regardless.
@@ -71,8 +71,8 @@ function snapshotNames(env: Record<string, string | undefined>): string[] {
  * @param data - Parsed Claude Code stdin.
  * @param effort - Resolved /effort level, or null when unset.
  */
-export function exportAgentBar(env: Record<string, string | undefined>, data: StdinData, effort: EffortLevel | null): void {
-  const dir = env.AGENT_BAR_DIR
+export function exportPaneHeader(env: Record<string, string | undefined>, data: StdinData, effort: EffortLevel | null): void {
+  const dir = env.PANE_HEADER_DIR
   const names = snapshotNames(env)
   if (!dir || names.length === 0) return
   try {
