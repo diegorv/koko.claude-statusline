@@ -1,8 +1,13 @@
 import { describe, expect, test } from "bun:test"
-import { render } from "../../src/ui/render.ts"
-import type { SessionData } from "../../src/model.ts"
+import { render as renderSnapshot } from "../../src/ui/render.ts"
+import type { SessionData } from "../../src/core/model.ts"
 import type { GitInfo } from "../../src/collection/git.ts"
-import type { ActivityData } from "../../src/model.ts"
+import type { ActivityData } from "../../src/core/model.ts"
+
+// Fixtures exercise the shared snapshot interface used by both hosts.
+function render(data: SessionData, git: GitInfo | null, config: import("../../src/core/model.ts").ConfigSummary | null, activity: ActivityData | null = null) {
+  return renderSnapshot({ data, config, activity, skipPermissions: false, headerBadges: [] }, git)
+}
 
 const MINIMAL_DATA: SessionData = {
   agent: "claude", effortLevel: null, terminalWidth: null, rightMargin: 16, frameWidth: "content", costEstimated: false, state: null,

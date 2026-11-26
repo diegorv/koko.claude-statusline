@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { antigravityAdapter, mapAntigravityInput } from "../../src/adapters/antigravity.ts"
+import { antigravityAdapter, mapAntigravityInput } from "../../src/agents/antigravity/adapter.ts"
 import { buildSnapshot } from "../../src/export/pane-header.ts"
 import { render } from "../../src/ui/render.ts"
 import { renderLines } from "../../src/ui/lines.ts"
@@ -24,8 +24,8 @@ const payload = {
 }
 
 function output(raw: Record<string, unknown>): string {
-  const { data, config, activity, skipPermissions, caveman } = antigravityAdapter.read(raw)
-  return renderLines(data, render(data, null, config, activity, skipPermissions, caveman))
+  const snapshot = antigravityAdapter.read(raw)
+  return renderLines(snapshot.data, render(snapshot, null))
     .replace(/\x1b\[[0-9;]*m/g, "").replaceAll("\u00a0", " ")
 }
 
@@ -126,7 +126,7 @@ describe("Antigravity adapter", () => {
       cost: { total_cost_usd: 99 },
     })
     expect(snapshot.config).toBeNull()
-    expect(snapshot.caveman).toBeNull()
+    expect(snapshot.headerBadges).toEqual([])
     expect(snapshot.skipPermissions).toBe(false)
     expect(snapshot.activity?.tools.size).toBe(0)
     expect(snapshot.data.sessionName).toBe("Fix tests")

@@ -1,11 +1,8 @@
 // Layout compositor — emits one row per semantic category so each line is
 // visually self-contained (git, rate limits, tools, agents, todos).
 
-import type { SessionData } from "../model.ts"
+import type { AgentSnapshot } from "../core/adapter.ts"
 import type { GitInfo } from "../collection/git.ts"
-import type { ConfigSummary } from "../model.ts"
-import type { ActivityData } from "../model.ts"
-import type { CavemanState } from "../collection/caveman.ts"
 import type { WorktrunkInfo } from "../collection/worktrunk.ts"
 import { SEP, GAP, ICONS } from "./constants.ts"
 import { c } from "./format.ts"
@@ -22,7 +19,6 @@ import {
   renderTokenBreakdown,
   renderOutputSpeed,
   renderSessionDiff,
-  renderCaveman,
 } from "./components/index.ts"
 
 export interface RenderResult {
@@ -34,8 +30,8 @@ export interface RenderResult {
   activityTitle: string
   /** /effort chip for the header; null when the level is unset. */
   effort: string | null
-  /** caveman chip for the header; null/absent when caveman isn't active/installed. */
-  caveman?: string | null
+  /** Agent-owned annotations displayed in the shared header. */
+  headerBadges?: string[]
 }
 
 /**
@@ -55,20 +51,16 @@ const GUTTERS = {
  * Composes status line rows. Each emitted row is a complete, standalone line —
  * the renderer prints them in order without further joining.
  *
- * @param data - Normalized data from the selected agent.
+ * @param snapshot - Normalized data and annotations from the selected agent.
  * @param git - Git repository info (null if not in a repo).
- * @param config - Config counts (null if no cwd).
- * @param transcript - Parsed transcript data (null if no transcript).
+
  */
 export function render(
-  data: SessionData,
+  snapshot: AgentSnapshot,
   git: GitInfo | null,
-  config: ConfigSummary | null,
-  transcript: ActivityData | null = null,
-  skipPermissions: boolean = false,
-  caveman: CavemanState | null = null,
   worktrunk: WorktrunkInfo | null = null,
 ): RenderResult {
+  const { data, config, activity: transcript, skipPermissions, headerBadges } = snapshot
   const session: string[] = []
 
   // Row 1 (git, green): branch / dirty / stats / ahead-behind / SHA / fork +
@@ -120,7 +112,6 @@ export function render(
 
   const activityTitle = renderActivityTitle(config, transcript?.mcpStatus ?? null, data.sessionName, data.outputStyle, skipPermissions)
   const effort = renderEffort(data.effortLevel)
-  const cavemanChip = renderCaveman(caveman)
 
-  return { session, activity, activityTitle, effort, caveman: cavemanChip }
+  return { session, activity, activityTitle, effort, headerBadges }
 }

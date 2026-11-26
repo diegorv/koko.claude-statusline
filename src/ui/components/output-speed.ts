@@ -1,6 +1,6 @@
 // Component: live output speed (tokens/second) from the assistant samples window.
 
-import type { AssistantSample } from "../../model.ts"
+import type { AssistantSample } from "../../core/model.ts"
 import { c, dim } from "../format.ts"
 
 /**

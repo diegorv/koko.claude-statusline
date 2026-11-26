@@ -4,7 +4,7 @@
 // conceptual family: "how much output did this session produce" — tokens
 // being the unit cost, +/- lines being the visible work product.
 
-import type { SessionData } from "../../model.ts"
+import type { SessionData } from "../../core/model.ts"
 import { c } from "../format.ts"
 
 /**

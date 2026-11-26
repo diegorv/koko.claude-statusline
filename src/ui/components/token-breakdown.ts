@@ -1,6 +1,6 @@
 // Component: per-session token breakdown (input / output / cache total)
 
-import type { TokenTotals } from "../../model.ts"
+import type { TokenTotals } from "../../core/model.ts"
 import { c, dim, formatTokens } from "../format.ts"
 
 /**

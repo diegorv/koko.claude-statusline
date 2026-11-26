@@ -26,14 +26,14 @@ export function renderGitStatus(git: GitInfo, wt: WorktrunkInfo | null = null): 
   if (git.dirty) str += c("yellow", "*")
 
   const stats: string[] = []
-  if (git.staged > 0)    stats.push(c("green", `+${git.staged}`))
-  if (git.modified > 0)  stats.push(c("yellow", `~${git.modified}`))
-  if (git.untracked > 0) stats.push(dim(`?${git.untracked}`))
+  if ((git.staged ?? 0) > 0)    stats.push(c("green", `+${git.staged}`))
+  if ((git.modified ?? 0) > 0)  stats.push(c("yellow", `~${git.modified}`))
+  if ((git.untracked ?? 0) > 0) stats.push(dim(`?${git.untracked}`))
   if (stats.length > 0) str += `  ${stats.join(" ")}`
 
   const sync: string[] = []
-  if (git.ahead > 0)  sync.push(c("green", `↑${git.ahead}`))
-  if (git.behind > 0) sync.push(c("red", `↓${git.behind}`))
+  if ((git.ahead ?? 0) > 0)  sync.push(c("green", `↑${git.ahead}`))
+  if ((git.behind ?? 0) > 0) sync.push(c("red", `↓${git.behind}`))
   if (sync.length > 0) str += `  ${sync.join(" ")}`
 
   // Sync vs the default branch (worktrunk), prefixed with its name so it

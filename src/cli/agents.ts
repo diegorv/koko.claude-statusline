@@ -1,6 +1,6 @@
-import { antigravityAdapter } from "./antigravity.ts"
-import { claudeAdapter } from "./claude.ts"
-import type { AgentAdapter } from "./types.ts"
+import { antigravityAdapter } from "../agents/antigravity/adapter.ts"
+import { claudeAdapter } from "../agents/claude/adapter.ts"
+import type { AgentAdapter } from "../core/adapter.ts"
 
 const adapters: AgentAdapter[] = [claudeAdapter, antigravityAdapter]
 

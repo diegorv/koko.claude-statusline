@@ -5,7 +5,7 @@
 // renderSessionDiff. This component covers only the spatial context: where
 // I'm working (worktree) and how I'm editing (vim mode).
 
-import type { SessionData } from "../../model.ts"
+import type { SessionData } from "../../core/model.ts"
 import { c, dim } from "../format.ts"
 import { ICONS } from "../constants.ts"
 

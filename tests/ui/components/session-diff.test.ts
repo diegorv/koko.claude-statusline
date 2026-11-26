@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { renderSessionDiff } from "../../../src/ui/components/session-diff.ts"
-import type { SessionData } from "../../../src/model.ts"
+import type { SessionData } from "../../../src/core/model.ts"
 
 const MINIMAL_DATA: SessionData = {
   agent: "claude", effortLevel: null, terminalWidth: null, rightMargin: 16, frameWidth: "content", costEstimated: false, state: null,

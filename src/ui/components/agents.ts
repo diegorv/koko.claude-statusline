@@ -1,6 +1,6 @@
 // Component: agent execution status
 
-import type { AgentInfo } from "../../model.ts"
+import type { AgentInfo } from "../../core/model.ts"
 import { c, dim, formatDuration } from "../format.ts"
 import { spin } from "../constants.ts"
 

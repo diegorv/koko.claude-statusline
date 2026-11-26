@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { selectAdapter, parseAgentArgument } from "../../src/adapters/index.ts"
+import { selectAdapter, parseAgentArgument } from "../../src/cli/agents.ts"
 
 describe("adapter selection", () => {
   test("keeps existing Claude invocations and auto-detects Antigravity", () => {

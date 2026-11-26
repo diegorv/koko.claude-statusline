@@ -1,7 +1,7 @@
 // Documented CLI payload: https://antigravity.google/docs/cli/statusline/
 // Do not feed its transcript path into the Claude-specific JSONL parser.
-import type { ActivityData, EffortLevel, RateLimit, SessionData } from "../model.ts"
-import type { AgentAdapter } from "./types.ts"
+import type { ActivityData, EffortLevel, RateLimit, SessionData } from "../../core/model.ts"
+import type { AgentAdapter } from "../../core/adapter.ts"
 
 function object(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value)
@@ -116,7 +116,7 @@ export const antigravityAdapter: AgentAdapter = {
       activity: readActivity(raw),
       config: null,
       skipPermissions: false,
-      caveman: null,
+      headerBadges: [],
     }
   },
 }

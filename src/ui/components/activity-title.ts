@@ -1,7 +1,7 @@
 // Component: activity box title (config counts + output style + session name)
 
-import type { ConfigSummary } from "../../model.ts"
-import type { McpStatus } from "../../model.ts"
+import type { ConfigSummary } from "../../core/model.ts"
+import type { McpStatus } from "../../core/model.ts"
 import { c } from "../format.ts"
 import { GAP } from "../constants.ts"
 

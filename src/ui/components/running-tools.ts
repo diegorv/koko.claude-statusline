@@ -1,6 +1,6 @@
 // Component: currently running tools with spinner
 
-import type { RunningTool } from "../../model.ts"
+import type { RunningTool } from "../../core/model.ts"
 import { c } from "../format.ts"
 import { spin } from "../constants.ts"
 

@@ -1,11 +1,12 @@
 // Claude Code owns these local configuration and transcript formats.
 import { basename } from "node:path"
-import type { SessionData } from "../model.ts"
-import type { AgentAdapter } from "./types.ts"
-import { getConfigCounts } from "../collection/config.ts"
-import { parseTranscript } from "../parsing/transcript.ts"
-import { detectSkipPermissions } from "../collection/parent-process.ts"
-import { getCavemanState } from "../collection/caveman.ts"
+import type { SessionData } from "../../core/model.ts"
+import type { AgentAdapter } from "../../core/adapter.ts"
+import { getConfigCounts } from "./config.ts"
+import { parseTranscript } from "./transcript.ts"
+import { detectSkipPermissions } from "./parent-process.ts"
+import { getCavemanState } from "./caveman.ts"
+import { renderCaveman } from "./caveman-badge.ts"
 
 /** Collapses "(1M context)" style suffixes into a bare size (e.g. "Opus 4.7 (1M context)" → "Opus 4.7 1M"). */
 function compactModelName(name: string): string {
@@ -22,7 +23,7 @@ export function mapClaudeInput(raw: any): SessionData {
     terminalWidth: null,
     rightMargin: 16,
     frameWidth: "content",
-    costEstimated: false,
+    costEstimated: null,
     state: null,
     model:    compactModelName(raw.model?.display_name ?? "Unknown"),
     modelId:  raw.model?.id ?? "",
@@ -60,6 +61,7 @@ export const claudeAdapter: AgentAdapter = {
     const data = mapClaudeInput(raw)
     const config = data.cwd ? getConfigCounts(data.cwd, data.modelId) : null
     data.effortLevel = config?.effortLevel ?? null
+    const caveman = renderCaveman(getCavemanState())
     return {
       data,
       config: config ? {
@@ -68,7 +70,7 @@ export const claudeAdapter: AgentAdapter = {
       } : null,
       activity: data.transcriptPath ? parseTranscript(data.transcriptPath) : null,
       skipPermissions: detectSkipPermissions(),
-      caveman: getCavemanState(),
+      headerBadges: caveman ? [caveman] : [],
     }
   },
 }

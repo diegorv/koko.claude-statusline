@@ -2,7 +2,7 @@
 
 import { readFileSync } from "fs"
 
-import type { ActivityData, AgentInfo, RunningTool, AssistantSample, TokenTotals } from "../model.ts"
+import type { ActivityData, AgentInfo, RunningTool, AssistantSample, TokenTotals } from "../../core/model.ts"
 
 /** Cap on the sliding window of assistant samples kept in memory. */
 const SAMPLE_WINDOW = 16

@@ -3,8 +3,8 @@
 // Test:  echo '{"model":{"display_name":"Opus"}}' | bun src/index.ts
 
 import { appendFileSync } from "node:fs"
-import { parseStdin } from "./parsing/stdin.ts"
-import { parseAgentArgument, selectAdapter } from "./adapters/index.ts"
+import { parseStdin } from "./cli/stdin.ts"
+import { parseAgentArgument, selectAdapter } from "./cli/agents.ts"
 import { getGitInfo } from "./collection/git.ts"
 import { getWorktrunkInfo } from "./collection/worktrunk.ts"
 import { render } from "./ui/render.ts"
@@ -29,11 +29,12 @@ try {
   console.error(error instanceof Error ? error.message : String(error))
   process.exit(1)
 }
-const { data, config, activity: transcript, skipPermissions, caveman } = adapter.read(raw)
+const snapshot = adapter.read(raw)
+const { data, activity: transcript } = snapshot
 const git = data.cwd ? getGitInfo(data.cwd) : null
 // wt costs ~100ms, so only ask it inside linked worktrees.
 const worktrunk = data.cwd && git?.worktree ? getWorktrunkInfo(data.cwd) : null
-const result = render(data, git, config, transcript, skipPermissions, caveman, worktrunk)
+const result = render(snapshot, git, worktrunk)
 const output = renderLines(data, result, git?.repo)
 console.log(output)
 

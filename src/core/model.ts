@@ -1,5 +1,5 @@
 // Shared data consumed by renderers and exporters. Provider formats stay in adapters.
-export type AgentId = "claude" | "antigravity"
+export type AgentId = "claude" | "antigravity" | "opencode"
 export type EffortLevel = "low" | "medium" | "high" | "xhigh" | "max"
 
 export interface RateLimit {
@@ -27,12 +27,13 @@ export interface SessionData {
   rightMargin: number
   /** Fit the frame to content/header annotations, or span all available columns. */
   frameWidth: "content" | "available"
-  costEstimated: boolean
+  /** null when the host does not report estimate metadata. */
+  costEstimated: boolean | null
   state: string | null
   model: string
   /** The model's id; empty when the provider does not send it. */
   modelId: string
-  contextPercent: number
+  contextPercent: number | null
   /**
    * Total tokens currently occupying the context window (input + cache_creation + cache_read),
    * excluding output tokens.

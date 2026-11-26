@@ -1,6 +1,6 @@
 // Flat-line layout — header (left + right) with horizontal rule and content rows.
 
-import type { SessionData } from "../model.ts"
+import type { SessionData } from "../core/model.ts"
 import type { RenderResult } from "./render.ts"
 import { bold, c, dim, formatDuration, formatTokens, gradientBar, nbsp, pctColor, RESET, vlen } from "./format.ts"
 import { GAP, SEP, inRuleColor, inFaintColor } from "./constants.ts"
@@ -38,17 +38,19 @@ function wrapLine(line: string, maxWidth: number, separator: string): string[] {
 }
 
 /** Left side of the header: repo (if any) · model · [effort] · [caveman] · context bar · %. */
-function buildHeaderLeft(data: SessionData, repoName: string | undefined, effort: string | null, caveman: string | null): string {
+function buildHeaderLeft(data: SessionData, repoName: string | undefined, effort: string | null, headerBadges: string[]): string {
   const parts: string[] = []
   if (repoName) parts.push(bold("yellow", repoName))
   parts.push(c("cyan", data.model))
   if (effort) parts.push(effort)
-  if (caveman) parts.push(caveman)
-  const pct = Math.round(data.contextPercent)
-  const tokensLabel = data.contextTokens != null && data.contextWindowSize
-    ? " " + dim(`${formatTokens(data.contextTokens)}/${formatTokens(data.contextWindowSize)}`)
-    : ""
-  parts.push(`${gradientBar(data.contextPercent, 10)} ${pctColor(data.contextPercent)}${pct}%${RESET}${tokensLabel}`)
+  parts.push(...headerBadges)
+  if (data.contextPercent !== null) {
+    const pct = Math.round(data.contextPercent)
+    const tokensLabel = data.contextTokens != null && data.contextWindowSize
+      ? " " + dim(`${formatTokens(data.contextTokens)}/${formatTokens(data.contextWindowSize)}`)
+      : ""
+    parts.push(`${gradientBar(data.contextPercent, 10)} ${pctColor(data.contextPercent)}${pct}%${RESET}${tokensLabel}`)
+  }
   return parts.join(SEP)
 }
 
@@ -106,7 +108,7 @@ export function renderLines(data: SessionData, result: RenderResult, repoName?: 
     ? Math.max(minimumWidth, terminalWidth - margin - LEFT_PAD.length)
     : Number.POSITIVE_INFINITY
 
-  const left = buildHeaderLeft(data, repoName, result.effort, result.caveman ?? null)
+  const left = buildHeaderLeft(data, repoName, result.effort, result.headerBadges ?? [])
   const right = buildHeaderRight(data, result.activityTitle)
   const headerLine = Number.isFinite(usableWidth)
     ? joinHeader(left, right, usableWidth)

@@ -1,6 +1,6 @@
 import { describe, expect, test, beforeEach, afterEach } from "bun:test"
 import { buildSnapshot, exportPaneHeader } from "../../src/export/pane-header.ts"
-import { mapClaudeInput } from "../../src/adapters/claude.ts"
+import { mapClaudeInput } from "../../src/agents/claude/adapter.ts"
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "fs"
 import { join } from "path"
 import { tmpdir } from "os"

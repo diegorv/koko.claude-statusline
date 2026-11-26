@@ -2,9 +2,9 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test"
 import { renderLines } from "../../src/ui/lines.ts"
 import { vlen } from "../../src/ui/format.ts"
 import { SEP } from "../../src/ui/constants.ts"
-import type { SessionData } from "../../src/model.ts"
+import type { SessionData } from "../../src/core/model.ts"
 import type { RenderResult } from "../../src/ui/render.ts"
-import { mapClaudeInput } from "../../src/adapters/claude.ts"
+import { mapClaudeInput } from "../../src/agents/claude/adapter.ts"
 
 const ORIGINAL_STDOUT_COLS = process.stdout.columns
 const ORIGINAL_STDERR_COLS = process.stderr.columns

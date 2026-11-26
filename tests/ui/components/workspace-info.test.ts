@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { renderWorkspaceInfo } from "../../../src/ui/components/workspace-info.ts"
-import type { SessionData } from "../../../src/model.ts"
+import type { SessionData } from "../../../src/core/model.ts"
 
 const MINIMAL_DATA: SessionData = {
   agent: "claude", effortLevel: null, terminalWidth: null, rightMargin: 16, frameWidth: "content", costEstimated: false, state: null,

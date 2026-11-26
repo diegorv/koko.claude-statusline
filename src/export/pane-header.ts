@@ -8,15 +8,15 @@
 
 import { chmodSync, mkdirSync, renameSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
-import type { AgentId, SessionData } from "../model.ts"
-import type { EffortLevel } from "../model.ts"
+import type { AgentId, SessionData } from "../core/model.ts"
+import type { EffortLevel } from "../core/model.ts"
 
 export interface PaneHeaderSnapshot {
   agent: AgentId
   model: string
   effort: EffortLevel | null
   /** Context window usage, rounded to a whole percent. */
-  context_pct: number
+  context_pct: number | null
   context_tokens: number | null
   cost_usd: number | null
   /** Present for providers that distinguish estimated cost. */
@@ -37,10 +37,10 @@ export function buildSnapshot(data: SessionData, effort: EffortLevel | null, now
     agent: data.agent,
     model: data.model,
     effort,
-    context_pct: Math.round(data.contextPercent),
+    context_pct: data.contextPercent === null ? null : Math.round(data.contextPercent),
     context_tokens: data.contextTokens,
     cost_usd: data.cost,
-    ...(data.agent === "claude" ? {} : { cost_estimated: data.costEstimated }),
+    ...(data.costEstimated === null ? {} : { cost_estimated: data.costEstimated }),
     session_name: data.sessionName,
     updated_at: now,
   }
