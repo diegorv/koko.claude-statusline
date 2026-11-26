@@ -25,6 +25,8 @@ export interface SessionData {
   terminalWidth: number | null
   /** Columns reserved by default for the host CLI's overlays; env overrides win. */
   rightMargin: number
+  /** Fit the frame to content/header annotations, or span all available columns. */
+  frameWidth: "content" | "available"
   costEstimated: boolean
   state: string | null
   model: string

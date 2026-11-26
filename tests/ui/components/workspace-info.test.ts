@@ -3,7 +3,7 @@ import { renderWorkspaceInfo } from "../../../src/ui/components/workspace-info.t
 import type { SessionData } from "../../../src/model.ts"
 
 const MINIMAL_DATA: SessionData = {
-  agent: "claude", effortLevel: null, terminalWidth: null, rightMargin: 16, costEstimated: false, state: null,
+  agent: "claude", effortLevel: null, terminalWidth: null, rightMargin: 16, frameWidth: "content", costEstimated: false, state: null,
   model: "Opus", modelId: "", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,
   linesAdded: 0, linesRemoved: 0, cwd: "/tmp", contextWindowSize: null,
   sessionName: null, sessionId: null, rateLimits: [],

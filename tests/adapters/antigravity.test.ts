@@ -48,6 +48,8 @@ describe("Antigravity adapter", () => {
       const quotaRows = text.split("\n").filter(line => /3p-|gemini-/.test(line))
       expect(quotaRows).toHaveLength(1)
       expect(vlen(quotaRows[0])).toBeLessThanOrEqual(130)
+      const withHeader = output({ ...raw, cost: { total_usd: 0.42 }, conversation_title: "Explain the factorial function" })
+      expect(withHeader.split("\n").filter(line => /3p-|gemini-/.test(line))).toHaveLength(1)
 
       // Manual margins still work, including the legacy variable and KOKO precedence.
       process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN = "16"
@@ -75,6 +77,29 @@ describe("Antigravity adapter", () => {
       context_tokens: null, cost_usd: 0.42, cost_estimated: true,
       session_name: "Fix tests", updated_at: 123,
     })
+  })
+
+  test("extends the frame to the available width independently of content and header annotations", () => {
+    const previous = [process.env.KOKO_STATUSLINE_RIGHT_MARGIN, process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN]
+    delete process.env.KOKO_STATUSLINE_RIGHT_MARGIN
+    delete process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN
+    try {
+      for (const header of [{}, { conversation_title: "Explain the factorial function", cost: { total_usd: 0.42 } }]) {
+        const text = output({ terminal_width: 130, agent_state: "idle", ...header })
+        const frame = text.split("\n").filter(line => /[┌├└]/.test(line))
+        expect(frame).toHaveLength(2)
+        for (const line of frame) expect(vlen(line)).toBe(130)
+      }
+      // Explicit margins still reduce the available width.
+      process.env.KOKO_STATUSLINE_RIGHT_MARGIN = "10"
+      const frame = output({ terminal_width: 130, agent_state: "idle" }).split("\n").filter(line => /[┌├└]/.test(line))
+      for (const line of frame) expect(vlen(line)).toBe(120)
+    } finally {
+      for (const [i, key] of ["KOKO_STATUSLINE_RIGHT_MARGIN", "CLAUDE_STATUSLINE_RIGHT_MARGIN"].entries()) {
+        if (previous[i] === undefined) delete process.env[key]
+        else process.env[key] = previous[i]
+      }
+    }
   })
 
   test("renders native quotas, totals, state and subagents without inventing elapsed time", () => {

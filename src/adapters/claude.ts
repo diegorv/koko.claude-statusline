@@ -21,6 +21,7 @@ export function mapClaudeInput(raw: any): SessionData {
     effortLevel: null,
     terminalWidth: null,
     rightMargin: 16,
+    frameWidth: "content",
     costEstimated: false,
     state: null,
     model:    compactModelName(raw.model?.display_name ?? "Unknown"),

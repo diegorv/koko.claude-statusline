@@ -7,7 +7,7 @@ Claude Code or Antigravity CLI pipes session JSON to stdin. The script writes a 
 - **Header (always shown)** — a single line with content pinned to both edges and dashes filling the middle.
 - **Body (conditional)** — wrapped in a single box. When both the session-state rows and the activity rows are populated, a `├──` tee divides them inside the same box. Rows wrap at separator or activity-item boundaries to fit the terminal width. Individual items longer than the available width are left to terminal wrapping.
 
-The box's right edge aligns with the column where the header's right-side stats begin — everything to the left of that column is framed; cost, duration, and activity title sit outside as floating annotations. Rows wider than the box wrap between items; the minimum frame width never exceeds the reported terminal width. Available width is shrunk by `KOKO_STATUSLINE_RIGHT_MARGIN` (or the legacy `CLAUDE_STATUSLINE_RIGHT_MARGIN`) (see [Tuning](TUNING.md)) to leave room for Claude Code's overlay indicators.
+In Claude, the box's right edge aligns with the column where the header's right-side stats begin — everything to the left of that column is framed; cost, duration, and activity title sit outside as floating annotations. Rows wider than the box wrap between items; the minimum frame width never exceeds the reported terminal width. Available width is shrunk by `KOKO_STATUSLINE_RIGHT_MARGIN` (or the legacy `CLAUDE_STATUSLINE_RIGHT_MARGIN`) (see [Tuning](TUNING.md)) to leave room for Claude Code's overlay indicators.
 
 ### Header
 
@@ -48,4 +48,4 @@ The consumption row is ordered most-stable to most-variable in width (rate limit
 
 ## Agent-specific availability
 
-The feature list above describes Claude Code. Antigravity uses the same layout with native quota labels, agent state and subagent status. Its exact occupied context-token count and subagent elapsed times are omitted when unavailable. Missing costs are hidden for both agents; explicit zero remains visible. See [Antigravity installation](INSTALL.md#antigravity-cli) for the supported fields and limitations.
+The feature list above describes Claude Code. Antigravity uses native quota labels, agent state and subagent status. Its frame spans the available terminal width, independent of content length and header annotations; a conversation title or cost never reduces the space available for body rows. Its exact occupied context-token count and subagent elapsed times are omitted when unavailable. Missing costs are hidden for both agents; explicit zero remains visible. See [Antigravity installation](INSTALL.md#antigravity-cli) for the supported fields and limitations.

@@ -112,15 +112,15 @@ export function renderLines(data: SessionData, result: RenderResult, repoName?: 
     ? joinHeader(left, right, usableWidth)
     : (right ? left + SEP + right : left)
 
-  // Box rule width aligns with where the header's right side starts (the
-  // column of "$"): everything to the LEFT of that column is wrapped in the
-  // box, the stats on the right (cost, duration, activity title) sit
-  // outside as floating annotations. When no right-side content exists, the
-  // box falls back to the widest body row.
+  // The adapter chooses whether the frame spans all available columns or
+  // leaves room for the header's floating annotations. Content-sized frames
+  // fall back to the widest body row when those annotations are absent.
   const rightW = vlen(right)
-  const boxWidth = Number.isFinite(usableWidth) && rightW > 0
-    ? Math.max(minimumWidth, usableWidth - rightW - HEADER_GAP.length)
-    : null
+  let boxWidth: number | null = null
+  if (Number.isFinite(usableWidth)) {
+    if (data.frameWidth === "available") boxWidth = usableWidth
+    else if (rightW > 0) boxWidth = Math.max(minimumWidth, usableWidth - rightW - HEADER_GAP.length)
+  }
 
   const headerLines = wrapLine(headerLine, usableWidth, SEP)
   // Body lines wrap to box width (not full usableWidth) so they don't
