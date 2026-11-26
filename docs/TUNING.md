@@ -1,16 +1,24 @@
 # Tuning
 
-Environment variables that adjust runtime behavior. Set them in the shell that launches your agent, or — for persistent defaults — in your shell rc. The `KOKO_` variables work for all supported agents and take precedence over their legacy `CLAUDE_` aliases.
+Set these variables in the environment that starts the command or plugin. For margin and diagnostic logging, the `KOKO_STATUSLINE_` name takes precedence over its `CLAUDE_STATUSLINE_` alias.
 
-| Env var | Description | Default |
+| Setting | Applies to | Behavior |
 |---|---|---|
-| `KOKO_STATUSLINE_RIGHT_MARGIN` | Columns reserved on the right. Overrides `CLAUDE_STATUSLINE_RIGHT_MARGIN`. Antigravity's reported terminal width is used before stream/environment probing. | Claude: `16`; Antigravity/OpenCode: `0` |
-| `KOKO_STATUSLINE_DEBUG_LOG` | Debug log path; overrides `CLAUDE_STATUSLINE_DEBUG_LOG`. Records include the selected `agent`. | — |
-| `CLAUDE_STATUSLINE_RIGHT_MARGIN` | Columns reserved on the right for Claude Code's overlay indicators (e.g. `0 tokens`, `@model /effort`). Lower it to use more width, raise it if output collides with the overlays. | Claude: `16`; Antigravity/OpenCode: `0` |
-| `CLAUDE_CODE_EFFORT_LEVEL` | Overrides the `/effort` level shown on the header. Accepts `low`, `medium`, `high`, `xhigh`, `max`. When unset, the value is read from `.claude/settings.local.json` → `.claude/settings.json` → `~/.claude/settings.json` (first valid wins). | — |
-| `CLAUDE_STATUSLINE_DEBUG_LOG` | When set to a file path, the statusline appends one JSON line per invocation describing what it rendered (`rows`, `maxW`, `termW`, `overflow`, tool/agent counts, session id). Useful for diagnosing layout/width issues. Leave unset for normal use. | — |
-| `PANE_HEADER_DIR` | When set to a directory, each invocation writes a small session snapshot to `<dir>/<KITTY_WINDOW_ID>.json` when Claude Code runs inside a kitty window and to `<dir>/herdr-<HERDR_PANE_ID>.json` (`:` replaced by `_`) when it runs inside a herdr pane. The snapshot has `agent`, `model`, `effort`, `context_pct`, `context_tokens`, `cost_usd`, `session_name`, `updated_at`, for a terminal-side pane header to read. The directory is created `0700` and the file `0600`; writes are atomic (temp file + rename). | — |
+| `KOKO_STATUSLINE_RIGHT_MARGIN` (alias `CLAUDE_STATUSLINE_RIGHT_MARGIN`) | Claude, Antigravity and OpenCode | Reserves columns on the right. Claude defaults to 16 columns for overlay indicators. Antigravity and OpenCode default to zero. An invalid or negative override uses the host default. |
+| `KOKO_STATUSLINE_DEBUG_LOG` (alias `CLAUDE_STATUSLINE_DEBUG_LOG`) | Standalone command | Appends one JSON line per invocation that renders a panel. `termW` is the selected width (zero if unknown). `rows`, `maxW` and `overflow` describe the resulting output. The record includes the agent, tool/agent counts and first eight characters of the session ID. Claude can derive that ID from the transcript filename. |
+| `CLAUDE_CODE_EFFORT_LEVEL` | Claude | Overrides the effort chip. Accepts `low`, `medium`, `high`, `xhigh` and `max`. Without the override, Claude reads the first valid effort setting from project-local, project and user configuration. |
+| `PANE_HEADER_DIR` | Claude, Antigravity and OpenCode | Writes a normalized JSON snapshot for each applicable terminal identifier below. |
 
-Pane-header export works for both agents, including `hc-<HC_TERMINAL_ID>.json` for herdr-core terminals. Claude snapshots retain their existing fields. All adapters use `cost_usd: null` when no cost is reported; consumers must accept that null value. Antigravity snapshots identify `agent: "antigravity"` and include `cost_estimated`. Debug session IDs come from the provider conversation/session ID (first eight characters), with the transcript filename as a fallback for Claude. `CLAUDE_CODE_EFFORT_LEVEL` applies only to Claude; Antigravity supplies its effort level in the payload.
+Antigravity's reported width takes precedence over terminal probing. OpenCode uses the actual slot width. The margin override applies to that selected width in each host. See [Layout](LAYOUT.md#agent-specific-availability).
 
-OpenCode exports `agent: "opencode"` and uses `context_pct: null` / `context_tokens: null` when the host cannot establish current usage. Consumers must handle these unknown values. Only the standalone command currently writes the optional debug log.
+## Pane-header output
+
+The exporter creates the directory with mode `0700`, writes each file with mode `0600`, and renames a temporary file into place so readers see complete JSON. The command writes after rendering. OpenCode batches session updates over 250 ms and can export before the first slot measurement. Resizing alone does not trigger a write.
+
+| Terminal identifier | File in `PANE_HEADER_DIR` |
+|---|---|
+| Numeric `KITTY_WINDOW_ID` | `<KITTY_WINDOW_ID>.json` |
+| `HERDR_PANE_ID` | `herdr-<HERDR_PANE_ID>.json` with colons replaced by underscores |
+| Local `HC_TERMINAL_ID` | `hc-<HC_TERMINAL_ID>.json` |
+
+The schema contains `agent`, `model`, `effort`, `context_pct`, `context_tokens`, `cost_usd`, `session_name` and `updated_at` (Unix milliseconds). Missing costs use `null`. Antigravity adds `cost_estimated` and reports `context_tokens: null`. OpenCode can report unknown context usage as `null`. Consumers should preserve the distinction between a JSON null and a measured zero.

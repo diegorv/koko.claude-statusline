@@ -1,6 +1,6 @@
 # Layout & Features
 
-Claude Code or Antigravity CLI pipes session JSON to stdin. The script writes a header row followed by a framed body containing one or more rows. Rows that have no data are simply not emitted — the statusline shrinks to just the header when you are outside a git repo and before any tools, agents, or todos appear.
+Claude Code and Antigravity CLI pipe session JSON to the standalone command. OpenCode updates its plugin from reactive session data. Both runtimes use the same panel renderer to produce a header and an optional framed body. Rows that have no data are simply not emitted — the statusline shrinks to just the header when you are outside a git repo and before any tools, agents, or todos appear.
 
 ## Layout overview
 
@@ -39,7 +39,7 @@ The consumption row is ordered most-stable to most-variable in width (rate limit
 - Running and completed tool usage from the session transcript
 - Agent execution tracking with elapsed time
 - Todo progress from `TodoWrite` calls
-- MCP server health status (ok / errored)
+- MCP tool results observed in the Claude transcript (successful / errored)
 - `CLAUDE.md`, rules, hooks, and MCP counts
 - Non-default `output_style` indicator
 - `⚡` warning when Claude Code was launched with `--dangerously-skip-permissions`
@@ -48,4 +48,14 @@ The consumption row is ordered most-stable to most-variable in width (rate limit
 
 ## Agent-specific availability
 
-The feature list above describes Claude Code. Antigravity uses native quota labels, agent state and subagent status. Its frame spans the available terminal width, independent of content length and header annotations; a conversation title or cost never reduces the space available for body rows. Its exact occupied context-token count and subagent elapsed times are omitted when unavailable. Missing costs are hidden for both agents; explicit zero remains visible. See [Antigravity installation](INSTALL.md#antigravity-cli) for the supported fields and limitations.
+The feature list above describes Claude Code. Each host supplies its own viewport and metrics.
+
+| Host | Width and frame | Context usage | MCP indicator |
+|---|---|---|---|
+| Claude Code | Local terminal probe with per-session stabilization when a key is available. The default right margin is 16 columns. | The payload supplies the percentage, with a fallback of zero. Occupied tokens sum current input, cache creation and cache reads when usage is present. | Configured server count plus servers seen in the transcript. The check and cross reflect successful and errored MCP tool results. |
+| Antigravity CLI | Payload width first, then local probing. The frame spans the available width with a default margin of zero. | The payload supplies the percentage, with a fallback of zero. Aggregate input and output are shown separately. Occupied context tokens are unknown. | The payload supplies no MCP status. |
+| OpenCode | The measured slot width sets the frame, with a default margin of zero. Resizing changes presentation only. | The active model's context sample includes input, visible output, reasoning, cache reads and cache writes. A known capacity is required for a percentage. Missing usage or capacity leaves the percentage unknown. | The host supplies connected and failed server states. |
+
+Antigravity displays native quota buckets, agent state and subagent status. Claude shows its reported five-hour and seven-day limits. OpenCode shows session token totals separately from the current context sample and adds reasoning to visible output in the output total. Model selection, compaction and undo boundaries determine which sample can supply current context.
+
+Missing costs stay hidden and a reported zero stays visible. Antigravity prefixes estimated costs with `~`. An omitted context percentage in a stdin payload can look like a measured zero. OpenCode can leave that percentage unknown.

@@ -1,8 +1,8 @@
 # Installation
 
-Two ways to install: **clone the repo** and point your CLI at the TypeScript entry point, or **[download a prebuilt bundle](#install-from-a-prebuilt-bundle-no-clone)** — a single `statusline.mjs` file you run with `node` or `bun`, no clone and no build. The numbered steps configure Claude Code; [Antigravity CLI](#antigravity-cli) uses the same checkout with its own settings.
+Claude Code and Antigravity CLI can run the TypeScript command from a checkout or a self-contained [release bundle](#install-from-a-prebuilt-bundle-no-clone). The numbered steps configure Claude Code. [Antigravity CLI](#antigravity-cli) uses its own command settings. [OpenCode](#opencode) loads the plugin directory from a full checkout.
 
-## Prerequisites
+## Command prerequisites
 
 - A TypeScript runtime — **[Bun](https://bun.sh) `>= 1.0`** (recommended), **[Node](https://nodejs.org) `>= 22.18`/`>= 23.6`**, or **[tsx](https://tsx.is)**. The script runs directly from TypeScript with no build step; pick whichever you already have. See [Other runtimes](#other-runtimes) for the tradeoffs.
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) or [Antigravity CLI](https://antigravity.google/docs/cli/statusline/) installed and configured.
@@ -24,10 +24,9 @@ Pick any stable location — the path will be hard-coded into your Claude Code s
 ```sh
 git clone https://github.com/diegorv/koko.claude-statusline.git
 cd koko.claude-statusline
-bun install
 ```
 
-`bun install` only pulls dev dependencies (`@types/bun`, `typescript`). There are zero runtime dependencies.
+The standalone command runs directly from the checkout. Contributors install the development dependencies to run tests and typechecks. See [Development](DEVELOPMENT.md#testing).
 
 ## 2. Get the absolute path
 
@@ -86,7 +85,6 @@ From inside the cloned directory:
 
 ```sh
 git pull
-bun install
 ```
 
 No restart of Claude Code is required — the script is re-read on the next refresh.
@@ -123,7 +121,7 @@ This integration targets **Antigravity CLI**, not the IDE or desktop app. The pa
 
 ## OpenCode
 
-The local TUI plugin targets **OpenCode 2.4.x**, verified with **2.4.2**. It requires the full checkout: `integrations/opencode/tui.tsx` imports the shared code under `src/`. The standalone `statusline.mjs` bundle and `--agent` command are for Claude/Antigravity and do not install the OpenCode plugin.
+The local TUI plugin targets **OpenCode 2.4.x**. Its mapping tests use SDK **2.4.2**. Keep the full checkout at a stable path. OpenCode loads the package's public `./tui` export from `integrations/opencode/tui.tsx` and the plugin imports shared modules under `src/`.
 
 Add the integration's absolute directory to the existing `plugins` array in **`~/.config/opencode/cli.json`**, preserving its other entries and settings:
 
@@ -150,7 +148,15 @@ The existing `PANE_HEADER_DIR` export works for the active OpenCode panel. Remov
 
 ## Install from a prebuilt bundle (no clone)
 
-Every [release](https://github.com/diegorv/koko.claude-statusline/releases) ships `statusline.mjs` — the whole statusline bundled into a single self-contained ESM file (still zero dependencies). Download it and point Claude Code at it: no clone, no `bun install`, no build step. It runs on **any runtime** — `node` (any version with ESM support, no type-stripping floor) or `bun`. This is the lightest path if you do not want the repo or are on an older Node.
+The [release bundle](https://github.com/diegorv/koko.claude-statusline/releases) contains the standalone command as a single JavaScript ES module. Run it with Bun or Node. The verified runtime matrix includes Bun 1.4.5 and Node 22, 24 and 26. The bundle can run outside the checkout without package installation or TypeScript stripping.
+
+To reproduce the release artifact in a checkout:
+
+```sh
+mkdir -p dist
+bun build src/index.ts --target=node --outfile=dist/statusline.mjs
+echo '{"model":{"display_name":"Opus"}}' | node dist/statusline.mjs
+```
 
 Download the latest bundle to a stable location (do not move it afterward — the path goes into your settings):
 

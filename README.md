@@ -6,7 +6,7 @@
 [![dependencies](https://img.shields.io/badge/runtime%20deps-0-success)](./package.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-A rich terminal statusline for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) , [Antigravity CLI](https://antigravity.google/docs/cli/statusline/) and [OpenCode](https://opencode.ai/docs/build/plugins/cli/). The standalone command has zero runtime dependencies and runs on Bun, Node, or tsx. OpenCode has a separate native TUI integration sharing the same core.
+A rich terminal statusline for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), [Antigravity CLI](https://antigravity.google/docs/cli/statusline/) and [OpenCode](https://opencode.ai/docs/build/plugins/cli/). The standalone command has zero runtime dependencies and runs on Bun, Node, or tsx. OpenCode has a separate native TUI integration sharing the same core.
 
 Developed with AI coding agents, including Claude Code and Codex.
 
@@ -14,22 +14,26 @@ Built and tested on macOS. CI builds and tests pass on Linux, but it has not bee
 
 Works on any terminal with true-color support (iTerm2, Ghostty, Kitty, Alacritty, WezTerm...).
 
-## Goals
+## Host integrations
 
-- **Small and simple.** A single entry point, one flat UI layer, no build step.
-- **Zero runtime dependencies.** No color library, no box-drawing library, no argument parser. Plain ANSI strings and the standard library (via `node:` modules).
-- **100% local and private.** No network I/O, no telemetry, no analytics, no tracking. The command adapters read stdin and local Git state; Claude also reads its own transcript and configuration. The OpenCode plugin reads session and VCS data through its existing server connection, which can be local or remote. There is no additional telemetry or external service.
+| Host | Installation | Source of updates |
+|---|---|---|
+| Claude Code | `src/index.ts` or the release bundle | Session JSON on stdin, local configuration and transcript |
+| Antigravity CLI | Same command with `--agent antigravity` or automatic product detection | Session JSON on stdin |
+| OpenCode 2.4.x | Local TUI plugin at `integrations/opencode` | Reactive host caches, server VCS and the measured slot width |
+| Codex | Its native configurable footer | Codex manages its own footer. This project provides no custom integration. |
+
+The command and plugin share the session and workspace contracts, panel renderer and pane-header exporter. The command reads local Git state. OpenCode uses its existing server connection, which also supports remote workspaces.
 
 ## Quick install
 
-The steps below configure Claude Code. For Antigravity CLI, use the same checkout and follow **[Antigravity CLI installation](docs/INSTALL.md#antigravity-cli)**. Existing Claude commands keep working without changes. OpenCode 2.4 uses a separate [TUI plugin](docs/INSTALL.md#opencode). Codex currently uses its native footer; see [the adapter architecture](docs/DEVELOPMENT.md#agent-adapters).
+The steps below configure Claude Code. See the [Antigravity settings](docs/INSTALL.md#antigravity-cli) or the [OpenCode plugin settings](docs/INSTALL.md#opencode) for those hosts.
 
 Recommended runtime: [Bun](https://bun.sh) `>= 1.0` — runs the TypeScript entry point directly, no build step.
 
 ```sh
 git clone https://github.com/diegorv/koko.claude-statusline.git
 cd koko.claude-statusline
-bun install
 pwd                         # copy this absolute path for the next step
 ```
 
@@ -54,7 +58,7 @@ echo '{"model":{"display_name":"Opus"},"context_window":{"used_percentage":45},"
 
 Restart Claude Code (or open a new session). For prerequisites, the absolute-path lookup, the verify step, update instructions, and troubleshooting, see **[docs/INSTALL.md](docs/INSTALL.md)**.
 
-### Run it with any runtime
+### Run the command from TypeScript
 
 The entry point is plain TypeScript with no build step and zero `Bun.*` calls — every system call goes through `node:` modules, and internal imports carry explicit `.ts` extensions. So you pick the runtime: swap the leading `bun` in the `command` above (and in the smoke test) for any of these.
 
@@ -68,7 +72,7 @@ Every option runs the same source — you are never locked in. Full details and 
 
 ### Or grab a prebuilt bundle (no clone)
 
-Don't want to clone? Every [release](https://github.com/diegorv/koko.claude-statusline/releases) ships `statusline.mjs` — the whole thing bundled into one self-contained file you run with `node` or `bun`, no repo and no build:
+Don't want to clone? Every [release](https://github.com/diegorv/koko.claude-statusline/releases) ships `statusline.mjs` — the standalone command bundled into one self-contained file you run with `node` or `bun`, no repo and no build:
 
 ```sh
 curl -fL -o ~/.claude-statusline.mjs \
