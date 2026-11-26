@@ -5,6 +5,7 @@ const BOLD = "\x1b[1m"
 const DIM = "\x1b[2m"
 
 const ANSI: Record<string, string> = {
+  orange: "\x1b[38;5;172m",
   red: "\x1b[31m",
   green: "\x1b[32m",
   yellow: "\x1b[33m",

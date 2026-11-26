@@ -1,5 +1,5 @@
 import { createEffect, createMemo, createSignal, onCleanup } from "solid-js"
-import { opencodeAdapter } from "./mapping/adapter.ts"
+import { mapOpenCodeSnapshot } from "./mapping/adapter.ts"
 import type { OpenCodeInput } from "./mapping/input.ts"
 import type { SessionData } from "../../src/core/model.ts"
 import type { WorkspaceSnapshot } from "../../src/core/workspace.ts"
@@ -12,7 +12,7 @@ export function createPanel(
   readWorkspace: () => WorkspaceSnapshot,
   writeHeader: (data: SessionData) => void,
 ) {
-  const snapshot = createMemo(() => opencodeAdapter.read(readInput()))
+  const snapshot = createMemo(() => mapOpenCodeSnapshot(readInput()))
   const [width, setWidth] = createSignal(0)
   const content = createMemo(() => {
     const columns = Math.floor(width())

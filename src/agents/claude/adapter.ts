@@ -1,12 +1,12 @@
 // Claude Code owns these local configuration and transcript formats.
 import { basename } from "node:path"
 import type { SessionData } from "../../core/model.ts"
-import type { AgentAdapter } from "../../core/adapter.ts"
+import type { AgentSnapshot } from "../../core/snapshot.ts"
 import { getConfigCounts } from "./config.ts"
 import { parseTranscript } from "./transcript.ts"
 import { detectSkipPermissions } from "./parent-process.ts"
 import { getCavemanState } from "./caveman.ts"
-import { renderCaveman } from "./caveman-badge.ts"
+import { cavemanAnnotation } from "./caveman-badge.ts"
 
 /** Collapses "(1M context)" style suffixes into a bare size (e.g. "Opus 4.7 (1M context)" → "Opus 4.7 1M"). */
 function compactModelName(name: string): string {
@@ -23,7 +23,6 @@ export function mapClaudeInput(raw: any): SessionData {
     costEstimated: null,
     state: null,
     model:    compactModelName(raw.model?.display_name ?? "Unknown"),
-    modelId:  raw.model?.id ?? "",
     contextPercent: raw.context_window?.used_percentage ?? 0,
     contextTokens: (() => {
       const u = raw.context_window?.current_usage
@@ -46,28 +45,29 @@ export function mapClaudeInput(raw: any): SessionData {
     ],
     vimMode:  raw.vim?.mode ?? null,
     worktree: raw.worktree?.name ?? null,
-    transcriptPath: raw.transcript_path ?? null,
     outputStyle: raw.output_style?.name ?? null,
   }
 }
 
+type ClaudeInput = Record<string, unknown> & { model?: { id?: string }; transcript_path?: string }
 
-export const claudeAdapter: AgentAdapter = {
-  id: "claude",
-  read(raw) {
+export const claudeAdapter = {
+  id: "claude" as const,
+  read(raw: ClaudeInput) {
     const data = mapClaudeInput(raw)
-    const config = data.cwd ? getConfigCounts(data.cwd, data.modelId) : null
+    const config = data.cwd ? getConfigCounts(data.cwd, raw.model?.id ?? "") : null
     data.effortLevel = config?.effortLevel ?? null
-    const caveman = renderCaveman(getCavemanState())
-    return {
+    const caveman = cavemanAnnotation(getCavemanState())
+    const snapshot: AgentSnapshot = {
       data,
       config: config ? {
         instructionFiles: [{ name: "CLAUDE.md", count: config.claudeMd }],
         mcps: config.mcps, hooks: config.hooks, rules: config.rules,
       } : null,
-      activity: data.transcriptPath ? parseTranscript(data.transcriptPath) : null,
+      activity: raw.transcript_path ? parseTranscript(raw.transcript_path) : null,
       skipPermissions: detectSkipPermissions(),
-      headerBadges: caveman ? [caveman] : [],
+      headerAnnotations: caveman ? [caveman] : [],
     }
+    return { snapshot, stabilityKey: raw.transcript_path ?? null }
   },
 }

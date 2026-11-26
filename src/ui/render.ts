@@ -1,4 +1,4 @@
-import type { AgentSnapshot } from "../core/adapter.ts"
+import type { AgentSnapshot } from "../core/snapshot.ts"
 import type { WorkspaceSnapshot } from "../core/workspace.ts"
 import type { PanelLayout } from "./layout.ts"
 import { renderLines } from "./lines.ts"

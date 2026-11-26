@@ -33,11 +33,6 @@ const dependencies: Record<Layer, readonly Layer[]> = {
   plugin: ["plugin", "mapping", "core", "ui", "export"],
 }
 
-// Existing edges to remove as the corresponding contracts and collectors move.
-const migrationEdges: Record<string, readonly string[]> = {
-  "src/agents/claude/caveman-badge.ts": ["src/ui/format.ts"],
-}
-
 function layer(file: string): Layer | undefined {
   if (file === "src/index.ts") return "cli"
   return layers[dirname(file) as keyof typeof layers]
@@ -54,8 +49,7 @@ function allowed(file: string, owner: Layer, specifier: string): boolean {
   if (/^(src\/index|integrations\/opencode\/tui)(?:\.[jt]sx?)?$/.test(target)) return false
   if (owner !== "ui" && /^src\/ui\/(?:rows|lines)\.ts$/.test(target)) return false
   const targetLayer = layer(target)
-  return (targetLayer !== undefined && dependencies[owner].includes(targetLayer))
-    || migrationEdges[file]?.includes(target) === true
+  return targetLayer !== undefined && dependencies[owner].includes(targetLayer)
 }
 
 async function violations(directory: string) {
@@ -102,6 +96,7 @@ test("finds forbidden dependencies and unclassified directories while skipping t
   try {
     const samples = {
       "src/ui/fixture.tsx": 'import "../index.ts"; export { x } from "../agents/claude/adapter.ts";',
+      "src/agents/claude/caveman-badge.ts": 'import "../../ui/format.ts"; import type { StdinAdapter } from "../../cli/adapter.ts"',
       "src/agents/claude/fixture.ts": 'import type { X } from "@opencode/client"; const x = import("../antigravity/adapter.ts")',
       "integrations/opencode/fixture.ts": 'export * from "./tui.tsx"',
       "integrations/opencode/mapping/fixture.ts": 'import "../host.ts"; import "solid-js"; export * from "node:fs"; import("@opencode/client/solid")',
@@ -121,6 +116,8 @@ test("finds forbidden dependencies and unclassified directories while skipping t
       "integrations/opencode/mapping/fixture.ts -> node:fs",
       "integrations/opencode/mapping/fixture.ts -> @opencode/client/solid",
       "unclassified: new-package/index.ts",
+      "src/agents/claude/caveman-badge.ts -> ../../ui/format.ts",
+      "src/agents/claude/caveman-badge.ts -> ../../cli/adapter.ts",
       "src/agents/claude/fixture.ts -> @opencode/client",
       "src/agents/claude/fixture.ts -> ../antigravity/adapter.ts",
       "src/ui/fixture.tsx -> ../index.ts",

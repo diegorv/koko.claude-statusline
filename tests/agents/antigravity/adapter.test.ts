@@ -25,7 +25,7 @@ const payload = {
 }
 
 function output(raw: Record<string, unknown>): string {
-  const snapshot = antigravityAdapter.read(raw)
+  const { snapshot } = antigravityAdapter.read(raw)
   const layout = resolveLayout(reportedWidth(raw), { frameWidth: "available", rightMargin: 0 }, process.env)
   return render(snapshot, EMPTY_WORKSPACE, layout).output
     .replace(/\x1b\[[0-9;]*m/g, "").replaceAll("\u00a0", " ")
@@ -115,14 +115,16 @@ describe("Antigravity adapter", () => {
   })
 
   test("does not reuse Claude fields or collectors even when supplied", () => {
-    const snapshot = antigravityAdapter.read({
-      ...payload, transcript_path: "/not/a/claude/transcript.jsonl",
+    const { snapshot, stabilityKey } = antigravityAdapter.read({
+      ...payload, transcript_path: "/not/a/claude/\x00transcript.jsonl",
       session_name: "Wrong session", output_style: { name: "Wrong style" },
       rate_limits: { five_hour: { used_percentage: 99 } },
       cost: { total_cost_usd: 99 },
     })
+    expect(stabilityKey).toBe("/not/a/claude/transcript.jsonl")
+    expect(snapshot.data).not.toHaveProperty("transcriptPath")
     expect(snapshot.config).toBeNull()
-    expect(snapshot.headerBadges).toEqual([])
+    expect(snapshot.headerAnnotations).toEqual([])
     expect(snapshot.skipPermissions).toBe(false)
     expect(snapshot.activity?.tools.size).toBe(0)
     expect(snapshot.data.sessionName).toBe("Fix tests")

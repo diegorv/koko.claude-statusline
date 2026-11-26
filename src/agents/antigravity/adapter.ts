@@ -1,7 +1,7 @@
 // Documented CLI payload: https://antigravity.google/docs/cli/statusline/
 // Do not feed its transcript path into the Claude-specific JSONL parser.
 import type { ActivityData, EffortLevel, RateLimit, SessionData } from "../../core/model.ts"
-import type { AgentAdapter } from "../../core/adapter.ts"
+import type { AgentSnapshot } from "../../core/snapshot.ts"
 
 function object(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value)
@@ -55,7 +55,6 @@ export function mapAntigravityInput(raw: Record<string, unknown>, now = Date.now
   return {
     agent: "antigravity",
     model: text(model.display_name) ?? text(model.id) ?? "Unknown",
-    modelId: text(model.id) ?? "",
     effortLevel: effort(model.effort),
     state: text(raw.agent_state),
     contextPercent: Math.min(100, number(context.used_percentage) ?? 0),
@@ -74,7 +73,6 @@ export function mapAntigravityInput(raw: Record<string, unknown>, now = Date.now
     rateLimits: quotaLimits(raw.quota, now),
     vimMode: text(object(raw.vim).mode),
     worktree: null,
-    transcriptPath: text(raw.transcript_path),
     outputStyle: null,
   }
 }
@@ -109,15 +107,16 @@ function readActivity(raw: Record<string, unknown>): ActivityData {
   }
 }
 
-export const antigravityAdapter: AgentAdapter = {
-  id: "antigravity",
-  read(raw) {
-    return {
+export const antigravityAdapter = {
+  id: "antigravity" as const,
+  read(raw: Record<string, unknown>) {
+    const snapshot: AgentSnapshot = {
       data: mapAntigravityInput(raw),
       activity: readActivity(raw),
       config: null,
       skipPermissions: false,
-      headerBadges: [],
+      headerAnnotations: [],
     }
+    return { snapshot, stabilityKey: text(raw.transcript_path) }
   },
 }

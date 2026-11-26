@@ -1,11 +1,11 @@
 import { antigravityAdapter } from "../agents/antigravity/adapter.ts"
 import { claudeAdapter } from "../agents/claude/adapter.ts"
-import type { AgentAdapter } from "../core/adapter.ts"
+import type { StdinAdapter } from "./adapter.ts"
 
-const adapters: AgentAdapter[] = [claudeAdapter, antigravityAdapter]
+const adapters: StdinAdapter[] = [claudeAdapter, antigravityAdapter]
 
 /** Explicit selection wins. Unmarked payloads remain Claude-compatible. */
-export function selectAdapter(raw: Record<string, unknown>, requested?: string): AgentAdapter {
+export function selectAdapter(raw: Record<string, unknown>, requested?: string): StdinAdapter {
   const id = requested ?? raw.product ?? "claude"
   if (id === "opencode") throw new Error("OpenCode uses the TUI plugin in integrations/opencode, not a stdin statusLine command.")
   const adapter = adapters.find(adapter => adapter.id === id)

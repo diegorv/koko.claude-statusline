@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { mapClaudeInput } from "../../../src/agents/claude/adapter.ts"
+import { claudeAdapter, mapClaudeInput } from "../../../src/agents/claude/adapter.ts"
 
 describe("mapClaudeInput", () => {
   test("preserves reported zeros and uses the session ID or transcript filename for diagnostics", () => {
@@ -41,7 +41,7 @@ describe("mapClaudeInput", () => {
     expect(result.rateLimits[1]).toEqual({ label: "7d", pct: 10, resetsAt: 1700100000, remaining: null, disabled: false })
     expect(result.vimMode).toBe("NORMAL")
     expect(result.worktree).toBe("feature-branch")
-    expect(result.transcriptPath).toBe("/tmp/transcript.jsonl")
+    expect(result).not.toHaveProperty("transcriptPath")
     expect(result.outputStyle).toBe("explanatory")
   })
 
@@ -59,7 +59,6 @@ describe("mapClaudeInput", () => {
     expect(result.rateLimits).toEqual([])
     expect(result.vimMode).toBeNull()
     expect(result.worktree).toBeNull()
-    expect(result.transcriptPath).toBeNull()
     expect(result.outputStyle).toBeNull()
   })
 
@@ -99,11 +98,6 @@ describe("mapClaudeInput", () => {
     expect(mapClaudeInput({ context_window: { used_percentage: 40 } }).contextTokens).toBeNull()
   })
 
-  test("keeps the model id, which settings are keyed by", () => {
-    expect(mapClaudeInput({ model: { id: "claude-opus-5-5", display_name: "Opus" } }).modelId).toBe("claude-opus-5-5")
-    expect(mapClaudeInput({}).modelId).toBe("")
-  })
-
   test("compacts model display name '(1M context)' suffix to '1M'", () => {
     expect(mapClaudeInput({ model: { display_name: "Opus 4.7 (1M context)" } }).model).toBe("Opus 4.7 1M")
     expect(mapClaudeInput({ model: { display_name: "Sonnet 4.6 (200k context)" } }).model).toBe("Sonnet 4.6 200k")
@@ -120,4 +114,13 @@ describe("mapClaudeInput", () => {
     const result = mapClaudeInput(raw)
     expect(result.rateLimits).toEqual([])
   })
+})
+
+test("keeps the transcript-derived width key separate from shared session facts", () => {
+  const path = "/missing/fixture/session.jsonl"
+  const { stabilityKey, snapshot } = claudeAdapter.read({ transcript_path: path, model: { id: "internal-id" } })
+  expect(stabilityKey).toBe(path)
+  expect(snapshot.data.sessionId).toBe("session")
+  expect(snapshot.data).not.toHaveProperty("modelId")
+  expect(snapshot.data).not.toHaveProperty("transcriptPath")
 })

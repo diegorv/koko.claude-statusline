@@ -26,13 +26,10 @@ export interface SessionData {
   costEstimated: boolean | null
   state: string | null
   model: string
-  /** The model's id; empty when the provider does not send it. */
-  modelId: string
   contextPercent: number | null
   /**
-   * Total tokens currently occupying the context window (input + cache_creation + cache_read),
-   * excluding output tokens.
-   * `null` before the first API call in a session.
+   * Host-reported context occupancy. Claude counts input and cache; OpenCode
+   * also counts output and reasoning. Null when occupancy is unknown.
    */
   contextTokens: number | null
   cost: number | null
@@ -47,7 +44,6 @@ export interface SessionData {
   rateLimits: RateLimit[]
   vimMode: string | null
   worktree: string | null
-  transcriptPath: string | null
   /**
    * Output style preset name (e.g. "explanatory", "succinct"). `null` when
    * unset; `"default"` when the user is on the built-in style — the renderer
@@ -71,7 +67,7 @@ export interface RunningTool {
 }
 
 export interface McpStatus {
-  ok: Set<string>      // servers with at least one successful call
+  ok: Set<string>      // successful Claude calls or connected OpenCode servers
   errored: Set<string> // servers with at least one error
 }
 

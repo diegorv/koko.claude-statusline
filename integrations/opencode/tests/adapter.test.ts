@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { opencodeAdapter } from "../mapping/adapter.ts"
+import { mapOpenCodeSnapshot } from "../mapping/adapter.ts"
 import type { OpenCodeInput } from "../mapping/input.ts"
 import { mapOpenCodeGit } from "../mapping/git.ts"
 import { EMPTY_WORKSPACE } from "../../../src/core/workspace.ts"
@@ -12,7 +12,7 @@ const base: OpenCodeInput = { directory: "/project", messages: [], children: [] 
 
 describe("OpenCode adapter", () => {
   test("omits unknown usage and cost instead of showing zero", () => {
-    const snapshot = opencodeAdapter.read(base)
+    const snapshot = mapOpenCodeSnapshot(base)
     const text = render(snapshot, EMPTY_WORKSPACE, layout).output
     expect(snapshot.data.contextPercent).toBeNull()
     expect(snapshot.data.cost).toBeNull()
@@ -23,8 +23,8 @@ describe("OpenCode adapter", () => {
   })
 
   test("maps native context and aggregate session tokens separately including separate reasoning usage", () => {
-    const snapshot = opencodeAdapter.read({ ...base,
-      model: { id: "model", name: "Model", variant: "high" },
+    const snapshot = mapOpenCodeSnapshot({ ...base,
+      model: { name: "Model", variant: "high" },
       session: { id: "session", title: "Fix tests", tokens: { ...usage, input: 2000 } },
       cost: 0, status: "running", context: { tokens: usage, limit: 1000 },
     })
@@ -41,7 +41,7 @@ describe("OpenCode adapter", () => {
   })
 
   test("handles streamed tool updates, errors, running input and children", () => {
-    const snapshot = opencodeAdapter.read({ ...base,
+    const snapshot = mapOpenCodeSnapshot({ ...base,
       messages: [
         { id: "m1", type: "assistant", time: { created: 1 }, content: [{ id: "t", type: "tool", name: "read", state: { status: "running", input: {} } }] },
         { id: "m1", type: "assistant", time: { created: 1 }, content: [{ id: "t", type: "tool", name: "read", state: { status: "completed", input: {} } }] },
@@ -64,14 +64,14 @@ describe("OpenCode adapter", () => {
 
   test("excludes undone messages and hides stale activity if the boundary is not loaded", () => {
     const messages = ["before", "undo"].map(id => ({ id, type: "assistant", time: { created: 1 }, content: [{ type: "tool", id: "tool", name: id, state: { status: "completed" } }] }))
-    expect(opencodeAdapter.read({ ...base, messages, revertMessageID: "undo" }).activity?.tools).toEqual(new Map([["before", 1]]))
-    expect(opencodeAdapter.read({ ...base, messages, revertMessageID: "unloaded" }).activity?.tools.size).toBe(0)
+    expect(mapOpenCodeSnapshot({ ...base, messages, revertMessageID: "undo" }).activity?.tools).toEqual(new Map([["before", 1]]))
+    expect(mapOpenCodeSnapshot({ ...base, messages, revertMessageID: "unloaded" }).activity?.tools.size).toBe(0)
   })
 
   test("maps server VCS data without inventing local details", () => {
     const git = mapOpenCodeGit("/remote/repo", "main", true)
     expect(git).toMatchObject({ repo: "repo", branch: "main", dirty: true, staged: null, ahead: null })
-    const snapshot = opencodeAdapter.read(base)
+    const snapshot = mapOpenCodeSnapshot(base)
     const remoteRows = render(snapshot, { git, worktrunk: null }, layout).output
     expect(remoteRows).toContain("main")
     // Counts unavailable from the server add no glyphs, just like measured zeros.
@@ -86,7 +86,7 @@ describe("OpenCode adapter", () => {
 })
 
 test("failed tools and failed/interrupted/unclassified children are not shown as successful", () => {
-  const snapshot = opencodeAdapter.read({ ...base,
+  const snapshot = mapOpenCodeSnapshot({ ...base,
     messages: [{ id: "m", type: "assistant", time: { created: 1 }, content: [{ id: "t", type: "tool", name: "edit", state: { status: "error" } }] }],
     children: [
       { id: "1", agent: "failed-agent", running: false, outcome: "failed" },

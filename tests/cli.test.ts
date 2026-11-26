@@ -53,6 +53,32 @@ describe("statusline CLI", () => {
     }
   })
 
+  test("renders the Caveman mode and savings as separately colored header text", () => {
+    const dir = mkdtempSync(join(tmpdir(), "koko-caveman-"))
+    try {
+      const env = { CLAUDE_CONFIG_DIR: dir, COLUMNS: "120", CAVEMAN_STATUSLINE_SAVINGS: "1" }
+      const input = JSON.stringify({ model: { display_name: "Opus" }, cwd: dir })
+      const output = (savings: string) => {
+        const result = run(input, [], { ...env, CAVEMAN_STATUSLINE_SAVINGS: savings })
+        expect(result.status).toBe(0)
+        return result.stdout
+      }
+      const chip = "\x1b[38;5;172m\u00a0full\x1b[0m"
+      const suffix = "\x1b[38;5;172m⛏\u00a012.4k\x1b[0m"
+      expect(output("1")).not.toContain("")
+      writeFileSync(join(dir, ".caveman-active"), "FULL")
+      writeFileSync(join(dir, ".caveman-statusline-suffix"), "⛏ 12.4k")
+      expect(output("1")).toContain(chip + "\u00a0" + suffix)
+      const withoutSavings = output("0")
+      expect(withoutSavings).toContain(chip)
+      expect(withoutSavings).not.toContain(suffix)
+      writeFileSync(join(dir, ".caveman-active"), "off")
+      expect(output("1")).not.toContain("")
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
   test("auto-detects Antigravity and exports its identity to the pane header", () => {
     const dir = mkdtempSync(join(tmpdir(), "koko-cli-"))
     try {

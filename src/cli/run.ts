@@ -25,11 +25,11 @@ export function run(args: string[]): number {
     console.error(error instanceof Error ? error.message : String(error))
     return 1
   }
-  const snapshot = adapter.read(raw)
+  const { snapshot, stabilityKey } = adapter.read(raw)
   const { data } = snapshot
   const claude = adapter.id === "claude"
   const suppliedWidth = claude ? null : reportedWidth(raw)
-  const width = suppliedWidth ?? getTerminalWidth({ stabilityKey: data.transcriptPath })
+  const width = suppliedWidth ?? getTerminalWidth({ stabilityKey })
   const layout = resolveLayout(width, claude
     ? { rightMargin: 16, frameWidth: "content" }
     : { rightMargin: 0, frameWidth: "available" }, process.env)

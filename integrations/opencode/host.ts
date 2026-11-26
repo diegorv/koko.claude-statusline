@@ -14,7 +14,7 @@ export function readHost(context: Plugin.Context, sessionID: string | undefined)
   const messages = sessionID ? context.data.session.message.list(sessionID) : []
   return {
     directory: session?.location.directory ?? location.directory,
-    model: selected ? { id: selected.modelID, name: model?.name ?? selected.modelID, variant: selected.variant } : undefined,
+    model: selected ? { name: model?.name ?? selected.modelID, variant: selected.variant } : undefined,
     session,
     cost: session ? context.data.session.cost(session.id) : undefined,
     status: sessionID ? context.data.session.status(sessionID) : undefined,

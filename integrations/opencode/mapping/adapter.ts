@@ -1,4 +1,4 @@
-import type { AgentAdapter } from "../../../src/core/adapter.ts"
+import type { AgentSnapshot } from "../../../src/core/snapshot.ts"
 import type { ActivityData, EffortLevel } from "../../../src/core/model.ts"
 import type { OpenCodeInput, Usage } from "./input.ts"
 
@@ -62,28 +62,25 @@ function activity(input: OpenCodeInput): ActivityData {
   }
 }
 
-export const opencodeAdapter: AgentAdapter<OpenCodeInput> = {
-  id: "opencode",
-  read(input) {
-    const usage = input.context?.tokens
-    // OpenCode v2 TokenUsageInfo reports visible output and reasoning separately.
-    const tokens = usage ? count(usage.input) + count(usage.output) + count(usage.reasoning) + count(usage.cache.read) + count(usage.cache.write) : null
-    const capacity = input.context?.limit && input.context.limit > 0 ? input.context.limit : null
-    return {
-      data: {
-        agent: "opencode", model: clean(input.model?.name ?? "OpenCode"), modelId: input.model?.id ?? "",
-        effortLevel: effort(input.model?.variant),
-        contextPercent: tokens !== null && capacity !== null ? Math.min(100, tokens / capacity * 100) : null,
-        contextTokens: tokens, contextWindowSize: capacity,
-        cost: input.cost !== undefined && Number.isFinite(input.cost) && input.cost >= 0 ? input.cost : null,
-        costEstimated: null,
-        durationMs: null, linesAdded: null, linesRemoved: null,
-        cwd: input.directory, sessionId: input.session?.id ?? null, sessionName: input.session?.title ? clean(input.session.title) : null,
-        state: input.status ?? null, rateLimits: [],
-        vimMode: null, worktree: null, transcriptPath: null, outputStyle: null,
-      },
-      config: input.mcps ? { instructionFiles: [], rules: 0, hooks: 0, mcps: input.mcps.length } : null,
-      activity: activity(input), skipPermissions: false, headerBadges: [],
-    }
-  },
+export function mapOpenCodeSnapshot(input: OpenCodeInput): AgentSnapshot {
+  const usage = input.context?.tokens
+  // OpenCode v2 TokenUsageInfo reports visible output and reasoning separately.
+  const tokens = usage ? count(usage.input) + count(usage.output) + count(usage.reasoning) + count(usage.cache.read) + count(usage.cache.write) : null
+  const capacity = input.context?.limit && input.context.limit > 0 ? input.context.limit : null
+  return {
+    data: {
+      agent: "opencode", model: clean(input.model?.name ?? "OpenCode"),
+      effortLevel: effort(input.model?.variant),
+      contextPercent: tokens !== null && capacity !== null ? Math.min(100, tokens / capacity * 100) : null,
+      contextTokens: tokens, contextWindowSize: capacity,
+      cost: input.cost !== undefined && Number.isFinite(input.cost) && input.cost >= 0 ? input.cost : null,
+      costEstimated: null,
+      durationMs: null, linesAdded: null, linesRemoved: null,
+      cwd: input.directory, sessionId: input.session?.id ?? null, sessionName: input.session?.title ? clean(input.session.title) : null,
+      state: input.status ?? null, rateLimits: [],
+      vimMode: null, worktree: null, outputStyle: null,
+    },
+    config: input.mcps ? { instructionFiles: [], rules: 0, hooks: 0, mcps: input.mcps.length } : null,
+    activity: activity(input), skipPermissions: false, headerAnnotations: [],
+  }
 }

@@ -25,7 +25,7 @@ export interface Message {
 
 export interface OpenCodeInput {
   directory: string
-  model?: { id: string; name: string; variant?: string }
+  model?: { name: string; variant?: string }
   session?: { id: string; title?: string; tokens: Usage }
   cost?: number
   status?: "idle" | "running"

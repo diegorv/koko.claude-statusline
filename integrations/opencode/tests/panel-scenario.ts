@@ -12,7 +12,7 @@ const { panel, dispose } = createRoot(dispose => ({
   panel: createPanel(() => {
     reads++
     return {
-      directory: "/remote", model: { id: "m", name: model() }, status: "idle", children: [],
+      directory: "/remote", model: { name: model() }, status: "idle", children: [],
       get messages() { aggregations++; return [] },
     }
   }, () => EMPTY_WORKSPACE, data => writes.push(data.model)),

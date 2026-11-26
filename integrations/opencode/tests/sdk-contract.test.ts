@@ -3,7 +3,7 @@ import { lastAssistantWithUsage } from "@opencode/client/solid"
 import { TokenUsage } from "@opencode/schema/token-usage"
 import type { ModelInfo, SessionMessageInfo } from "@opencode/client"
 import { activeContext, contextStep } from "../mapping/context.ts"
-import { opencodeAdapter } from "../mapping/adapter.ts"
+import { mapOpenCodeSnapshot } from "../mapping/adapter.ts"
 
 const usage = { input: 100, output: 20, reasoning: 10, cache: { read: 50, write: 30 } }
 const assistant: SessionMessageInfo = { id: "assistant", type: "assistant", agent: "build", model: { id: "model", providerID: "p" }, tokens: usage, content: [], time: { created: 1 } }
@@ -20,7 +20,7 @@ test("local context selector agrees with pinned SDK across compaction and undo",
 })
 
 test("context total agrees with the host's TokenUsageInfo contract", () => {
-  const snapshot = opencodeAdapter.read({ directory: "/repo", context: { tokens: usage, limit: 1000 }, messages: [], children: [] })
+  const snapshot = mapOpenCodeSnapshot({ directory: "/repo", context: { tokens: usage, limit: 1000 }, messages: [], children: [] })
   expect(snapshot.data.contextTokens).toBe(TokenUsage.total(usage))
 })
 

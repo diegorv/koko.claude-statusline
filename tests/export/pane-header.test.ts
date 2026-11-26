@@ -1,18 +1,19 @@
 import { describe, expect, test, beforeEach, afterEach } from "bun:test"
 import { buildSnapshot, exportPaneHeader } from "../../src/export/pane-header.ts"
-import { mapClaudeInput } from "../../src/agents/claude/adapter.ts"
+import type { SessionData } from "../../src/core/model.ts"
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "fs"
 import { join } from "path"
 import { tmpdir } from "os"
 
 const TMP_DIR = join(tmpdir(), "claude-statusline-pane-header-tests")
 
-const data = mapClaudeInput({
-  model: { display_name: "Opus 5.5 (1M context)" },
-  context_window: { used_percentage: 37.4, current_usage: { input_tokens: 100, cache_read_input_tokens: 900 } },
-  cost: { total_cost_usd: 21.09 },
-  session_name: "kitty bar",
-})
+const data: SessionData = {
+  agent: "claude", model: "Opus 5.5 1M", effortLevel: null, state: null,
+  contextPercent: 37.4, contextTokens: 1000, contextWindowSize: null,
+  cost: 21.09, costEstimated: null, durationMs: null, linesAdded: null, linesRemoved: null,
+  cwd: "", sessionId: null, sessionName: "kitty bar", rateLimits: [],
+  vimMode: null, worktree: null, outputStyle: null,
+}
 
 beforeEach(() => {
   rmSync(TMP_DIR, { recursive: true, force: true })

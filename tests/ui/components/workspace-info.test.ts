@@ -4,10 +4,10 @@ import type { SessionData } from "../../../src/core/model.ts"
 
 const MINIMAL_DATA: SessionData = {
   agent: "claude", effortLevel: null, costEstimated: false, state: null,
-  model: "Opus", modelId: "", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,
+  model: "Opus", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,
   linesAdded: 0, linesRemoved: 0, cwd: "/tmp", contextWindowSize: null,
   sessionName: null, sessionId: null, rateLimits: [],
-  vimMode: null, worktree: null, transcriptPath: null, outputStyle: null,
+  vimMode: null, worktree: null, outputStyle: null,
 }
 
 describe("renderWorkspaceInfo", () => {

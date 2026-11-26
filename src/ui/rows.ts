@@ -1,7 +1,7 @@
 // Layout compositor — emits one row per semantic category so each line is
 // visually self-contained (git, rate limits, tools, agents, todos).
 
-import type { AgentSnapshot } from "../core/adapter.ts"
+import type { AgentSnapshot } from "../core/snapshot.ts"
 import type { WorkspaceSnapshot } from "../core/workspace.ts"
 import { SEP, GAP, ICONS } from "./constants.ts"
 import { c } from "./format.ts"
@@ -58,7 +58,7 @@ export function composeRows(
   snapshot: AgentSnapshot,
   { git, worktrunk }: WorkspaceSnapshot,
 ): RenderResult {
-  const { data, config, activity: transcript, skipPermissions, headerBadges } = snapshot
+  const { data, config, activity: transcript, skipPermissions, headerAnnotations } = snapshot
   const session: string[] = []
 
   // Row 1 (git, green): branch / dirty / stats / ahead-behind / SHA / fork +
@@ -112,5 +112,6 @@ export function composeRows(
   const activityTitle = renderActivityTitle(config, transcript?.mcpStatus ?? null, data.sessionName, data.outputStyle, skipPermissions)
   const effort = renderEffort(data.effortLevel)
 
+  const headerBadges = headerAnnotations.map(({ color, parts }) => parts.map(text => c(color, text)).join(" "))
   return { session, activity, activityTitle, effort, headerBadges }
 }

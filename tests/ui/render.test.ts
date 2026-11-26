@@ -6,15 +6,15 @@ import type { ActivityData } from "../../src/core/model.ts"
 
 // Fixtures exercise the shared snapshot interface used by both hosts.
 function render(data: SessionData, git: GitInfo | null, config: import("../../src/core/model.ts").ConfigSummary | null, activity: ActivityData | null = null) {
-  return renderSnapshot({ data, config, activity, skipPermissions: false, headerBadges: [] }, { git, worktrunk: null })
+  return renderSnapshot({ data, config, activity, skipPermissions: false, headerAnnotations: [] }, { git, worktrunk: null })
 }
 
 const MINIMAL_DATA: SessionData = {
   agent: "claude", effortLevel: null, costEstimated: false, state: null,
-  model: "Opus", modelId: "", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,
+  model: "Opus", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,
   linesAdded: 0, linesRemoved: 0, cwd: "/tmp", contextWindowSize: null,
   sessionName: null, sessionId: null, rateLimits: [],
-  vimMode: null, worktree: null, transcriptPath: null, outputStyle: null,
+  vimMode: null, worktree: null, outputStyle: null,
 }
 
 const CLEAN_GIT: GitInfo = {

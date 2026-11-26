@@ -10,10 +10,10 @@ const layout: PanelLayout = { terminalWidth: null, rightMargin: 0, frameWidth: "
 
 const MINIMAL_DATA: SessionData = {
   agent: "claude", effortLevel: null, costEstimated: false, state: null,
-  model: "Opus", modelId: "", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,
+  model: "Opus", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,
   linesAdded: 0, linesRemoved: 0, cwd: "/tmp", contextWindowSize: null,
   sessionName: null, sessionId: null, rateLimits: [],
-  vimMode: null, worktree: null, transcriptPath: null, outputStyle: null,
+  vimMode: null, worktree: null, outputStyle: null,
 }
 
 const EMPTY_RESULT: RenderResult = { session: [], activity: [], activityTitle: "", effort: null }

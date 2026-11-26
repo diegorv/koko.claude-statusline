@@ -1,5 +1,5 @@
 import { appendFileSync } from "node:fs"
-import type { AgentSnapshot } from "../core/adapter.ts"
+import type { AgentSnapshot } from "../core/snapshot.ts"
 import type { render } from "../ui/render.ts"
 import { vlen } from "../ui/format.ts"
 
