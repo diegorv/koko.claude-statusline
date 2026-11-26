@@ -116,12 +116,26 @@ jobs:
           echo "$agy_output" | grep -Fq '~$0.42'
           echo "Node smoke test passed on $(node --version)"
 
+  opencode:
+    name: OpenCode plugin (SDK types + host tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.5
+      - run: bun install --frozen-lockfile
+      - run: bun install --cwd integrations/opencode --frozen-lockfile
+      - run: bun run --cwd integrations/opencode typecheck
+      - run: bun run --cwd integrations/opencode test
+
   # Aggregate gate. Wire this as the single required status check for
   # branch protection so the rule doesn't need updating whenever the
   # job matrix changes.
   ci-success:
     name: CI success
-    needs: [test, node-smoke]
+    needs: [test, node-smoke, opencode]
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 1
@@ -138,6 +152,10 @@ jobs:
           fi
           if [ "$node_smoke_result" != "success" ]; then
             echo "::error::node-smoke job did not succeed (result=$node_smoke_result)"
+            exit 1
+          fi
+          if [ "${{ needs.opencode.result }}" != "success" ]; then
+            echo "::error::OpenCode plugin job did not succeed"
             exit 1
           fi
           echo "All gates passed."

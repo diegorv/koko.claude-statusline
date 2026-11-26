@@ -121,6 +121,33 @@ It does not read Claude configuration, infer permission bypass from Antigravity'
 
 This integration targets **Antigravity CLI**, not the IDE or desktop app. The payload mapping is based on the [official statusline documentation](https://antigravity.google/docs/cli/statusline/); it is covered by automated payload and subprocess tests, not a live Antigravity session test.
 
+## OpenCode
+
+The local TUI plugin targets **OpenCode 2.4.x**, verified with **2.4.2**. It requires the full checkout: `integrations/opencode/tui.tsx` imports the shared code under `src/`. The standalone `statusline.mjs` bundle and `--agent` command are for Claude/Antigravity and do not install the OpenCode plugin.
+
+Add the integration's absolute directory to the existing `plugins` array in **`~/.config/opencode/cli.json`**, preserving its other entries and settings:
+
+```json
+{
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "plugins": ["/absolute/path/to/koko.claude-statusline/integrations/opencode"]
+}
+```
+
+With `XDG_CONFIG_HOME`, the file is `$XDG_CONFIG_HOME/opencode/cli.json`. OpenCode has no project-local CLI settings file. For a temporary preview that does not change your settings:
+
+```sh
+OPENCODE_CLI_CONFIG_CONTENT='{"plugins":["/absolute/path/to/koko.claude-statusline/integrations/opencode"]}' opencode
+```
+
+Inline arrays replace the global arrays for that launch. These are host CLI settings, not `opencode.json` server plugin settings. OpenCode resolves the host SDK at runtime. Development SDK installation is only needed to typecheck/run the plugin's own tests; see [development](DEVELOPMENT.md#opencode-plugin-development).
+
+The panel appears above the composer in a session and above the footer on the home screen. It shows the selected model/recognized effort, current context when known, session cost and input/output/cache totals, tools, direct subagents, MCP status, branch and dirty state. It uses the slot's measured width, so an open sidebar does not cause it to assume the full terminal width. Git refreshes every five seconds; session data follows the host's reactive cache.
+
+The public server VCS API does not expose the same staged/untracked/ahead/behind/SHA details as the local Git collector. Those fields remain absent. Provider rate limits, todo progress, output speed and elapsed times are also omitted where no reliable host data is connected. Switching models or compacting/undoing clears unknown context usage instead of displaying a stale percentage.
+
+The existing `PANE_HEADER_DIR` export works for the active OpenCode panel. Remove the package path from `plugins` to uninstall; core and other agent settings are unaffected. Source: [TUI plugin interface](https://opencode.ai/docs/build/plugins/cli/) and [CLI configuration](https://opencode.ai/docs/cli/config/).
+
 ## Install from a prebuilt bundle (no clone)
 
 Every [release](https://github.com/diegorv/koko.claude-statusline/releases) ships `statusline.mjs` — the whole statusline bundled into a single self-contained ESM file (still zero dependencies). Download it and point Claude Code at it: no clone, no `bun install`, no build step. It runs on **any runtime** — `node` (any version with ESM support, no type-stripping floor) or `bun`. This is the lightest path if you do not want the repo or are on an older Node.

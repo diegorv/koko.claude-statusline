@@ -14,40 +14,59 @@ CI runs on push and PR via GitHub Actions.
 
 | Path | Responsibility |
 |---|---|
-| `src/index.ts` | Entry point, orchestration only |
-| `src/model.ts` | Shared session, activity, quota and configuration types |
-| `src/adapters/` | Agent selection and provider-owned mapping/collection for Claude and Antigravity |
-| `src/parsing/stdin.ts` | Read a JSON object from stdin; reject malformed or non-object input silently |
-| `src/parsing/transcript.ts` | Parse session transcript JSONL — tool/agent tracking, per-turn token usage, assistant samples for rate math |
-| `src/collection/git.ts` | Git repo info via `node:child_process` `spawnSync` (branch, dirty, SHA, fork detection) |
-| `src/collection/config.ts` | Count `CLAUDE.md`, MCPs, hooks, rules |
-| `src/collection/parent-process.ts` | Inspect parent process cmdline for `--dangerously-skip-permissions` |
-| `src/export/pane-header.ts` | Optional session snapshot for a terminal-side pane header (`PANE_HEADER_DIR`) |
-| `src/ui/terminal.ts` | Terminal width detection (stdout / stderr / env / `/dev/tty`) with per-session cache to defuse transient glitches |
-| `src/ui/format.ts` | ANSI colors, gradient bar, `Intl.Segmenter`-based grapheme width, duration formatting |
-| `src/ui/render.ts` | Compositor — assembles per-row components and assigns domain gutters |
-| `src/ui/lines.ts` | Layout (header + boxed body with optional `├──` tee divider, wrap) |
-| `src/ui/constants.ts` | Icons, separators, spinner |
-| `src/ui/components/` | Per-row components (git, workspace, rate limits, token breakdown, output speed, session diff, tools, agents, todos, activity title, effort) |
-| `tests/` | Mirrors `src/` structure |
+| `src/index.ts` | Stable command entry point for Claude and Antigravity |
+| `src/cli/` | JSON stdin transport and selection of command-based adapters |
+| `src/core/` | Shared session/activity model and the `AgentAdapter<Input>` / `AgentSnapshot` contracts |
+| `src/agents/claude/` | Claude payload, local config, transcript, parent process and Caveman integration |
+| `src/agents/antigravity/` | Antigravity CLI payload mapping |
+| `src/agents/opencode/` | Typed OpenCode data and server VCS mapping; no SDK or UI lifecycle dependency |
+| `src/collection/` | Shared local Git and Worktrunk collectors |
+| `src/ui/` | Shared ANSI formatters, components, compositor and width-aware layout |
+| `src/export/` | Shared pane-header export for Kitty/Herdr |
+| `integrations/opencode/` | OpenCode 2.4 TUI entry point, host SDK bridge, native text conversion and lifecycle |
+| `tests/` | Core, agent and CLI tests, including dependency-direction checks |
+| `integrations/opencode/tests/` | SDK-specific tests, isolated from the standalone runtime |
 
 ## Agent adapters
 
-The pipeline is `stdin → selectAdapter → adapter.read → shared Git/worktree collection → render → pane-header export`.
+Each adapter returns an `AgentSnapshot`: normalized `SessionData`, optional configuration counts and activity, a permission indicator and optional header annotations. The shared compositor takes that snapshot, plus workspace data. It never reads a provider's files or calls a host SDK.
 
-`AgentAdapter.read(raw)` returns an `AgentSnapshot`: normalized `SessionData`, optional configuration counts and activity, plus optional permission/caveman indicators. UI modules consume shared types from `model.ts`, not a provider's input or transcript types. The existing compositors and ANSI components remain shared. Each adapter supplies its default `rightMargin` (Claude: 16 columns for overlays; Antigravity: 0); environment overrides still take precedence. Its `frameWidth` policy controls whether the body fits content/header annotations (Claude) or spans all available columns independently of the header (Antigravity).
+The dependency direction is:
 
-The Claude adapter owns the previous stdin mapping and invokes the existing Claude config, transcript, parent-process and caveman collectors. The Antigravity adapter uses its documented stdin payload directly; it does not invoke those collectors. `null` means an unavailable cost, duration, session diff or subagent elapsed time. Known zero values remain distinct. Quotas are a list with provider-supplied labels rather than fixed 5h/7d fields; reset timestamps are normalized to Unix seconds.
+```text
+Claude/Antigravity stdin -> cli -> agents/<agent> -> core snapshot
+OpenCode host -> integrations/opencode -> agents/opencode -> core snapshot
+core snapshot + workspace data -> ui -> ANSI output / native OpenCode spans
+core snapshot -> export -> Kitty/Herdr pane header
+```
 
-To add an agent, add its ID to `AgentId`, implement `AgentAdapter`, register it in `src/adapters/index.ts`, and test its real input contract through normalization, rendering and export. Do not add placeholder adapters that interpret another agent's schema. Codex and OpenCode still need their own transport/display integrations before they can be supported.
+`core/` imports only `core/`. Shared `ui/`, `collection/` and `export/` modules cannot import an agent or an integration. An agent cannot import another agent. No file under `src/` imports OpenCode, OpenTUI or Solid. `tests/architecture.test.ts` enforces these rules.
 
-An explicit `--agent` wins over the payload's `product`; absent both, selection defaults to Claude for existing installations. Unknown agents are rejected. This same selection runs in the source entry point and the bundled release.
+The Claude adapter owns all `~/.claude` reads and transcript parsing. Its optional Caveman annotation is formatted inside that agent, so other adapters and shared rendering do not depend on it. The Antigravity adapter uses its documented stdin payload directly. The OpenCode adapter consumes typed plain data from its host bridge; it does not pretend OpenCode has a Claude-style stdin callback.
+
+Adapters choose their layout policy: Claude keeps a 16-column overlay reserve and a frame sized around its header annotations; Antigravity and OpenCode default to no reserve and use the full available width. Environment overrides still win. OpenCode measures its slot's actual width, including changes caused by sidebars and terminal resizing.
+
+Unavailable measurements use `null`, including context percentage when the host cannot establish current usage. Known zero values stay distinct. Quotas carry provider-supplied labels, and reset timestamps use Unix seconds. OpenCode's SDK helper handles compaction and undo boundaries; model changes cannot mix an old usage sample with a different model's capacity.
+
+To add another agent, implement its adapter and a real transport in the appropriate directories. Register it in `src/cli/agents.ts` only if it actually receives stdin payloads. Do not create placeholder adapters or infer one provider's format from another. Codex currently uses its native configurable footer; no custom Codex integration is implemented.
+
+## OpenCode plugin development
+
+OpenCode's dependencies are isolated in `integrations/opencode/package.json` and its own lockfile. The root package remains free of runtime dependencies. The plugin uses SDK 2.4.2 types and the host's OpenTUI/Solid runtime. Its source entry point imports the shared code from this checkout; it is a local integration, not a standalone npm distribution.
+
+```sh
+bun install --cwd integrations/opencode --frozen-lockfile
+bun run --cwd integrations/opencode typecheck
+bun run --cwd integrations/opencode test
+```
+
+The plugin mounts above the session composer and before the home footer. `prompt.footer` is a horizontal host layout and is deliberately not used for the multiline panel. The host bridge reads cached reactive session/model/message data; VCS refreshes use asynchronous server calls every five seconds, with timeout and cancellation. Component cleanup removes timers and pending export writes. The plugin never probes a remote directory on the local filesystem.
+
+Native spans are produced from the shared renderer's ANSI colors; this avoids copying layout and formatting logic into a second renderer. SDK types are checked separately so a host SDK upgrade cannot silently alter the standalone command's dependency graph. CI runs both suites as separate jobs.
 
 ## Dependencies
 
-Zero runtime dependencies. Layout is rendered as plain ANSI rows with a horizontal rule between header and body — no box-drawing or color library. Git and terminal size are queried via `node:child_process` `spawnSync`.
-
-Dev dependency: `@types/bun` for TypeScript types.
+The standalone command has zero runtime dependencies and runs on Bun, Node or tsx. It uses `node:` builtins for local filesystem/process access. The OpenCode integration depends on APIs provided by OpenCode; its development SDKs are installed only in the integration directory.
 
 ## Inspiration & Attribution
 

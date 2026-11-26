@@ -9,10 +9,13 @@ describe("adapter selection", () => {
     expect(selectAdapter({ product: "antigravity" }, "claude").id).toBe("claude")
   })
   test("rejects unsupported agents instead of interpreting them as Claude", () => {
-    for (const id of ["codex", "opencode", "unknown"]) {
+    for (const id of ["codex", "unknown"]) {
       expect(() => selectAdapter({}, id)).toThrow("Unsupported agent")
       expect(() => selectAdapter({ product: id })).toThrow("Unsupported agent")
     }
+  })
+  test("directs OpenCode to its native TUI integration", () => {
+    expect(() => selectAdapter({}, "opencode")).toThrow("TUI plugin")
   })
   test("accepts explicit selection and rejects malformed arguments", () => {
     expect(parseAgentArgument([])).toBeUndefined()

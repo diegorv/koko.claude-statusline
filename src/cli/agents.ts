@@ -7,6 +7,7 @@ const adapters: AgentAdapter[] = [claudeAdapter, antigravityAdapter]
 /** Explicit selection wins. Unmarked payloads remain Claude-compatible. */
 export function selectAdapter(raw: Record<string, unknown>, requested?: string): AgentAdapter {
   const id = requested ?? raw.product ?? "claude"
+  if (id === "opencode") throw new Error("OpenCode uses the TUI plugin in integrations/opencode, not a stdin statusLine command.")
   const adapter = adapters.find(adapter => adapter.id === id)
   if (!adapter) throw new Error(`Unsupported agent: ${String(id)}. Supported agents: ${adapters.map(a => a.id).join(", ")}.`)
   return adapter

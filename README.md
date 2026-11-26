@@ -6,9 +6,9 @@
 [![dependencies](https://img.shields.io/badge/runtime%20deps-0-success)](./package.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-A rich terminal statusline for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and [Antigravity CLI](https://antigravity.google/docs/cli/statusline/). Single entry point, agent-specific adapters, zero runtime dependencies, plain TypeScript that runs on Bun, Node, or tsx.
+A rich terminal statusline for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) , [Antigravity CLI](https://antigravity.google/docs/cli/statusline/) and [OpenCode](https://opencode.ai/docs/build/plugins/cli/). The standalone command has zero runtime dependencies and runs on Bun, Node, or tsx. OpenCode has a separate native TUI integration sharing the same core.
 
-100% AI-generated — code, tests, and docs were written entirely with [Claude Code](https://claude.com/claude-code).
+Developed with AI coding agents, including Claude Code and Codex.
 
 Built and tested on macOS. CI builds and tests pass on Linux, but it has not been manually tested there.
 
@@ -18,11 +18,11 @@ Works on any terminal with true-color support (iTerm2, Ghostty, Kitty, Alacritty
 
 - **Small and simple.** A single entry point, one flat UI layer, no build step.
 - **Zero runtime dependencies.** No color library, no box-drawing library, no argument parser. Plain ANSI strings and the standard library (via `node:` modules).
-- **100% local and private.** No network I/O, no telemetry, no analytics, no tracking. Both adapters read the CLI's stdin and local Git state. The Claude adapter also reads its transcript and configuration files. Nothing ever leaves your machine.
+- **100% local and private.** No network I/O, no telemetry, no analytics, no tracking. The command adapters read stdin and local Git state; Claude also reads its own transcript and configuration. The OpenCode plugin reads session and VCS data through its existing server connection, which can be local or remote. There is no additional telemetry or external service.
 
 ## Quick install
 
-The steps below configure Claude Code. For Antigravity CLI, use the same checkout and follow **[Antigravity CLI installation](docs/INSTALL.md#antigravity-cli)**. Existing Claude commands keep working without changes. Codex and OpenCode adapters are not implemented yet; see [the adapter architecture](docs/DEVELOPMENT.md#agent-adapters).
+The steps below configure Claude Code. For Antigravity CLI, use the same checkout and follow **[Antigravity CLI installation](docs/INSTALL.md#antigravity-cli)**. Existing Claude commands keep working without changes. OpenCode 2.4 uses a separate [TUI plugin](docs/INSTALL.md#opencode). Codex currently uses its native footer; see [the adapter architecture](docs/DEVELOPMENT.md#agent-adapters).
 
 Recommended runtime: [Bun](https://bun.sh) `>= 1.0` — runs the TypeScript entry point directly, no build step.
 
