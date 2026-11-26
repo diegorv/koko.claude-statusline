@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import type { SessionMessageInfo } from "@opencode/client"
-import { activeContext, resolveModel } from "../host.ts"
+import { activeContext, resolveModel } from "../mapping/context.ts"
 
 const selected = { providerID: "provider", modelID: "model" }
 const models = [{ id: "model", modelID: "model", providerID: "provider", name: "Model", limit: { context: 1000, output: 200 } }]

@@ -11,13 +11,13 @@ const layers = {
   "src/cli": "cli",
   "src/agents/claude": "claude",
   "src/agents/antigravity": "antigravity",
-  "src/agents/opencode": "opencode",
   "src/core": "core",
   "src/cli/workspace": "workspace",
   "src/export": "export",
   "src/ui": "ui",
   "src/ui/components": "ui",
   "integrations/opencode": "plugin",
+  "integrations/opencode/mapping": "mapping",
 } as const
 type Layer = (typeof layers)[keyof typeof layers]
 
@@ -25,12 +25,12 @@ const dependencies: Record<Layer, readonly Layer[]> = {
   cli: ["cli", "claude", "antigravity", "core", "workspace", "ui", "export"],
   claude: ["claude", "core"],
   antigravity: ["antigravity", "core"],
-  opencode: ["opencode", "core"],
+  mapping: ["mapping", "core"],
   core: ["core"],
   workspace: ["workspace", "core"],
   export: ["export", "core"],
   ui: ["ui", "core"],
-  plugin: ["plugin", "opencode", "core", "ui", "export"],
+  plugin: ["plugin", "mapping", "core", "ui", "export"],
 }
 
 // Existing edges to remove as the corresponding contracts and collectors move.
@@ -104,6 +104,7 @@ test("finds forbidden dependencies and unclassified directories while skipping t
       "src/ui/fixture.tsx": 'import "../index.ts"; export { x } from "../agents/claude/adapter.ts";',
       "src/agents/claude/fixture.ts": 'import type { X } from "@opencode/client"; const x = import("../antigravity/adapter.ts")',
       "integrations/opencode/fixture.ts": 'export * from "./tui.tsx"',
+      "integrations/opencode/mapping/fixture.ts": 'import "../host.ts"; import "solid-js"; export * from "node:fs"; import("@opencode/client/solid")',
       "src/ui/widgets/nested.ts": "",
       "new-package/index.ts": "",
       "src/ui/tests/fixture.ts": "",
@@ -115,6 +116,10 @@ test("finds forbidden dependencies and unclassified directories while skipping t
     }
     expect(await violations(temp)).toEqual([
       "integrations/opencode/fixture.ts -> ./tui.tsx",
+      "integrations/opencode/mapping/fixture.ts -> ../host.ts",
+      "integrations/opencode/mapping/fixture.ts -> solid-js",
+      "integrations/opencode/mapping/fixture.ts -> node:fs",
+      "integrations/opencode/mapping/fixture.ts -> @opencode/client/solid",
       "unclassified: new-package/index.ts",
       "src/agents/claude/fixture.ts -> @opencode/client",
       "src/agents/claude/fixture.ts -> ../antigravity/adapter.ts",

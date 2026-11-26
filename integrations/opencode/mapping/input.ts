@@ -1,5 +1,4 @@
-// The public OpenCode 2.x fields used by this adapter. No SDK imports here:
-// integrations/opencode owns the host dependency and checks its types against this contract.
+// Fields read from the OpenCode 2.x host and passed into normalization.
 export interface Usage {
   input: number
   output: number

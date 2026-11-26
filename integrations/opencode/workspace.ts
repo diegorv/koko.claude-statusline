@@ -1,6 +1,6 @@
 import type { Plugin } from "@opencode/plugin/tui"
 import { EMPTY_WORKSPACE, type WorkspaceSnapshot } from "../../src/core/workspace.ts"
-import { mapOpenCodeGit } from "../../src/agents/opencode/git.ts"
+import { mapOpenCodeGit } from "./mapping/git.ts"
 
 type Client = Plugin.Context["client"]
 type WorkspaceClient = { vcs: Pick<Client["vcs"], "get" | "status">; location: Pick<Client["location"], "get"> }

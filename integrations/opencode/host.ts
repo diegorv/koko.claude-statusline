@@ -1,23 +1,6 @@
 import type { Plugin } from "@opencode/plugin/tui"
-import type { ModelInfo, SessionMessageInfo } from "@opencode/client"
-import { contextStep } from "../../src/agents/opencode/context.ts"
-import type { OpenCodeInput } from "../../src/agents/opencode/input.ts"
-
-type Selection = { providerID: string; modelID: string; variant?: string }
-type ModelWindow = Pick<ModelInfo, "id" | "providerID" | "name" | "limit">
-
-export function resolveModel(selected: Selection | undefined, models: readonly ModelWindow[]): ModelWindow | undefined {
-  return selected ? models.find(model => model.providerID === selected.providerID && model.id === selected.modelID) : undefined
-}
-
-/** Use the host's compaction/revert semantics and match the selected model. */
-export function activeContext(messages: SessionMessageInfo[], selected: Selection | undefined, models: readonly ModelWindow[], boundary?: string): OpenCodeInput["context"] {
-  const step = contextStep(messages, boundary)
-  const model = resolveModel(selected, models)
-  const matches = step && selected && step.model.providerID === selected.providerID
-    && step.model.id === selected.modelID
-  return matches && model ? { tokens: step.tokens, limit: model.limit.context } : undefined
-}
+import { activeContext, resolveModel } from "./mapping/context.ts"
+import type { OpenCodeInput } from "./mapping/input.ts"
 
 /** Only this integration knows the OpenCode SDK. The adapter consumes plain data. */
 export function readHost(context: Plugin.Context, sessionID: string | undefined): OpenCodeInput {

@@ -19,13 +19,13 @@ CI runs on push and PR via GitHub Actions.
 | `src/core/` | Shared workspace, session and activity models and the `AgentAdapter<Input>` / `AgentSnapshot` contracts |
 | `src/agents/claude/` | Claude payload, local config, transcript, parent process and Caveman integration |
 | `src/agents/antigravity/` | Antigravity CLI payload mapping |
-| `src/agents/opencode/` | Typed OpenCode data and server VCS mapping; no SDK or UI lifecycle dependency |
 | `src/cli/workspace/` | Local Git acquisition and Worktrunk lookup for linked worktrees |
 | `src/ui/` | Shared ANSI formatters, components, compositor and width-aware layout |
 | `src/export/` | Shared pane-header export for Kitty/Herdr |
 | `integrations/opencode/` | OpenCode 2.4 TUI entry point, host SDK bridge, native text conversion and lifecycle |
+| `integrations/opencode/mapping/` | OpenCode input shapes, context and capacity selection, session normalization, and translation of server VCS data |
 | `tests/` | Core, agent and CLI tests, including dependency-direction checks |
-| `integrations/opencode/tests/` | SDK-specific tests, isolated from the standalone runtime |
+| `integrations/opencode/tests/` | Plugin mapping, SDK contract, remote workspace and reactive panel tests |
 
 ## Agent adapters
 
@@ -35,14 +35,14 @@ The dependency direction is:
 
 ```text
 Claude/Antigravity stdin -> cli -> agents/<agent> -> core snapshot
-OpenCode host -> integrations/opencode -> agents/opencode -> core snapshot
+OpenCode host -> integrations/opencode/host.ts -> mapping/ -> core snapshot
 core snapshot + workspace data -> ui -> ANSI output / native OpenCode spans
 core snapshot -> export -> Kitty/Herdr pane header
 ```
 
 `core/` imports only `core/`. The shared UI, exporter and remote mapper consume contracts from core. Local Git and Worktrunk subprocesses belong to the command. OpenCode obtains its workspace snapshot from the connected server. An agent cannot import another agent. No file under `src/` imports OpenCode, OpenTUI or Solid. `tests/architecture.test.ts` enforces these rules.
 
-The Claude adapter owns all `~/.claude` reads and transcript parsing. Its optional Caveman annotation is formatted inside that agent, so other adapters and shared rendering do not depend on it. The Antigravity adapter uses its documented stdin payload directly. The OpenCode adapter consumes typed plain data from its host bridge; it does not pretend OpenCode has a Claude-style stdin callback.
+The Claude adapter owns all `~/.claude` reads and transcript parsing. Its optional Caveman annotation is formatted inside that agent, so other adapters and shared rendering do not depend on it. The Antigravity adapter uses its documented stdin payload directly. The OpenCode host bridge reads SDK caches and supplies plain data to the mapping modules. These modules depend only on one another and the shared contracts.
 
 Adapters choose their layout policy: Claude keeps a 16-column overlay reserve and a frame sized around its header annotations; Antigravity and OpenCode default to no reserve and use the full available width. Environment overrides still win. OpenCode measures its slot's actual width, including changes caused by sidebars and terminal resizing.
 

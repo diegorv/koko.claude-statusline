@@ -1,5 +1,5 @@
-import type { AgentAdapter } from "../../core/adapter.ts"
-import type { ActivityData, EffortLevel } from "../../core/model.ts"
+import type { AgentAdapter } from "../../../src/core/adapter.ts"
+import type { ActivityData, EffortLevel } from "../../../src/core/model.ts"
 import type { OpenCodeInput, Usage } from "./input.ts"
 
 const clean = (text: string) => text.replace(/[\x00-\x1f\x7f]/g, "")
