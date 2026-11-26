@@ -17,8 +17,8 @@ export function activeContext(messages: SessionMessageInfo[], selected: Selectio
 
 /** Only this integration knows the OpenCode SDK. The adapter consumes plain data. */
 export function readHost(context: Plugin.Context, sessionID: string | undefined, width: number): OpenCodeInput {
-  const location = context.location ?? context.data.location.default()
   const session = sessionID ? context.data.session.get(sessionID) : undefined
+  const location = session?.location ?? context.location ?? context.data.location.default()
   const selected = context.ui.model.current() ?? (session?.model ? {
     modelID: session.model.id, providerID: session.model.providerID, variant: session.model.variant,
   } : undefined)

@@ -17,11 +17,16 @@ function Statusline(props: { context: Plugin.Context; sessionID?: string }) {
 
   // Async server VCS calls work for remote servers as well as local sessions.
   // Solid ignores stale resource results after a directory change.
+  let request: AbortController | undefined
+  onCleanup(() => request?.abort())
   const [vcs, { refetch }] = createResource(directory, async directory => {
+    request?.abort()
+    request = new AbortController()
+    const signal = AbortSignal.any([request.signal, AbortSignal.timeout(4000)])
     try {
       const [info, status] = await Promise.all([
-        context.client.vcs.get({ location: { directory } }),
-        context.client.vcs.status({ location: { directory } }),
+        context.client.vcs.get({ location: { directory } }, { signal }),
+        context.client.vcs.status({ location: { directory } }, { signal }),
       ])
       return { directory, git: mapOpenCodeGit(directory, info.data.branch.current, status.data.length > 0) }
     } catch { return { directory, git: null } }

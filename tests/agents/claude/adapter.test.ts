@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { mapClaudeInput } from "../../src/agents/claude/adapter.ts"
+import { mapClaudeInput } from "../../../src/agents/claude/adapter.ts"
 
 describe("mapClaudeInput", () => {
   test("preserves reported zeros and uses the session ID or transcript filename for diagnostics", () => {

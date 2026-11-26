@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test"
-import { antigravityAdapter, mapAntigravityInput } from "../../src/agents/antigravity/adapter.ts"
-import { buildSnapshot } from "../../src/export/pane-header.ts"
-import { render } from "../../src/ui/render.ts"
-import { renderLines } from "../../src/ui/lines.ts"
-import { vlen } from "../../src/ui/format.ts"
+import { antigravityAdapter, mapAntigravityInput } from "../../../src/agents/antigravity/adapter.ts"
+import { buildSnapshot } from "../../../src/export/pane-header.ts"
+import { render } from "../../../src/ui/render.ts"
+import { renderLines } from "../../../src/ui/lines.ts"
+import { vlen } from "../../../src/ui/format.ts"
 
 const payload = {
   product: "antigravity",
