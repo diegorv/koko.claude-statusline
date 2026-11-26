@@ -1,10 +1,10 @@
 // Flat-line layout — header (left + right) with horizontal rule and content rows.
 
 import type { SessionData } from "../core/model.ts"
-import type { RenderResult } from "./render.ts"
+import type { RenderResult } from "./rows.ts"
 import { bold, c, dim, formatDuration, formatTokens, gradientBar, nbsp, pctColor, RESET, vlen } from "./format.ts"
 import { GAP, SEP, inRuleColor, inFaintColor } from "./constants.ts"
-import { getTerminalWidth } from "./terminal.ts"
+import type { PanelLayout } from "./layout.ts"
 
 const RULE_CHAR = "─"
 const LEFT_PAD = " "
@@ -85,12 +85,6 @@ function joinHeader(left: string, right: string, maxWidth: number): string {
   return left + HEADER_GAP + inFaintColor(RULE_CHAR.repeat(dashes)) + HEADER_GAP + right
 }
 
-/** Resolves the configured right margin (env override → default). */
-function resolveRightMargin(defaultMargin: number): number {
-  const env = Number.parseInt(process.env.KOKO_STATUSLINE_RIGHT_MARGIN ?? process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN ?? "", 10)
-  return Number.isFinite(env) && env >= 0 ? env : defaultMargin
-}
-
 /**
  * Renders the status line as flat rows:
  *   1. header — left (model/context) · dashes · right (cost/duration/config counts)
@@ -100,9 +94,8 @@ function resolveRightMargin(defaultMargin: number): number {
  *
  * Rows wider than the terminal are wrapped at separator boundaries.
  */
-export function renderLines(data: SessionData, result: RenderResult, repoName?: string): string {
-  const terminalWidth = data.terminalWidth ?? getTerminalWidth({ stabilityKey: data.transcriptPath })
-  const margin = resolveRightMargin(data.rightMargin)
+export function renderLines(data: SessionData, result: RenderResult, layout: PanelLayout, repoName?: string): string {
+  const { terminalWidth, rightMargin: margin } = layout
   const minimumWidth = terminalWidth ? Math.min(MIN_USABLE_WIDTH, Math.max(1, terminalWidth - LEFT_PAD.length)) : MIN_USABLE_WIDTH
   const usableWidth = terminalWidth
     ? Math.max(minimumWidth, terminalWidth - margin - LEFT_PAD.length)
@@ -114,13 +107,13 @@ export function renderLines(data: SessionData, result: RenderResult, repoName?: 
     ? joinHeader(left, right, usableWidth)
     : (right ? left + SEP + right : left)
 
-  // The adapter chooses whether the frame spans all available columns or
+  // The host chooses whether the frame spans all available columns or
   // leaves room for the header's floating annotations. Content-sized frames
   // fall back to the widest body row when those annotations are absent.
   const rightW = vlen(right)
   let boxWidth: number | null = null
   if (Number.isFinite(usableWidth)) {
-    if (data.frameWidth === "available") boxWidth = usableWidth
+    if (layout.frameWidth === "available") boxWidth = usableWidth
     else if (rightW > 0) boxWidth = Math.max(minimumWidth, usableWidth - rightW - HEADER_GAP.length)
   }
 

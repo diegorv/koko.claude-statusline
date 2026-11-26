@@ -1,42 +1,15 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test"
+import { describe, expect, test } from "bun:test"
 import { renderLines } from "../../src/ui/lines.ts"
 import { vlen } from "../../src/ui/format.ts"
 import { SEP } from "../../src/ui/constants.ts"
 import type { SessionData } from "../../src/core/model.ts"
-import type { RenderResult } from "../../src/ui/render.ts"
-import { mapClaudeInput } from "../../src/agents/claude/adapter.ts"
+import type { RenderResult } from "../../src/ui/rows.ts"
+import type { PanelLayout } from "../../src/ui/layout.ts"
 
-const ORIGINAL_STDOUT_COLS = process.stdout.columns
-const ORIGINAL_STDERR_COLS = process.stderr.columns
-const ORIGINAL_COLUMNS_ENV = process.env.COLUMNS
-const ORIGINAL_KOKO_MARGIN = process.env.KOKO_STATUSLINE_RIGHT_MARGIN
-const ORIGINAL_RIGHT_MARGIN_ENV = process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN
-
-function setStreamColumns(stream: NodeJS.WriteStream, value: number | undefined): void {
-  Object.defineProperty(stream, "columns", { value, configurable: true, writable: true })
-}
-
-beforeEach(() => {
-  setStreamColumns(process.stdout, undefined)
-  setStreamColumns(process.stderr, undefined)
-  delete process.env.COLUMNS
-  delete process.env.KOKO_STATUSLINE_RIGHT_MARGIN
-  process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN = "0"
-})
-
-afterEach(() => {
-  setStreamColumns(process.stdout, ORIGINAL_STDOUT_COLS)
-  setStreamColumns(process.stderr, ORIGINAL_STDERR_COLS)
-  if (ORIGINAL_COLUMNS_ENV === undefined) delete process.env.COLUMNS
-  else process.env.COLUMNS = ORIGINAL_COLUMNS_ENV
-  if (ORIGINAL_KOKO_MARGIN === undefined) delete process.env.KOKO_STATUSLINE_RIGHT_MARGIN
-  else process.env.KOKO_STATUSLINE_RIGHT_MARGIN = ORIGINAL_KOKO_MARGIN
-  if (ORIGINAL_RIGHT_MARGIN_ENV === undefined) delete process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN
-  else process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN = ORIGINAL_RIGHT_MARGIN_ENV
-})
+const layout: PanelLayout = { terminalWidth: null, rightMargin: 0, frameWidth: "content" }
 
 const MINIMAL_DATA: SessionData = {
-  agent: "claude", effortLevel: null, terminalWidth: null, rightMargin: 16, frameWidth: "content", costEstimated: false, state: null,
+  agent: "claude", effortLevel: null, costEstimated: false, state: null,
   model: "Opus", modelId: "", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,
   linesAdded: 0, linesRemoved: 0, cwd: "/tmp", contextWindowSize: null,
   sessionName: null, sessionId: null, rateLimits: [],
@@ -47,46 +20,46 @@ const EMPTY_RESULT: RenderResult = { session: [], activity: [], activityTitle: "
 
 describe("renderLines header", () => {
   test("includes model name", () => {
-    expect(renderLines(MINIMAL_DATA, EMPTY_RESULT)).toContain("Opus")
+    expect(renderLines(MINIMAL_DATA, EMPTY_RESULT, layout)).toContain("Opus")
   })
 
   test("includes context percent rounded", () => {
-    expect(renderLines(MINIMAL_DATA, EMPTY_RESULT)).toContain("50%")
+    expect(renderLines(MINIMAL_DATA, EMPTY_RESULT, layout)).toContain("50%")
   })
 
   test("renders cost in cents when below $0.10", () => {
-    expect(renderLines(MINIMAL_DATA, EMPTY_RESULT)).toContain("5¢")
+    expect(renderLines(MINIMAL_DATA, EMPTY_RESULT, layout)).toContain("5¢")
   })
 
   test("renders cost in dollars when >= $0.10", () => {
     const data = { ...MINIMAL_DATA, cost: 1.5 }
-    expect(renderLines(data, EMPTY_RESULT)).toContain("$1.50")
+    expect(renderLines(data, EMPTY_RESULT, layout)).toContain("$1.50")
   })
 
   test("includes duration when >= 1 second", () => {
-    expect(renderLines(MINIMAL_DATA, EMPTY_RESULT)).toContain("1m")
+    expect(renderLines(MINIMAL_DATA, EMPTY_RESULT, layout)).toContain("1m")
   })
 
   test("omits duration when < 1 second", () => {
     const data = { ...MINIMAL_DATA, durationMs: 500 }
-    expect(renderLines(data, EMPTY_RESULT)).not.toContain("⏱")
+    expect(renderLines(data, EMPTY_RESULT, layout)).not.toContain("⏱")
   })
 
   test("includes repo name when provided", () => {
-    expect(renderLines(MINIMAL_DATA, EMPTY_RESULT, "my-repo")).toContain("my-repo")
+    expect(renderLines(MINIMAL_DATA, EMPTY_RESULT, layout, "my-repo")).toContain("my-repo")
   })
 })
 
 describe("renderLines structure", () => {
   test("emits header only when no body content", () => {
-    const output = renderLines(MINIMAL_DATA, EMPTY_RESULT)
+    const output = renderLines(MINIMAL_DATA, EMPTY_RESULT, layout)
     const lines = output.split("\n")
     expect(lines).toHaveLength(1)
   })
 
   test("frames body content with top (┌──) and bottom (└──) rules", () => {
     const result: RenderResult = { session: ["body line"], activity: [], activityTitle: "", effort: null }
-    const lines = renderLines(MINIMAL_DATA, result).split("\n")
+    const lines = renderLines(MINIMAL_DATA, result, layout).split("\n")
     // header, top rule, body, bottom rule
     expect(lines).toHaveLength(4)
     expect(lines[1]).toContain("┌")
@@ -102,7 +75,7 @@ describe("renderLines structure", () => {
       activityTitle: "TITLE",
       effort: null,
     }
-    const lines = renderLines(MINIMAL_DATA, result).split("\n")
+    const lines = renderLines(MINIMAL_DATA, result, layout).split("\n")
     // header, ┌, session, ├, activity, └ — a single box with an internal
     // tee divider when both session and activity have content.
     expect(lines).toHaveLength(6)
@@ -116,7 +89,7 @@ describe("renderLines structure", () => {
 
   test("emits a single box when only session rows are present", () => {
     const result: RenderResult = { session: ["SESS"], activity: [], activityTitle: "", effort: null }
-    const lines = renderLines(MINIMAL_DATA, result).split("\n")
+    const lines = renderLines(MINIMAL_DATA, result, layout).split("\n")
     expect(lines).toHaveLength(4)  // header, ┌, SESS, └
     expect(lines[1]).toContain("┌")
     expect(lines[3]).toContain("└")
@@ -124,7 +97,7 @@ describe("renderLines structure", () => {
 
   test("emits a single box when only activity rows are present", () => {
     const result: RenderResult = { session: [], activity: ["ACT"], activityTitle: "", effort: null }
-    const lines = renderLines(MINIMAL_DATA, result).split("\n")
+    const lines = renderLines(MINIMAL_DATA, result, layout).split("\n")
     expect(lines).toHaveLength(4)
     expect(lines[1]).toContain("┌")
     expect(lines[3]).toContain("└")
@@ -132,7 +105,7 @@ describe("renderLines structure", () => {
 
   test("each row is left-padded with one space (after the leading ANSI reset)", () => {
     const result: RenderResult = { session: ["x"], activity: [], activityTitle: "", effort: null }
-    for (const line of renderLines(MINIMAL_DATA, result).split("\n")) {
+    for (const line of renderLines(MINIMAL_DATA, result, layout).split("\n")) {
       // Lines start with a leading "\x1b[0m" reset (introduced to defend
       // against Claude Code's dim styling leaking into the first char of a
       // row); skip it before checking the pad.
@@ -142,20 +115,19 @@ describe("renderLines structure", () => {
 
   test("each row starts with the ANSI reset escape", () => {
     const result: RenderResult = { session: ["x"], activity: ["y"], activityTitle: "", effort: null }
-    for (const line of renderLines(MINIMAL_DATA, result).split("\n")) {
+    for (const line of renderLines(MINIMAL_DATA, result, layout).split("\n")) {
       expect(line.startsWith("\x1b[0m")).toBe(true)
     }
   })
 
   test("activityTitle in header is dimmed", () => {
     const result: RenderResult = { session: [], activity: [], activityTitle: "ZZZ", effort: null }
-    const output = renderLines(MINIMAL_DATA, result)
+    const output = renderLines(MINIMAL_DATA, result, layout)
     expect(output).toContain("\x1b[2mZZZ")
   })
 
   test("header has dashed filler between left and right when terminal is wide", () => {
-    setStreamColumns(process.stdout, 200)
-    const output = renderLines(MINIMAL_DATA, EMPTY_RESULT)
+    const output = renderLines(MINIMAL_DATA, EMPTY_RESULT, { ...layout, terminalWidth: 200 })
     const headerRow = output.split("\n")[0]
     // Expect dashes (─) inside the header line, not just on the rule below.
     expect(headerRow).toContain("─")
@@ -164,11 +136,10 @@ describe("renderLines structure", () => {
 
 describe("renderLines wrapping", () => {
   test("wraps a long body line at SEP boundaries when terminal is narrow", () => {
-    setStreamColumns(process.stdout, 50)
     const seg = (n: number) => `seg-${n}-1234567890`
     const longLine = [seg(1), seg(2), seg(3), seg(4)].join(SEP)
     const result: RenderResult = { session: [longLine], activity: [], activityTitle: "", effort: null }
-    const lines = renderLines(MINIMAL_DATA, result).split("\n")
+    const lines = renderLines(MINIMAL_DATA, result, { ...layout, terminalWidth: 50 }).split("\n")
     // header, rule, then >=2 wrapped body lines
     const bodyLines = lines.slice(2)
     expect(bodyLines.length).toBeGreaterThan(1)
@@ -177,70 +148,35 @@ describe("renderLines wrapping", () => {
   })
 
   test("does not wrap when line has no SEP even if it exceeds width", () => {
-    setStreamColumns(process.stdout, 20)
     const noSep = "x".repeat(100)
     const result: RenderResult = { session: [noSep], activity: [], activityTitle: "", effort: null }
-    const lines = renderLines(MINIMAL_DATA, result).split("\n")
+    const lines = renderLines(MINIMAL_DATA, result, { ...layout, terminalWidth: 20 }).split("\n")
     // body line stays as one row (terminal handles visual wrap)
     expect(lines.filter(l => l.includes("xxxxx"))).toHaveLength(1)
   })
 
   test("rule width does not exceed usable width", () => {
-    setStreamColumns(process.stdout, 60)
     const result: RenderResult = { session: ["short"], activity: [], activityTitle: "", effort: null }
-    const ruleLine = renderLines(MINIMAL_DATA, result).split("\n")[1]
+    const ruleLine = renderLines(MINIMAL_DATA, result, { ...layout, terminalWidth: 60 }).split("\n")[1]
     expect(vlen(ruleLine)).toBeLessThanOrEqual(60)
   })
 })
 
-describe("renderLines terminal width fallbacks", () => {
-  test("keeps Claude's default overlay reserve", () => {
-    delete process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN
-    const previousKokoMargin = process.env.KOKO_STATUSLINE_RIGHT_MARGIN
-    delete process.env.KOKO_STATUSLINE_RIGHT_MARGIN
-    try {
-      setStreamColumns(process.stdout, 130)
-      const data = mapClaudeInput({ model: { display_name: "Opus" } })
-      const result: RenderResult = {
-        ...EMPTY_RESULT,
-        session: ["first-" + "a".repeat(52) + SEP + "second-" + "b".repeat(52)],
-      }
-      // 122 columns of body fit the terminal, but not Claude's 16-column reserve.
-      const body = renderLines(data, result).split("\n").filter(line => /first-|second-/.test(line))
-      expect(body).toHaveLength(2)
-    } finally {
-      if (previousKokoMargin === undefined) delete process.env.KOKO_STATUSLINE_RIGHT_MARGIN
-      else process.env.KOKO_STATUSLINE_RIGHT_MARGIN = previousKokoMargin
-    }
-  })
-
-  test("uses stderr.columns when stdout has none", () => {
-    setStreamColumns(process.stderr, 200)
-    const longLine = Array.from({ length: 8 }, (_, i) => `seg-${i}`).join(SEP)
-    const result: RenderResult = { session: [longLine], activity: [], activityTitle: "", effort: null }
-    // slice(2, -1) drops header + top rule + bottom rule, leaving only body rows
-    const bodyLines = renderLines(MINIMAL_DATA, result).split("\n").slice(2, -1)
-    // 8 short segments fit easily in 200 cols → no wrap
-    expect(bodyLines).toHaveLength(1)
-  })
-
-  test("CLAUDE_STATUSLINE_RIGHT_MARGIN reduces usable width", () => {
-    setStreamColumns(process.stdout, 100)
-    process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN = "40"
-    const seg = (n: number) => `segment-number-${n}`
-    const longLine = [seg(1), seg(2), seg(3), seg(4)].join(SEP)
-    const result: RenderResult = { session: [longLine], activity: [], activityTitle: "", effort: null }
-    const bodyLines = renderLines(MINIMAL_DATA, result).split("\n").slice(2)
-    // With 60 usable cols (100 - 40), the line wraps
-    expect(bodyLines.length).toBeGreaterThan(1)
-  })
+test("reserves the explicit right margin when wrapping body rows", () => {
+  const result = { ...EMPTY_RESULT, session: ["first-" + "a".repeat(52) + SEP + "second-" + "b".repeat(52)] }
+  const data = { ...MINIMAL_DATA, cost: null, durationMs: null }
+  const renderBody = (rightMargin: number) => renderLines(data, result, {
+    ...layout, terminalWidth: 130, rightMargin,
+  }).split("\n").filter(line => /first-|second-/.test(line))
+  expect(renderBody(0)).toHaveLength(1)
+  expect(renderBody(16)).toHaveLength(2)
 })
 
 test("preserves rendered colors, spaces, graphemes and frames at two widths", () => {
   const result = { ...EMPTY_RESULT, session: [`工作目錄${SEP}👩‍💻 é`] }
   const panels = [14, 24].map(terminalWidth => renderLines(
-    { ...MINIMAL_DATA, terminalWidth, contextPercent: null, durationMs: null, cost: null },
-    result,
+    { ...MINIMAL_DATA, contextPercent: null, durationMs: null, cost: null },
+    result, { ...layout, terminalWidth },
   ).replaceAll("\x1b", "␛").replaceAll("\u00a0", "␣"))
   expect(panels).toEqual([
     [

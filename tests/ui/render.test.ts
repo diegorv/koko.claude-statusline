@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, setSystemTime, test } from "bun:test"
-import { render as renderSnapshot } from "../../src/ui/render.ts"
+import { composeRows as renderSnapshot } from "../../src/ui/rows.ts"
 import type { SessionData } from "../../src/core/model.ts"
 import type { GitInfo } from "../../src/core/workspace.ts"
 import type { ActivityData } from "../../src/core/model.ts"
@@ -10,7 +10,7 @@ function render(data: SessionData, git: GitInfo | null, config: import("../../sr
 }
 
 const MINIMAL_DATA: SessionData = {
-  agent: "claude", effortLevel: null, terminalWidth: null, rightMargin: 16, frameWidth: "content", costEstimated: false, state: null,
+  agent: "claude", effortLevel: null, costEstimated: false, state: null,
   model: "Opus", modelId: "", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,
   linesAdded: 0, linesRemoved: 0, cwd: "/tmp", contextWindowSize: null,
   sessionName: null, sessionId: null, rateLimits: [],

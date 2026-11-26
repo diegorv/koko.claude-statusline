@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, setSystemTime, test } from "bun:test"
-import { antigravityAdapter, mapAntigravityInput } from "../../../src/agents/antigravity/adapter.ts"
+import { antigravityAdapter, mapAntigravityInput, reportedWidth } from "../../../src/agents/antigravity/adapter.ts"
 import { buildSnapshot } from "../../../src/export/pane-header.ts"
 import { EMPTY_WORKSPACE } from "../../../src/core/workspace.ts"
 import { render } from "../../../src/ui/render.ts"
-import { renderLines } from "../../../src/ui/lines.ts"
+import { resolveLayout } from "../../../src/ui/layout.ts"
 import { vlen } from "../../../src/ui/format.ts"
 
 const payload = {
@@ -26,7 +26,8 @@ const payload = {
 
 function output(raw: Record<string, unknown>): string {
   const snapshot = antigravityAdapter.read(raw)
-  return renderLines(snapshot.data, render(snapshot, EMPTY_WORKSPACE))
+  const layout = resolveLayout(reportedWidth(raw), { frameWidth: "available", rightMargin: 0 }, process.env)
+  return render(snapshot, EMPTY_WORKSPACE, layout).output
     .replace(/\x1b\[[0-9;]*m/g, "").replaceAll("\u00a0", " ")
 }
 
@@ -136,7 +137,7 @@ describe("Antigravity adapter", () => {
     expect(data.cost).toBeNull()
     expect(data.durationMs).toBeNull()
     expect(data.contextTokens).toBeNull()
-    expect(data.terminalWidth).toBeNull()
+    expect(reportedWidth(raw)).toBeNull()
     expect(data.rateLimits).toEqual([])
     expect(output(raw)).not.toMatch(/¢|\$|NaN|⏱/)
     expect(buildSnapshot(data, null).cost_usd).toBeNull()

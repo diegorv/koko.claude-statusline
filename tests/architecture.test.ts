@@ -46,12 +46,13 @@ function layer(file: string): Layer | undefined {
 function allowed(file: string, owner: Layer, specifier: string): boolean {
   if (!specifier.startsWith(".")) {
     if (isBuiltin(specifier)) {
-      return ["cli", "claude", "workspace", "export", "plugin"].includes(owner) || file === "src/ui/terminal.ts"
+      return ["cli", "claude", "workspace", "export", "plugin"].includes(owner)
     }
     return owner === "plugin" && /^(?:@opencode\/|@opentui\/|solid-js(?:\/|$))/.test(specifier)
   }
   const target = join(dirname(file), specifier)
   if (/^(src\/index|integrations\/opencode\/tui)(?:\.[jt]sx?)?$/.test(target)) return false
+  if (owner !== "ui" && /^src\/ui\/(?:rows|lines)\.ts$/.test(target)) return false
   const targetLayer = layer(target)
   return (targetLayer !== undefined && dependencies[owner].includes(targetLayer))
     || migrationEdges[file]?.includes(target) === true

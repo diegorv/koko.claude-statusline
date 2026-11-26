@@ -76,11 +76,38 @@ describe("statusline CLI", () => {
     expect(result.stdout).not.toContain("¢")
   })
 
+  test("reserves Claude's default 16 columns before applying a margin override", () => {
+    const input = JSON.stringify({ model: { display_name: "Opus" }, cost: { total_cost_usd: 0.5 } })
+    const env = { COLUMNS: "120", KOKO_STATUSLINE_RIGHT_MARGIN: "", CLAUDE_STATUSLINE_RIGHT_MARGIN: "" }
+    const result = run(input, [], env)
+    expect(result.status).toBe(0)
+    expect(result.stdout).toBe(run(input, [], { ...env, KOKO_STATUSLINE_RIGHT_MARGIN: "16" }).stdout)
+    expect(result.stdout).not.toBe(run(input, [], { ...env, KOKO_STATUSLINE_RIGHT_MARGIN: "0" }).stdout)
+  })
+
   test("does not display unknown Claude cost as a reported zero", () => {
     const result = run("{}")
     expect(result.status).toBe(0)
     expect(result.stdout).not.toContain("¢")
     expect(result.stdout).not.toContain("$")
+  })
+
+  test("uses the selected width for both the rendered frame and its diagnostics", () => {
+    const dir = mkdtempSync(join(tmpdir(), "koko-width-"))
+    try {
+      const log = join(dir, "debug.jsonl")
+      const env = { KOKO_STATUSLINE_DEBUG_LOG: log, COLUMNS: "120", KOKO_STATUSLINE_RIGHT_MARGIN: "0" }
+      for (const width of [80, undefined]) {
+        const result = run(JSON.stringify({ product: "antigravity", terminal_width: width, agent_state: "idle" }), [], env)
+        expect(result.status).toBe(0)
+        const frame = result.stdout.split("\n").find(line => line.includes("┌"))
+        expect(frame?.replace(/\x1b\[[0-9;]*m/g, "").length).toBe(width ?? 120)
+      }
+      const records = readFileSync(log, "utf8").trim().split("\n").map(line => JSON.parse(line))
+      expect(records.map(({ termW }) => termW)).toEqual([80, 120])
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 
   test("distinguishes Antigravity conversations with identical transcript filenames", () => {

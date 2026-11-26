@@ -22,11 +22,6 @@ export interface ConfigSummary {
 export interface SessionData {
   agent: AgentId
   effortLevel: EffortLevel | null
-  terminalWidth: number | null
-  /** Columns reserved by default for the host CLI's overlays; env overrides win. */
-  rightMargin: number
-  /** Fit the frame to content/header annotations, or span all available columns. */
-  frameWidth: "content" | "available"
   /** null when the host does not report estimate metadata. */
   costEstimated: boolean | null
   state: string | null

@@ -43,19 +43,20 @@ function quotaLimits(raw: unknown, now: number): RateLimit[] {
   })
 }
 
+export function reportedWidth(raw: Record<string, unknown>): number | null {
+  const width = number(raw.terminal_width)
+  return width !== null && width >= 1 ? Math.floor(width) : null
+}
+
 export function mapAntigravityInput(raw: Record<string, unknown>, now = Date.now()): SessionData {
   const model = object(raw.model)
   const context = object(raw.context_window)
   const cost = object(raw.cost)
-  const width = number(raw.terminal_width)
   return {
     agent: "antigravity",
     model: text(model.display_name) ?? text(model.id) ?? "Unknown",
     modelId: text(model.id) ?? "",
     effortLevel: effort(model.effort),
-    terminalWidth: width !== null && width >= 1 ? Math.floor(width) : null,
-    rightMargin: 0,
-    frameWidth: "available",
     state: text(raw.agent_state),
     contextPercent: Math.min(100, number(context.used_percentage) ?? 0),
     // current_usage is not documented as occupied context and can contradict

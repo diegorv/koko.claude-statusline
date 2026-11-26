@@ -26,7 +26,6 @@ export interface Message {
 
 export interface OpenCodeInput {
   directory: string
-  width: number
   model?: { id: string; name: string; variant?: string }
   session?: { id: string; title?: string; tokens: Usage }
   cost?: number

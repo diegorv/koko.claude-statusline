@@ -20,6 +20,6 @@ test("local context selector agrees with pinned SDK across compaction and undo",
 })
 
 test("context total agrees with the host's TokenUsageInfo contract", () => {
-  const snapshot = opencodeAdapter.read({ directory: "/repo", width: 100, context: { tokens: usage, limit: 1000 }, messages: [], children: [] })
+  const snapshot = opencodeAdapter.read({ directory: "/repo", context: { tokens: usage, limit: 1000 }, messages: [], children: [] })
   expect(snapshot.data.contextTokens).toBe(TokenUsage.total(usage))
 })

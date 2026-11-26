@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import { existsSync, unlinkSync, writeFileSync } from "node:fs"
-import { getTerminalWidth } from "../../src/ui/terminal.ts"
+import { getTerminalWidth } from "../../src/cli/terminal-width.ts"
 
 const ORIGINAL_STDOUT_COLS = process.stdout.columns
 const ORIGINAL_STDERR_COLS = process.stderr.columns

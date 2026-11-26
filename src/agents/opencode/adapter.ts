@@ -73,7 +73,6 @@ export const opencodeAdapter: AgentAdapter<OpenCodeInput> = {
       data: {
         agent: "opencode", model: clean(input.model?.name ?? "OpenCode"), modelId: input.model?.id ?? "",
         effortLevel: effort(input.model?.variant),
-        terminalWidth: Math.max(1, Math.floor(input.width)), rightMargin: 0, frameWidth: "available",
         contextPercent: tokens !== null && capacity !== null ? Math.min(100, tokens / capacity * 100) : null,
         contextTokens: tokens, contextWindowSize: capacity,
         cost: input.cost !== undefined && Number.isFinite(input.cost) && input.cost >= 0 ? input.cost : null,
