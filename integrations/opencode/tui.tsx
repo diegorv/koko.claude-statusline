@@ -24,11 +24,12 @@ function Statusline(props: { context: Plugin.Context; sessionID?: string }) {
     request = new AbortController()
     const signal = AbortSignal.any([request.signal, AbortSignal.timeout(4000)])
     try {
-      const [info, status] = await Promise.all([
+      const [info, status, project] = await Promise.all([
         context.client.vcs.get({ location: { directory } }, { signal }),
         context.client.vcs.status({ location: { directory } }, { signal }),
+        context.client.location.get({ location: { directory } }, { signal }),
       ])
-      return { directory, git: mapOpenCodeGit(directory, info.data.branch.current, status.data.length > 0) }
+      return { directory, git: mapOpenCodeGit(project.project.directory, info.data.branch.current, status.data.length > 0) }
     } catch { return { directory, git: null } }
   })
   const timer = setInterval(() => { void refetch() }, 5000)

@@ -98,6 +98,7 @@ export function render(
     const toolParts = [
       ...renderRunningTools(transcript.runningTools),
       ...renderCompletedTools(transcript.tools),
+      ...(transcript.failedTools ? renderCompletedTools(transcript.failedTools, 5, "error") : []),
     ]
     if (toolParts.length > 0) activity.push(GUTTERS.tools + toolParts.join(GAP))
 

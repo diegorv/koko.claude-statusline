@@ -21,19 +21,20 @@ describe("OpenCode adapter", () => {
     expect(buildSnapshot(snapshot.data, null).context_pct).toBeNull()
   })
 
-  test("maps native context and aggregate session tokens separately without counting reasoning twice", () => {
+  test("maps native context and aggregate session tokens separately including separate reasoning usage", () => {
     const snapshot = opencodeAdapter.read({ ...base,
       model: { id: "model", name: "Model", variant: "high" },
       session: { id: "session", title: "Fix tests", tokens: { ...usage, input: 2000 } },
       cost: 0, status: "running", context: { tokens: usage, limit: 1000 },
     })
-    expect(snapshot.data.contextTokens).toBe(200)
-    expect(snapshot.data.contextPercent).toBe(20)
+    expect(snapshot.data.contextTokens).toBe(210)
+    expect(snapshot.data.contextPercent).toBe(21)
     expect(snapshot.activity?.tokenTotals.input).toBe(2000)
+    expect(snapshot.activity?.tokenTotals.output).toBe(30)
     expect(snapshot.data.cost).toBe(0)
     expect(snapshot.data.effortLevel).toBe("high")
     expect(buildSnapshot(snapshot.data, "high", 0)).toEqual({
-      agent: "opencode", model: "Model", effort: "high", context_pct: 20, context_tokens: 200,
+      agent: "opencode", model: "Model", effort: "high", context_pct: 21, context_tokens: 210,
       cost_usd: 0, session_name: "Fix tests", updated_at: 0,
     })
   })
@@ -52,7 +53,8 @@ describe("OpenCode adapter", () => {
       children: [{ id: "child", agent: "explore", running: true }],
       mcps: [{ name: "good", status: { status: "connected" } }, { name: "bad", status: { status: "failed" } }],
     })
-    expect(snapshot.activity?.tools).toEqual(new Map([["read", 1], ["edit", 1]]))
+    expect(snapshot.activity?.tools).toEqual(new Map([["read", 1]]))
+    expect(snapshot.activity?.failedTools).toEqual(new Map([["edit", 1]]))
     expect(snapshot.activity?.runningTools).toEqual([{ name: "bash", target: "" }, { name: "read", target: "file.ts" }])
     expect(snapshot.activity?.agents[0]).toMatchObject({ type: "explore", running: true, elapsed: null })
     expect(snapshot.activity?.mcpStatus.errored).toEqual(new Set(["bad"]))
@@ -72,4 +74,23 @@ describe("OpenCode adapter", () => {
     expect(render(snapshot, git).session[0]).toContain("main")
     expect(mapOpenCodeGit("/remote/repo", undefined, null)).toBeNull()
   })
+})
+
+test("failed tools and failed/interrupted/unclassified children are not shown as successful", () => {
+  const snapshot = opencodeAdapter.read({ ...base,
+    messages: [{ id: "m", type: "assistant", time: { created: 1 }, content: [{ id: "t", type: "tool", name: "edit", state: { status: "error" } }] }],
+    children: [
+      { id: "1", agent: "failed-agent", running: false, outcome: "failed" },
+      { id: "2", agent: "interrupted-agent", running: false, outcome: "interrupted" },
+      { id: "3", agent: "idle-agent", running: false },
+      { id: "4", agent: "done-agent", running: false, outcome: "succeeded" },
+    ],
+  })
+  const text = renderLines(snapshot.data, render(snapshot, null)).replace(/\x1b\[[0-9;]*m/g, "").replaceAll("\u00a0", " ")
+  expect(text).toContain("✗ edit ×1")
+  expect(text).toContain("✗ failed-agent")
+  expect(text).toContain("■ interrupted-agent")
+  expect(text).toContain("○ idle-agent")
+  expect(text).toContain("✓ done-agent")
+  expect(text).not.toContain("✓ edit")
 })

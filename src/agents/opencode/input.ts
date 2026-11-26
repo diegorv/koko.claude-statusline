@@ -31,11 +31,11 @@ export interface OpenCodeInput {
   session?: { id: string; title?: string; tokens: Usage }
   cost?: number
   status?: "idle" | "running"
-  /** Selected by the host's lastAssistantWithUsage helper, after compaction/revert. */
+  /** Selected using the host's compaction/revert semantics. */
   context?: { tokens: Usage; limit: number }
   messages: readonly Message[]
   /** Messages at/after an undo boundary are excluded from activity. */
   revertMessageID?: string
-  children: readonly { id: string; title?: string; agent?: string; running: boolean }[]
+  children: readonly { id: string; title?: string; agent?: string; running: boolean; outcome?: "succeeded" | "failed" | "interrupted" }[]
   mcps?: readonly { name: string; status: { status: string } }[]
 }

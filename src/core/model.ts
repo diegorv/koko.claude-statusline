@@ -65,6 +65,8 @@ export interface AgentInfo {
   type: string
   description: string
   running: boolean
+  /** Absent for legacy hosts that report only running/completed. */
+  outcome?: "succeeded" | "failed" | "interrupted" | "unknown"
   elapsed: number | null // ms; null when the provider does not report timing
 }
 
@@ -97,6 +99,8 @@ export interface AssistantSample {
 
 export interface ActivityData {
   tools: Map<string, number>  // name → completed count
+  /** Separate failures when the host reports tool outcomes. */
+  failedTools?: Map<string, number>
   runningTools: RunningTool[]  // currently running tools
   agents: AgentInfo[]
   todos: { total: number; completed: number; current: string | null }

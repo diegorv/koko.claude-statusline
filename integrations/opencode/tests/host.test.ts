@@ -23,3 +23,12 @@ test("does not combine old usage with an unrelated newly selected model", () => 
   expect(activeContext([assistant("m", 800)], undefined, models)).toBeUndefined()
   expect(activeContext([assistant("m", 800)], selected, [])).toBeUndefined()
 })
+
+test("matches public model identities, not provider wire aliases", () => {
+  const catalog = [
+    { id: "alias", modelID: "model", providerID: "provider", name: "Alias", limit: { context: 100000, output: 1000 } },
+    { id: "model", modelID: "model", providerID: "provider", name: "Model", limit: { context: 8000, output: 1000 } },
+  ]
+  expect(activeContext([assistant("m", 800)], selected, catalog)?.limit).toBe(8000)
+  expect(activeContext([assistant("m", 800)], { ...selected, modelID: "alias" }, catalog)).toBeUndefined()
+})

@@ -8,12 +8,12 @@ import { c } from "../format.ts"
  * @param limit - Maximum number of tools to display (default: 5).
  * @returns Array of formatted tool count strings.
  */
-export function renderCompletedTools(tools: Map<string, number>, limit = 5): string[] {
+export function renderCompletedTools(tools: Map<string, number>, limit = 5, outcome: "success" | "error" = "success"): string[] {
   const parts: string[] = []
   let count = 0
   for (const [name, n] of tools) {
     if (count++ >= limit) break
-    parts.push(`${c("green", "✓")} ${name} ×${n}`)
+    parts.push(`${c(outcome === "error" ? "red" : "green", outcome === "error" ? "✗" : "✓")} ${name} ×${n}`)
   }
   return parts
 }
