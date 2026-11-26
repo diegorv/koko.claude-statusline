@@ -1,11 +1,11 @@
 # Installation
 
-Two ways to install: **clone the repo** and point Claude Code at the TypeScript entry point (the numbered steps below), or **[download a prebuilt bundle](#install-from-a-prebuilt-bundle-no-clone)** — a single `statusline.mjs` file you run with `node` or `bun`, no clone and no build.
+Two ways to install: **clone the repo** and point your CLI at the TypeScript entry point, or **[download a prebuilt bundle](#install-from-a-prebuilt-bundle-no-clone)** — a single `statusline.mjs` file you run with `node` or `bun`, no clone and no build. The numbered steps configure Claude Code; [Antigravity CLI](#antigravity-cli) uses the same checkout with its own settings.
 
 ## Prerequisites
 
 - A TypeScript runtime — **[Bun](https://bun.sh) `>= 1.0`** (recommended), **[Node](https://nodejs.org) `>= 22.18`/`>= 23.6`**, or **[tsx](https://tsx.is)**. The script runs directly from TypeScript with no build step; pick whichever you already have. See [Other runtimes](#other-runtimes) for the tradeoffs.
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed and configured.
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) or [Antigravity CLI](https://antigravity.google/docs/cli/statusline/) installed and configured.
 - A terminal with true-color (24-bit) support (iTerm2, Ghostty, Kitty, Alacritty, WezTerm, modern Terminal.app, modern GNOME Terminal).
 - Tested on macOS. CI passes on Linux but has not been manually validated there.
 
@@ -90,6 +90,36 @@ bun install
 ```
 
 No restart of Claude Code is required — the script is re-read on the next refresh.
+
+## Antigravity CLI
+
+After cloning, add this block to `~/.gemini/antigravity-cli/settings.json`, preserving your other settings:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bun /absolute/path/to/koko.claude-statusline/src/index.ts --agent antigravity",
+    "padding": 0
+  }
+}
+```
+
+Use your checkout's absolute path. For paths containing spaces, quote the script path inside the command using escaped double quotes (`\"/path with spaces/src/index.ts\"`). Node and tsx work with the same arguments. A bundle built from this version also accepts `--agent antigravity`; older releases may only support Claude.
+
+Smoke-test without launching the CLI:
+
+```sh
+echo '{"product":"antigravity","model":{"display_name":"Gemini","effort":"high"},"context_window":{"used_percentage":25},"quota":{"gemini-weekly":{"remaining_fraction":0.75}},"agent_state":"working","terminal_width":120}' | bun src/index.ts --agent antigravity
+```
+
+The script auto-detects `product: "antigravity"` when no argument is supplied. `--agent antigravity` explicitly selects that adapter even before product metadata is available. Unmarked payloads default to Claude; unsupported product names or agent arguments fail with a message on stderr.
+
+The Antigravity adapter shows model, effort, context, session title, Git/worktree state, Vim mode, quotas, aggregate input/output tokens, agent state and subagents when available. Costs marked as estimated (or without an explicit estimate flag) use `~`; missing costs are hidden. Bucket balances without a percentage show `N left`. Disabled buckets are marked `disabled`.
+
+It does not read Claude configuration, infer permission bypass from Antigravity's sandbox settings, or parse Antigravity transcripts as Claude JSONL. Tool history, todos, output speed, session diff and elapsed times remain absent where the documented payload provides no data. Antigravity's `terminal_width` takes precedence over terminal probing. The default right margin remains 16 columns; set `KOKO_STATUSLINE_RIGHT_MARGIN=0` to use more space.
+
+This integration targets **Antigravity CLI**, not the IDE or desktop app. The payload mapping is based on the [official statusline documentation](https://antigravity.google/docs/cli/statusline/); it is covered by automated payload and subprocess tests, not a live Antigravity session test.
 
 ## Install from a prebuilt bundle (no clone)
 

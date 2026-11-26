@@ -1,95 +1,12 @@
-// Parse JSON from Claude Code stdin
-
+// Read the transport once. Agent adapters interpret the JSON object.
 import { readFileSync } from "node:fs"
 
-export interface StdinData {
-  model: string
-  /** The model's id ("claude-opus-5-5"); "" when Claude Code doesn't send it. */
-  modelId: string
-  contextPercent: number
-  /**
-   * Total tokens currently occupying the context window (input + cache_creation + cache_read),
-   * matching the input-only formula Claude Code uses for `used_percentage`.
-   * `null` before the first API call in a session.
-   */
-  contextTokens: number | null
-  cost: number
-  durationMs: number
-  linesAdded: number
-  linesRemoved: number
-  cwd: string
-  contextWindowSize: number | null
-  sessionName: string | null
-  rateLimit5h: { pct: number; resetsAt: number } | null
-  rateLimit7d: { pct: number; resetsAt: number } | null
-  vimMode: string | null
-  worktree: string | null
-  transcriptPath: string | null
-  /**
-   * Output style preset name (e.g. "explanatory", "succinct"). `null` when
-   * unset; `"default"` when the user is on the built-in style — the renderer
-   * may choose to hide that case to keep the header uncluttered.
-   */
-  outputStyle: string | null
-}
-
-/**
- * Maps a raw JSON object from Claude Code stdin into a normalized StdinData structure.
- * Extracts and transforms nested fields with safe defaults for missing values.
- * @param raw - Raw parsed JSON from stdin.
- * @returns Normalized StdinData object.
- */
-/** Collapses "(1M context)" style suffixes into a bare size (e.g. "Opus 4.7 (1M context)" → "Opus 4.7 1M"). */
-function compactModelName(name: string): string {
-  return name.replace(/\s*\(\s*([0-9.]+[kKmM])\s+context\s*\)/i, " $1")
-}
-
-export function mapRawToStdinData(raw: any): StdinData {
-  const rateLimitFiveHour = raw.rate_limits?.five_hour
-  const rateLimitSevenDay = raw.rate_limits?.seven_day
-
-  return {
-    model:    compactModelName(raw.model?.display_name ?? "Unknown"),
-    modelId:  raw.model?.id ?? "",
-    contextPercent: raw.context_window?.used_percentage ?? 0,
-    contextTokens: (() => {
-      const u = raw.context_window?.current_usage
-      if (!u) return null
-      return (u.input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0)
-    })(),
-    cost:     raw.cost?.total_cost_usd ?? 0,
-    durationMs: raw.cost?.total_duration_ms ?? 0,
-    linesAdded:  raw.cost?.total_lines_added ?? 0,
-    linesRemoved: raw.cost?.total_lines_removed ?? 0,
-    cwd:      raw.workspace?.current_dir ?? raw.cwd ?? "",
-    contextWindowSize: raw.context_window?.context_window_size ?? null,
-    sessionName: raw.session_name ?? null,
-    rateLimit5h: rateLimitFiveHour?.used_percentage != null
-              ? { pct: Math.round(rateLimitFiveHour.used_percentage), resetsAt: rateLimitFiveHour.resets_at ?? 0 }
-              : null,
-    rateLimit7d: rateLimitSevenDay?.used_percentage != null
-              ? { pct: Math.round(rateLimitSevenDay.used_percentage), resetsAt: rateLimitSevenDay.resets_at ?? 0 }
-              : null,
-    vimMode:  raw.vim?.mode ?? null,
-    worktree: raw.worktree?.name ?? null,
-    transcriptPath: raw.transcript_path ?? null,
-    outputStyle: raw.output_style?.name ?? null,
-  }
-}
-
-/**
- * Reads and parses JSON from stdin (fd 0), returning a normalized StdinData object.
- * Exits the process silently if stdin cannot be parsed. Reads synchronously from
- * the stdin pipe, which works under any runtime (Bun, Node, tsx) — Claude Code
- * always pipes the JSON payload in.
- * @returns Promise resolving to the parsed StdinData.
- */
-export async function parseStdin(): Promise<StdinData> {
-  let raw: any
+export function parseStdin(): Record<string, unknown> | null {
   try {
-    raw = JSON.parse(readFileSync(0, "utf8"))
+    const raw: unknown = JSON.parse(readFileSync(0, "utf8"))
+    return raw !== null && typeof raw === "object" && !Array.isArray(raw)
+      ? raw as Record<string, unknown> : null
   } catch {
-    process.exit(0)
+    return null
   }
-  return mapRawToStdinData(raw)
 }

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test"
 import { renderLines } from "../../src/ui/lines.ts"
 import { vlen } from "../../src/ui/format.ts"
 import { SEP } from "../../src/ui/constants.ts"
-import type { StdinData } from "../../src/parsing/stdin.ts"
+import type { SessionData } from "../../src/model.ts"
 import type { RenderResult } from "../../src/ui/render.ts"
 
 const ORIGINAL_STDOUT_COLS = process.stdout.columns
@@ -30,10 +30,11 @@ afterEach(() => {
   else process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN = ORIGINAL_RIGHT_MARGIN_ENV
 })
 
-const MINIMAL_DATA: StdinData = {
+const MINIMAL_DATA: SessionData = {
+  agent: "claude", effortLevel: null, terminalWidth: null, costEstimated: false, state: null,
   model: "Opus", modelId: "", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,
   linesAdded: 0, linesRemoved: 0, cwd: "/tmp", contextWindowSize: null,
-  sessionName: null, rateLimit5h: null, rateLimit7d: null,
+  sessionName: null, rateLimits: [],
   vimMode: null, worktree: null, transcriptPath: null, outputStyle: null,
 }
 

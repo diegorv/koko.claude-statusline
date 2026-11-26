@@ -1,7 +1,7 @@
 // Component: activity box title (config counts + output style + session name)
 
-import type { ConfigCounts } from "../../collection/config.ts"
-import type { McpStatus } from "../../parsing/transcript.ts"
+import type { ConfigSummary } from "../../model.ts"
+import type { McpStatus } from "../../model.ts"
 import { c } from "../format.ts"
 import { GAP } from "../constants.ts"
 
@@ -15,7 +15,7 @@ import { GAP } from "../constants.ts"
  * glance that they're on a non-stock preset.
  */
 export function renderActivityTitle(
-  config: ConfigCounts | null,
+  config: ConfigSummary | null,
   mcpStatus: McpStatus | null,
   sessionName: string | null,
   outputStyle: string | null = null,
@@ -27,7 +27,9 @@ export function renderActivityTitle(
   // catches on the right side of the header.
   if (skipPermissions) titleParts.push(c("yellow", "⚡"))
   if (config) {
-    if (config.claudeMd > 0) titleParts.push(`${config.claudeMd} CLAUDE.md`)
+    for (const file of config.instructionFiles) {
+      if (file.count > 0) titleParts.push(`${file.count} ${file.name}`)
+    }
 
     const mcpOk = mcpStatus?.ok ?? new Set()
     const mcpErr = mcpStatus?.errored ?? new Set()

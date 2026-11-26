@@ -4,7 +4,7 @@ import { existsSync, readdirSync, readFileSync } from "fs"
 import { join } from "path"
 import { homedir } from "os"
 
-export type EffortLevel = "low" | "medium" | "high" | "xhigh" | "max"
+import type { EffortLevel } from "../model.ts"
 
 const VALID_EFFORT: readonly EffortLevel[] = ["low", "medium", "high", "xhigh", "max"] as const
 

@@ -1,11 +1,12 @@
 import { describe, expect, test } from "bun:test"
 import { renderSessionDiff } from "../../../src/ui/components/session-diff.ts"
-import type { StdinData } from "../../../src/parsing/stdin.ts"
+import type { SessionData } from "../../../src/model.ts"
 
-const MINIMAL_DATA: StdinData = {
+const MINIMAL_DATA: SessionData = {
+  agent: "claude", effortLevel: null, terminalWidth: null, costEstimated: false, state: null,
   model: "Opus", modelId: "", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,
   linesAdded: 0, linesRemoved: 0, cwd: "/tmp", contextWindowSize: null,
-  sessionName: null, rateLimit5h: null, rateLimit7d: null,
+  sessionName: null, rateLimits: [],
   vimMode: null, worktree: null, transcriptPath: null, outputStyle: null,
 }
 

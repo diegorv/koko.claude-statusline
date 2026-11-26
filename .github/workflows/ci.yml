@@ -70,6 +70,9 @@ jobs:
             exit 1
           }
           echo "Smoke test passed"
+          agy_output=$(echo '{"product":"antigravity","model":{"display_name":"Gemini"},"cost":{"total_usd":0.42,"estimated":true},"terminal_width":120}' | bun src/index.ts --agent antigravity)
+          echo "$agy_output" | grep -q "Gemini"
+          echo "$agy_output" | grep -Fq '~$0.42'
 
   node-smoke:
     name: Node smoke (${{ matrix.node-version }})
@@ -108,6 +111,9 @@ jobs:
             echo "Got: $output"
             exit 1
           }
+          agy_output=$(echo '{"product":"antigravity","model":{"display_name":"Gemini"},"cost":{"total_usd":0.42,"estimated":true},"terminal_width":120}' | node src/index.ts --agent antigravity)
+          echo "$agy_output" | grep -q "Gemini"
+          echo "$agy_output" | grep -Fq '~$0.42'
           echo "Node smoke test passed on $(node --version)"
 
   # Aggregate gate. Wire this as the single required status check for

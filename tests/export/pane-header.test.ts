@@ -1,13 +1,13 @@
 import { describe, expect, test, beforeEach, afterEach } from "bun:test"
 import { buildSnapshot, exportPaneHeader } from "../../src/export/pane-header.ts"
-import { mapRawToStdinData } from "../../src/parsing/stdin.ts"
+import { mapClaudeInput } from "../../src/adapters/claude.ts"
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync } from "fs"
 import { join } from "path"
 import { tmpdir } from "os"
 
 const TMP_DIR = join(tmpdir(), "claude-statusline-pane-header-tests")
 
-const data = mapRawToStdinData({
+const data = mapClaudeInput({
   model: { display_name: "Opus 5.5 (1M context)" },
   context_window: { used_percentage: 37.4, current_usage: { input_tokens: 100, cache_read_input_tokens: 900 } },
   cost: { total_cost_usd: 21.09 },

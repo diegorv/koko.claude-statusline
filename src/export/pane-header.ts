@@ -8,17 +8,19 @@
 
 import { chmodSync, mkdirSync, renameSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
-import type { StdinData } from "../parsing/stdin.ts"
-import type { EffortLevel } from "../collection/config.ts"
+import type { AgentId, SessionData } from "../model.ts"
+import type { EffortLevel } from "../model.ts"
 
 export interface PaneHeaderSnapshot {
-  agent: "claude"
+  agent: AgentId
   model: string
   effort: EffortLevel | null
   /** Context window usage, rounded to a whole percent. */
   context_pct: number
   context_tokens: number | null
-  cost_usd: number
+  cost_usd: number | null
+  /** Present for providers that distinguish estimated cost. */
+  cost_estimated?: boolean
   session_name: string | null
   /** Milliseconds since the epoch. */
   updated_at: number
@@ -26,18 +28,19 @@ export interface PaneHeaderSnapshot {
 
 /**
  * Maps the parsed session data into the pane-header schema.
- * @param data - Parsed Claude Code stdin.
+ * @param data - Normalized session data.
  * @param effort - Resolved /effort level, or null when unset.
  * @param now - Timestamp for `updated_at` (injectable for tests).
  */
-export function buildSnapshot(data: StdinData, effort: EffortLevel | null, now = Date.now()): PaneHeaderSnapshot {
+export function buildSnapshot(data: SessionData, effort: EffortLevel | null, now = Date.now()): PaneHeaderSnapshot {
   return {
-    agent: "claude",
+    agent: data.agent,
     model: data.model,
     effort,
     context_pct: Math.round(data.contextPercent),
     context_tokens: data.contextTokens,
     cost_usd: data.cost,
+    ...(data.agent === "claude" ? {} : { cost_estimated: data.costEstimated }),
     session_name: data.sessionName,
     updated_at: now,
   }
@@ -68,10 +71,10 @@ function snapshotNames(env: Record<string, string | undefined>): string[] {
  * otherwise does nothing. Never throws — the statusline must render regardless.
  * Each file is written to a temp name and renamed, so readers never see half a file.
  * @param env - Environment (process.env in production).
- * @param data - Parsed Claude Code stdin.
+ * @param data - Normalized session data.
  * @param effort - Resolved /effort level, or null when unset.
  */
-export function exportPaneHeader(env: Record<string, string | undefined>, data: StdinData, effort: EffortLevel | null): void {
+export function exportPaneHeader(env: Record<string, string | undefined>, data: SessionData, effort: EffortLevel | null): void {
   const dir = env.PANE_HEADER_DIR
   const names = snapshotNames(env)
   if (!dir || names.length === 0) return

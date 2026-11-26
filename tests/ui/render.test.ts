@@ -1,13 +1,14 @@
 import { describe, expect, test } from "bun:test"
 import { render } from "../../src/ui/render.ts"
-import type { StdinData } from "../../src/parsing/stdin.ts"
+import type { SessionData } from "../../src/model.ts"
 import type { GitInfo } from "../../src/collection/git.ts"
-import type { TranscriptData } from "../../src/parsing/transcript.ts"
+import type { ActivityData } from "../../src/model.ts"
 
-const MINIMAL_DATA: StdinData = {
+const MINIMAL_DATA: SessionData = {
+  agent: "claude", effortLevel: null, terminalWidth: null, costEstimated: false, state: null,
   model: "Opus", modelId: "", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,
   linesAdded: 0, linesRemoved: 0, cwd: "/tmp", contextWindowSize: null,
-  sessionName: null, rateLimit5h: null, rateLimit7d: null,
+  sessionName: null, rateLimits: [],
   vimMode: null, worktree: null, transcriptPath: null, outputStyle: null,
 }
 
@@ -17,7 +18,7 @@ const CLEAN_GIT: GitInfo = {
   sha: "", isFork: false, worktree: "",
 }
 
-const EMPTY_TRANSCRIPT: TranscriptData = {
+const EMPTY_TRANSCRIPT: ActivityData = {
   tools: new Map(), runningTools: [], agents: [],
   todos: { total: 0, completed: 0, current: null },
   mcpStatus: { ok: new Set(), errored: new Set() },
@@ -41,7 +42,7 @@ describe("render", () => {
   })
 
   test("session includes rate limits when provided", () => {
-    const data = { ...MINIMAL_DATA, rateLimit5h: { pct: 50, resetsAt: 0 } }
+    const data = { ...MINIMAL_DATA, rateLimits: [{ label: "5h", pct: 50, resetsAt: 0, remaining: null, disabled: false }] }
     const result = render(data, null, null, null)
     expect(result.session.length).toBe(1)
     expect(result.session[0]).toContain("5h")
@@ -49,7 +50,7 @@ describe("render", () => {
   })
 
   test("session emits separate rows for git and rate limits", () => {
-    const data = { ...MINIMAL_DATA, rateLimit5h: { pct: 30, resetsAt: 0 } }
+    const data = { ...MINIMAL_DATA, rateLimits: [{ label: "5h", pct: 30, resetsAt: 0, remaining: null, disabled: false }] }
     const result = render(data, CLEAN_GIT, null, null)
     expect(result.session.length).toBe(2)
     expect(result.session[0]).toContain("main")
@@ -60,15 +61,14 @@ describe("render", () => {
     const onlyGit = render(MINIMAL_DATA, CLEAN_GIT, null, null)
     expect(onlyGit.session.length).toBe(1)
 
-    const onlyRate = render({ ...MINIMAL_DATA, rateLimit5h: { pct: 10, resetsAt: 0 } }, null, null, null)
+    const onlyRate = render({ ...MINIMAL_DATA, rateLimits: [{ label: "5h", pct: 10, resetsAt: 0, remaining: null, disabled: false }] }, null, null, null)
     expect(onlyRate.session.length).toBe(1)
   })
 
   test("rate limit row groups 5h and 7d together", () => {
     const data = {
       ...MINIMAL_DATA,
-      rateLimit5h: { pct: 30, resetsAt: 0 },
-      rateLimit7d: { pct: 50, resetsAt: 0 },
+      rateLimits: [{ label: "5h", pct: 30, resetsAt: 0, remaining: null, disabled: false }, { label: "7d", pct: 50, resetsAt: 0, remaining: null, disabled: false }],
     }
     const result = render(data, null, null, null)
     expect(result.session.length).toBe(1)
@@ -77,7 +77,7 @@ describe("render", () => {
   })
 
   test("token breakdown joins the consumption row when transcript has totals", () => {
-    const transcript: TranscriptData = {
+    const transcript: ActivityData = {
       ...EMPTY_TRANSCRIPT,
       tokenTotals: { input: 1200, output: 300, cacheCreate: 0, cacheRead: 0 },
     }
@@ -88,8 +88,8 @@ describe("render", () => {
   })
 
   test("token breakdown shares its row with rate limits", () => {
-    const data = { ...MINIMAL_DATA, rateLimit5h: { pct: 30, resetsAt: 0 } }
-    const transcript: TranscriptData = {
+    const data = { ...MINIMAL_DATA, rateLimits: [{ label: "5h", pct: 30, resetsAt: 0, remaining: null, disabled: false }] }
+    const transcript: ActivityData = {
       ...EMPTY_TRANSCRIPT,
       tokenTotals: { input: 1000, output: 200, cacheCreate: 0, cacheRead: 0 },
     }
@@ -101,7 +101,7 @@ describe("render", () => {
 
   test("output speed joins the consumption row when samples are fresh and spread", () => {
     const now = Date.now()
-    const transcript: TranscriptData = {
+    const transcript: ActivityData = {
       ...EMPTY_TRANSCRIPT,
       tokenTotals: { input: 100, output: 1400, cacheCreate: 0, cacheRead: 0 },
       // Δ400 output tokens in 4s = 100 tok/s. Most recent sample within freshness window.
@@ -116,7 +116,7 @@ describe("render", () => {
   })
 
   test("output speed is omitted when samples are stale", () => {
-    const transcript: TranscriptData = {
+    const transcript: ActivityData = {
       ...EMPTY_TRANSCRIPT,
       tokenTotals: { input: 100, output: 1400, cacheCreate: 0, cacheRead: 0 },
       // Both samples are over a minute old — output speed gates out.
@@ -130,7 +130,7 @@ describe("render", () => {
   })
 
   test("activity emits separate rows for tools, agents, todos", () => {
-    const transcript: TranscriptData = {
+    const transcript: ActivityData = {
       ...EMPTY_TRANSCRIPT,
       tools: new Map([["read", 5]]),
       agents: [{ type: "Explore", description: "x", running: false, elapsed: 1000 }],
@@ -144,7 +144,7 @@ describe("render", () => {
   })
 
   test("activity includes tools from transcript", () => {
-    const transcript: TranscriptData = {
+    const transcript: ActivityData = {
       ...EMPTY_TRANSCRIPT,
       tools: new Map([["read", 5], ["edit", 3]]),
     }
@@ -155,7 +155,7 @@ describe("render", () => {
   })
 
   test("activity includes agents from transcript", () => {
-    const transcript: TranscriptData = {
+    const transcript: ActivityData = {
       ...EMPTY_TRANSCRIPT,
       agents: [{ type: "Explore", description: "search", running: false, elapsed: 5000 }],
     }
@@ -165,7 +165,7 @@ describe("render", () => {
   })
 
   test("activity includes todo progress from transcript", () => {
-    const transcript: TranscriptData = {
+    const transcript: ActivityData = {
       ...EMPTY_TRANSCRIPT,
       todos: { total: 3, completed: 1, current: "Fix bug" },
     }
@@ -180,7 +180,7 @@ describe("render", () => {
   })
 
   test("activityTitle includes config counts", () => {
-    const config = { claudeMd: 2, mcps: 3, hooks: 1, rules: 0, effortLevel: null }
+    const config = { instructionFiles: [{ name: "CLAUDE.md", count: 2 }], mcps: 3, hooks: 1, rules: 0 }
     const result = render(MINIMAL_DATA, null, config, null)
     expect(result.activityTitle).toContain("2 CLAUDE.md")
     expect(result.activityTitle).toContain("3 MCPs")

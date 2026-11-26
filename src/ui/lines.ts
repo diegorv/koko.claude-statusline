@@ -1,6 +1,6 @@
 // Flat-line layout — header (left + right) with horizontal rule and content rows.
 
-import type { StdinData } from "../parsing/stdin.ts"
+import type { SessionData } from "../model.ts"
 import type { RenderResult } from "./render.ts"
 import { bold, c, dim, formatDuration, formatTokens, gradientBar, nbsp, pctColor, RESET, vlen } from "./format.ts"
 import { SEP, inRuleColor, inFaintColor } from "./constants.ts"
@@ -39,7 +39,7 @@ function wrapLine(line: string, maxWidth: number, separator: string): string[] {
 }
 
 /** Left side of the header: repo (if any) · model · [effort] · [caveman] · context bar · %. */
-function buildHeaderLeft(data: StdinData, repoName: string | undefined, effort: string | null, caveman: string | null): string {
+function buildHeaderLeft(data: SessionData, repoName: string | undefined, effort: string | null, caveman: string | null): string {
   const parts: string[] = []
   if (repoName) parts.push(bold("yellow", repoName))
   parts.push(c("cyan", data.model))
@@ -54,11 +54,13 @@ function buildHeaderLeft(data: StdinData, repoName: string | undefined, effort: 
 }
 
 /** Right side of the header: cost · duration · activity title (config counts). */
-function buildHeaderRight(data: StdinData, activityTitle: string): string {
+function buildHeaderRight(data: SessionData, activityTitle: string): string {
   const parts: string[] = []
-  const costLabel = data.cost < 0.10 ? `${Math.round(data.cost * 100)}¢` : `$${data.cost.toFixed(2)}`
-  parts.push(c("yellow", costLabel))
-  if (data.durationMs >= 1000) parts.push(`⏱ ${formatDuration(data.durationMs)}`)
+  if (data.cost !== null) {
+    const costLabel = data.cost < 0.10 ? `${Math.round(data.cost * 100)}¢` : `$${data.cost.toFixed(2)}`
+    parts.push(c("yellow", (data.costEstimated ? "~" : "") + costLabel))
+  }
+  if (data.durationMs !== null && data.durationMs >= 1000) parts.push(`⏱ ${formatDuration(data.durationMs)}`)
   if (activityTitle) parts.push(dim(activityTitle))
   return parts.join(SEP)
 }
@@ -84,7 +86,7 @@ function joinHeader(left: string, right: string, maxWidth: number): string {
 
 /** Resolves the configured right margin (env override → default). */
 function resolveRightMargin(): number {
-  const env = Number.parseInt(process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN ?? "", 10)
+  const env = Number.parseInt(process.env.KOKO_STATUSLINE_RIGHT_MARGIN ?? process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN ?? "", 10)
   return Number.isFinite(env) && env >= 0 ? env : DEFAULT_RIGHT_MARGIN
 }
 
@@ -97,8 +99,8 @@ function resolveRightMargin(): number {
  *
  * Rows wider than the terminal are wrapped at separator boundaries.
  */
-export function renderLines(data: StdinData, result: RenderResult, repoName?: string): string {
-  const terminalWidth = getTerminalWidth({ stabilityKey: data.transcriptPath })
+export function renderLines(data: SessionData, result: RenderResult, repoName?: string): string {
+  const terminalWidth = data.terminalWidth ?? getTerminalWidth({ stabilityKey: data.transcriptPath })
   const margin = resolveRightMargin()
   const usableWidth = terminalWidth
     ? Math.max(MIN_USABLE_WIDTH, terminalWidth - margin - LEFT_PAD.length)

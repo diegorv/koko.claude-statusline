@@ -1,10 +1,10 @@
 // Layout compositor — emits one row per semantic category so each line is
 // visually self-contained (git, rate limits, tools, agents, todos).
 
-import type { StdinData } from "../parsing/stdin.ts"
+import type { SessionData } from "../model.ts"
 import type { GitInfo } from "../collection/git.ts"
-import type { ConfigCounts } from "../collection/config.ts"
-import type { TranscriptData } from "../parsing/transcript.ts"
+import type { ConfigSummary } from "../model.ts"
+import type { ActivityData } from "../model.ts"
 import type { CavemanState } from "../collection/caveman.ts"
 import type { WorktrunkInfo } from "../collection/worktrunk.ts"
 import { SEP, GAP, ICONS } from "./constants.ts"
@@ -55,16 +55,16 @@ const GUTTERS = {
  * Composes status line rows. Each emitted row is a complete, standalone line —
  * the renderer prints them in order without further joining.
  *
- * @param data - Parsed stdin data from Claude Code.
+ * @param data - Normalized data from the selected agent.
  * @param git - Git repository info (null if not in a repo).
  * @param config - Config counts (null if no cwd).
  * @param transcript - Parsed transcript data (null if no transcript).
  */
 export function render(
-  data: StdinData,
+  data: SessionData,
   git: GitInfo | null,
-  config: ConfigCounts | null,
-  transcript: TranscriptData | null = null,
+  config: ConfigSummary | null,
+  transcript: ActivityData | null = null,
   skipPermissions: boolean = false,
   caveman: CavemanState | null = null,
   worktrunk: WorktrunkInfo | null = null,
@@ -89,8 +89,7 @@ export function render(
   // Wrap logic in lines.ts splits at SEP boundaries when the row exceeds
   // terminal width.
   const consumptionParts: string[] = []
-  if (data.rateLimit5h) consumptionParts.push(renderRateLimit("5h", data.rateLimit5h))
-  if (data.rateLimit7d) consumptionParts.push(renderRateLimit("7d", data.rateLimit7d))
+  for (const limit of data.rateLimits) consumptionParts.push(renderRateLimit(limit.label, limit))
   const outputSpeed = transcript ? renderOutputSpeed(transcript.assistantSamples) : null
   if (outputSpeed) consumptionParts.push(outputSpeed)
   const sessionDiff = renderSessionDiff(data)
@@ -100,6 +99,7 @@ export function render(
   if (consumptionParts.length > 0) session.push(GUTTERS.consumption + consumptionParts.join(SEP))
 
   const activity: string[] = []
+  if (data.state) activity.push(GUTTERS.tools + data.state)
 
   if (transcript) {
     // Row 3 (tools, cyan): running with spinner + completed with counts.
@@ -119,7 +119,7 @@ export function render(
   }
 
   const activityTitle = renderActivityTitle(config, transcript?.mcpStatus ?? null, data.sessionName, data.outputStyle, skipPermissions)
-  const effort = renderEffort(config?.effortLevel ?? null)
+  const effort = renderEffort(data.effortLevel)
   const cavemanChip = renderCaveman(caveman)
 
   return { session, activity, activityTitle, effort, caveman: cavemanChip }

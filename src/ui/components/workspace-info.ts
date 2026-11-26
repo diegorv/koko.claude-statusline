@@ -5,7 +5,7 @@
 // renderSessionDiff. This component covers only the spatial context: where
 // I'm working (worktree) and how I'm editing (vim mode).
 
-import type { StdinData } from "../../parsing/stdin.ts"
+import type { SessionData } from "../../model.ts"
 import { c, dim } from "../format.ts"
 import { ICONS } from "../constants.ts"
 
@@ -14,7 +14,7 @@ import { ICONS } from "../constants.ts"
  * @param gitWorktree - Linked git worktree name, used when Claude Code reports none.
  * @returns Array of formatted string parts (may be empty).
  */
-export function renderWorkspaceInfo(data: StdinData, gitWorktree = ""): string[] {
+export function renderWorkspaceInfo(data: SessionData, gitWorktree = ""): string[] {
   const parts: string[] = []
   const worktree = data.worktree || gitWorktree
   if (worktree) parts.push(c("magenta", `${ICONS.tree} ${worktree}`))

@@ -2,53 +2,7 @@
 
 import { readFileSync } from "fs"
 
-export interface AgentInfo {
-  type: string
-  description: string
-  running: boolean
-  elapsed: number // ms
-}
-
-export interface RunningTool {
-  name: string
-  target: string
-}
-
-export interface McpStatus {
-  ok: Set<string>      // servers with at least one successful call
-  errored: Set<string> // servers with at least one error
-}
-
-export interface TokenTotals {
-  input: number
-  output: number
-  cacheCreate: number
-  cacheRead: number
-}
-
-/**
- * One sample point from an assistant turn — used by the output-speed widget
- * to compute Δtokens/Δtime across the tail of a sliding window.
- * `output` is the session-cumulative output token count at this point.
- */
-export interface AssistantSample {
-  t: number       // ms epoch (timestamp of the assistant turn)
-  output: number  // cumulative session output tokens at this sample
-}
-
-export interface TranscriptData {
-  tools: Map<string, number>  // name → completed count
-  runningTools: RunningTool[]  // currently running tools
-  agents: AgentInfo[]
-  todos: { total: number; completed: number; current: string | null }
-  mcpStatus: McpStatus
-  /** Wall-clock time of the most recent assistant message, in ms epoch. Null if no assistant turns seen. */
-  lastAssistantTimestamp: number | null
-  /** Session-level token usage summed across all assistant turns, deduped by requestId. */
-  tokenTotals: TokenTotals
-  /** Up to 16 most recent assistant samples (for output-speed rate math). Oldest first. */
-  assistantSamples: AssistantSample[]
-}
+import type { ActivityData, AgentInfo, RunningTool, AssistantSample, TokenTotals } from "../model.ts"
 
 /** Cap on the sliding window of assistant samples kept in memory. */
 const SAMPLE_WINDOW = 16
@@ -90,7 +44,7 @@ function extractTarget(name: string, input: any): string {
  * @param path - Absolute path to the transcript JSONL file.
  * @returns Parsed transcript data, or null if the file cannot be read.
  */
-export function parseTranscript(path: string): TranscriptData | null {
+export function parseTranscript(path: string): ActivityData | null {
   let text: string
   try {
     text = readFileSync(path, "utf-8")

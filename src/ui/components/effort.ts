@@ -1,7 +1,7 @@
 // /effort chip — dim label + colored level. Rendered as a sibling chip in the header,
 // joined by the standard SEP so it follows the same visual rhythm as other columns.
 
-import type { EffortLevel } from "../../collection/config.ts"
+import type { EffortLevel } from "../../model.ts"
 import { c, dim } from "../format.ts"
 
 // Color per effort level on the Speed ↔ Intelligence axis. `low` is handled

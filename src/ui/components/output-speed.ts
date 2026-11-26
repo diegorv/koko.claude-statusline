@@ -1,6 +1,6 @@
 // Component: live output speed (tokens/second) from the assistant samples window.
 
-import type { AssistantSample } from "../../parsing/transcript.ts"
+import type { AssistantSample } from "../../model.ts"
 import { c, dim } from "../format.ts"
 
 /**
@@ -23,7 +23,7 @@ const MIN_TOKEN_SPREAD = 200
  * returns null when the rate would be stale or statistically meaningless.
  *
  * Callers must pass the same `assistantSamples` array stored on
- * `TranscriptData`. Two samples are needed for a delta; with fewer, returns
+ * `ActivityData`. Two samples are needed for a delta; with fewer, returns
  * null without computing.
  *
  * @param samples - Sliding-window samples (oldest first). At least 2 required.

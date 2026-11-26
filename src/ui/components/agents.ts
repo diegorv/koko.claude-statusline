@@ -1,6 +1,6 @@
 // Component: agent execution status
 
-import type { AgentInfo } from "../../parsing/transcript.ts"
+import type { AgentInfo } from "../../model.ts"
 import { c, dim, formatDuration } from "../format.ts"
 import { spin } from "../constants.ts"
 
@@ -12,6 +12,7 @@ import { spin } from "../constants.ts"
 export function renderAgents(agents: AgentInfo[]): string[] {
   return agents.map(agent => {
     const icon = agent.running ? c("cyan", spin()) : c("green", "✓")
-    return `${icon} ${agent.type} ${dim(`(${formatDuration(agent.elapsed)})`)}`
+    const elapsed = agent.elapsed === null ? "" : " " + dim(`(${formatDuration(agent.elapsed)})`)
+    return `${icon} ${agent.type}${elapsed}`
   })
 }

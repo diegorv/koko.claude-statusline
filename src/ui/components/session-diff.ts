@@ -4,7 +4,7 @@
 // conceptual family: "how much output did this session produce" — tokens
 // being the unit cost, +/- lines being the visible work product.
 
-import type { StdinData } from "../../parsing/stdin.ts"
+import type { SessionData } from "../../model.ts"
 import { c } from "../format.ts"
 
 /**
@@ -12,7 +12,8 @@ import { c } from "../format.ts"
  * when both counters are zero (typical at the start of a session before
  * any edits land).
  */
-export function renderSessionDiff(data: StdinData): string | null {
+export function renderSessionDiff(data: SessionData): string | null {
+  if (data.linesAdded === null || data.linesRemoved === null) return null
   if (data.linesAdded === 0 && data.linesRemoved === 0) return null
   return `${c("green", `+${data.linesAdded}`)} ${c("red", `-${data.linesRemoved}`)}`
 }

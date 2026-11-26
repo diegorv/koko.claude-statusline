@@ -15,7 +15,9 @@ CI runs on push and PR via GitHub Actions.
 | Path | Responsibility |
 |---|---|
 | `src/index.ts` | Entry point, orchestration only |
-| `src/parsing/stdin.ts` | Parse Claude Code JSON from stdin |
+| `src/model.ts` | Shared session, activity, quota and configuration types |
+| `src/adapters/` | Agent selection and provider-owned mapping/collection for Claude and Antigravity |
+| `src/parsing/stdin.ts` | Read a JSON object from stdin; reject malformed or non-object input silently |
 | `src/parsing/transcript.ts` | Parse session transcript JSONL — tool/agent tracking, per-turn token usage, assistant samples for rate math |
 | `src/collection/git.ts` | Git repo info via `node:child_process` `spawnSync` (branch, dirty, SHA, fork detection) |
 | `src/collection/config.ts` | Count `CLAUDE.md`, MCPs, hooks, rules |
@@ -28,6 +30,18 @@ CI runs on push and PR via GitHub Actions.
 | `src/ui/constants.ts` | Icons, separators, spinner |
 | `src/ui/components/` | Per-row components (git, workspace, rate limits, token breakdown, output speed, session diff, tools, agents, todos, activity title, effort) |
 | `tests/` | Mirrors `src/` structure |
+
+## Agent adapters
+
+The pipeline is `stdin → selectAdapter → adapter.read → shared Git/worktree collection → render → pane-header export`.
+
+`AgentAdapter.read(raw)` returns an `AgentSnapshot`: normalized `SessionData`, optional configuration counts and activity, plus optional permission/caveman indicators. UI modules consume shared types from `model.ts`, not a provider's input or transcript types. The existing compositors and ANSI components remain shared.
+
+The Claude adapter owns the previous stdin mapping and invokes the existing Claude config, transcript, parent-process and caveman collectors. The Antigravity adapter uses its documented stdin payload directly; it does not invoke those collectors. `null` means an unavailable cost, duration, session diff or subagent elapsed time. Known zero values remain distinct. Quotas are a list with provider-supplied labels rather than fixed 5h/7d fields; reset timestamps are normalized to Unix seconds.
+
+To add an agent, add its ID to `AgentId`, implement `AgentAdapter`, register it in `src/adapters/index.ts`, and test its real input contract through normalization, rendering and export. Do not add placeholder adapters that interpret another agent's schema. Codex and OpenCode still need their own transport/display integrations before they can be supported.
+
+An explicit `--agent` wins over the payload's `product`; absent both, selection defaults to Claude for existing installations. Unknown agents are rejected. This same selection runs in the source entry point and the bundled release.
 
 ## Dependencies
 
