@@ -38,7 +38,7 @@ An Issue can start when its status is `todo` and every Issue in its "Blocked by"
 | 01 | [Protect both runtime contracts before reorganizing the code](issues/01-protect-contracts-and-validation.md) | none | done | issue/01-protect-contracts-and-validation (69b429c) | 2026-11-26 |
 | 02 | [Separate workspace data from local and remote sources](issues/02-separate-workspace-data-from-sources.md) | 01 | done | issue/02-separate-workspace-data-from-sources (b65596c) | 2026-11-26 |
 | 03 | [Render the panel through a shared interface with explicit layout](issues/03-isolate-panel-rendering-and-layout.md) | 02 | done | issue/03-isolate-panel-rendering-and-layout (7725d66) | 2026-11-26 |
-| 04 | [Consolidate OpenCode implementation inside the plugin package](issues/04-consolidate-opencode-integration.md) | 02 | in-progress | issue/04-consolidate-opencode-integration | |
+| 04 | [Consolidate OpenCode implementation inside the plugin package](issues/04-consolidate-opencode-integration.md) | 02 | done | issue/04-consolidate-opencode-integration (fc42c47) | 2026-11-26 |
 | 05 | [Keep the shared snapshot free of ANSI and collection internals](issues/05-remove-presentation-escapes-and-collection-details.md) | 03 | todo | | |
 | 06 | [Document the final architecture and verify installation compatibility](issues/06-document-and-verify-final-architecture.md) | 04, 05 | todo | | |
 
@@ -52,3 +52,4 @@ An Issue can start when its status is `todo` and every Issue in its "Blocked by"
 - 2026-11-26 19:31 — 03 — start — Codex-native build and independent review; blocker 02 delivered — 6cc2ed7
 - 2026-11-26 19:38 — 03 — deliver — Codex review approved; both typechecks, 269 root and 13 plugin tests passed; ANSI comparisons and runtime smokes passed; merged and pushed — 7725d66
 - 2026-11-26 19:38 — 04 — start — Codex-native build and independent review; blocker 02 delivered; preserving issue 03 — 03079c3
+- 2026-11-26 19:42 — 04 — deliver — Codex review approved; both typechecks and complete root/plugin suites passed; standalone runtime smokes without dependencies and public export passed; merged and pushed — fc42c47
