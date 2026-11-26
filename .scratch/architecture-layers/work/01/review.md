@@ -1,0 +1,18 @@
+VERDICT: APPROVED
+
+- [met] The architecture check recursively inspects all production TypeScript and TSX modules, excluding tests and installed dependencies; every new production directory must have an explicit responsibility classification. — The repository-wide TS/TSX glob skips installed packages and test modules. The exact directory map and fixture in tests/architecture.test.ts:63 and :102 catch both an unclassified nested widget and a new top-level package.
+- [met] The rules detect prohibited imports of runtime entry points, other agents, and host SDKs, including direct imports, reexports, and literal dynamic imports. Small representative cases demonstrate that violations are detected. — The TypeScript compiler collects source specifiers. The negative fixture exercises a static import of src/index.ts, a reexport of the plugin entry point, a cross-agent dynamic import, and a type import of the host SDK. The fixture and production checks passed.
+- [met] The plugin import guard covers nested directories and distinguishes type-only imports from executed dependencies. Host-provided runtime packages remain allowed; development-only SDK helpers cannot enter the runtime import graph. — The recursive plugin test scans executed imports with Bun.Transpiler. Its fixture covers erased types, a side-effect import, a mixed reexport and a dynamic import. The host module allowlist admits the imports in the current TUI.
+- [met] Existing regressions and only the additional scenarios needed for this migration cover the Claude command with configuration and transcript data, the Antigravity payload, representative panel widths, and OpenCode span conversion. Time and environment inputs used for output comparisons are controlled. — The Claude CLI fixture assembles settings and completed transcript tools in an isolated project. The two-width fixture compares colors, nonbreaking spaces, graphemes and frames. Antigravity and render tests control the clock and layout tests control margin overrides. The existing ANSI span test checks native colors and attributes.
+- [met] The relay-lite validation configuration installs and checks both packages while retaining separate lockfiles and running both typechecks and complete test suites. A plugin failure makes the aggregate check fail. — The setup command installs each package with its frozen lockfile. The suite joins both typechecks and both complete suites with shell AND operators, so a nonzero status from either package blocks delivery. Both typechecks passed independently. The ship driver must run the complete suite before delivery.
+- [met] The standalone command remains executable without installing plugin dependencies, and the architecture rules and existing CI checks pass before production code is moved. — I copied src and package.json alone into an empty temporary directory. Both CI payloads produced the expected model and cost with Bun 1.4.5 and Node 22.23.1, 24.22.2 and 26.13.1. The architecture tests passed and the diff contains no production edits. The complete suites remain the ship driver's gate.
+
+## Findings
+
+None.
+
+## Checks
+
+Reviewed `git diff main...780da03`. I ran both package typechecks and five root test files with relay's bounded runner. All 60 root tests passed with 245 assertions across `tests/architecture.test.ts`, `tests/cli.test.ts`, `tests/agents/antigravity/adapter.test.ts`, `tests/ui/lines.test.ts` and `tests/ui/render.test.ts`.
+
+Two plugin test files passed at this tree, relay record: `bun test tests/runtime-imports.test.ts tests/ansi.test.ts` from `integrations/opencode`. All eight independent command smoke cases passed. No command reached its time bound.

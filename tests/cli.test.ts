@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { spawnSync } from "node:child_process"
-import { mkdtempSync, readFileSync, rmSync } from "node:fs"
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
@@ -19,6 +19,38 @@ describe("statusline CLI", () => {
     expect(result.stderr).toBe("")
     expect(result.stdout).toContain("Opus")
     expect(result.stdout).toContain("$1.50")
+  })
+
+  test("assembles model-specific Claude settings and completed transcript tools", () => {
+    const dir = mkdtempSync(join(tmpdir(), "koko-claude-"))
+    try {
+      const project = join(dir, "project")
+      mkdirSync(join(project, ".claude"), { recursive: true })
+      writeFileSync(join(project, "CLAUDE.md"), "Project instructions")
+      writeFileSync(join(project, ".claude", "settings.json"), JSON.stringify({
+        effortLevel: "low", modelSettings: { "fixture-opus": { effortLevel: "high" } },
+      }))
+      const transcript = join(dir, "session.jsonl")
+      writeFileSync(transcript, [
+        { message: { content: [{ type: "tool_use", id: "1", name: "Read", input: {} }] } },
+        { message: { content: [{ type: "tool_result", tool_use_id: "1" }] } },
+      ].map(record => JSON.stringify(record)).join("\n"))
+      const result = run(JSON.stringify({
+        model: { id: "fixture-opus", display_name: "Opus" },
+        workspace: { current_dir: project }, transcript_path: transcript,
+      }), [], {
+        HOME: dir, CLAUDE_CONFIG_DIR: join(dir, ".claude"), CLAUDE_CODE_EFFORT_LEVEL: "",
+        COLUMNS: "120", KOKO_STATUSLINE_RIGHT_MARGIN: "0",
+      })
+      expect(result.status).toBe(0)
+      expect(result.stderr).toBe("")
+      const text = result.stdout.replace(/\x1b\[[0-9;]*m/g, "").replaceAll("\u00a0", " ")
+      expect(text).toContain("1 CLAUDE.md")
+      expect(text).toContain("effort: high")
+      expect(text).toContain("✓ read ×1")
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 
   test("auto-detects Antigravity and exports its identity to the pane header", () => {

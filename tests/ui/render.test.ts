@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test"
+import { afterEach, beforeEach, describe, expect, setSystemTime, test } from "bun:test"
 import { render as renderSnapshot } from "../../src/ui/render.ts"
 import type { SessionData } from "../../src/core/model.ts"
 import type { GitInfo } from "../../src/collection/git.ts"
@@ -33,6 +33,9 @@ const EMPTY_TRANSCRIPT: ActivityData = {
 }
 
 describe("render", () => {
+  beforeEach(() => setSystemTime(new Date("2026-11-26T12:00:00Z")))
+  afterEach(() => setSystemTime())
+
   test("returns empty arrays with minimal data and no git/config/transcript", () => {
     const result = render(MINIMAL_DATA, null, null, null)
     expect(result.session).toEqual([])

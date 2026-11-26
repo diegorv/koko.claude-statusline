@@ -1,15 +1,35 @@
 import { expect, test } from "bun:test"
-import { readdirSync, readFileSync } from "node:fs"
-import { resolve } from "node:path"
+import { globSync, readFileSync } from "node:fs"
+import { join, resolve } from "node:path"
 
-test("runtime entry points only import host-provided packages, not development SDK helpers", () => {
+const hostModules = new Set(["@opencode/plugin/tui", "@opentui/core", "@opentui/solid", "solid-js", "solid-js/store"])
+
+function unsupportedImports(source: string, loader: "ts" | "tsx") {
+  return new Bun.Transpiler({ loader }).scan(source).imports
+    .map(entry => entry.path)
+    .filter(path => !path.startsWith(".") && !hostModules.has(path))
+}
+
+test("production plugin modules execute only relative imports and host-provided packages", () => {
   const dir = resolve(import.meta.dir, "..")
-  const hostModules = new Set(["@opencode/plugin/tui", "@opentui/core", "@opentui/solid", "solid-js", "solid-js/store"])
-  const violations: string[] = []
-  for (const file of readdirSync(dir).filter(file => /\.tsx?$/.test(file))) {
-    for (const match of readFileSync(resolve(dir, file), "utf8").matchAll(/^import(?!\s+type\b)[\s\S]*?from\s+["']([^"']+)["']/gm)) {
-      if (!match[1].startsWith(".") && !hostModules.has(match[1])) violations.push(`${file}: ${match[1]}`)
-    }
-  }
+  const files = globSync("**/*.{ts,tsx}", {
+    cwd: dir, exclude: ["**/node_modules/**", "**/tests/**", "**/*.{test,spec}.{ts,tsx}"],
+  })
+  const violations = files.flatMap(file =>
+    unsupportedImports(readFileSync(join(dir, file), "utf8"), file.endsWith(".tsx") ? "tsx" : "ts")
+      .map(specifier => `${file}: ${specifier}`))
   expect(violations).toEqual([])
+})
+
+test("separates erased SDK types from runtime imports, reexports and lazy loads", () => {
+  expect(unsupportedImports(`
+    import type { Message } from "@opencode/client"
+    import { type Info } from "@opencode/schema"
+    export type { Model } from "@opencode/client"
+    export { type Theme } from "@opencode/theme"
+    import { For } from "solid-js"
+    import "@opencode/client/solid"
+    export { type T, value } from "@opencode/schema/token-usage"
+    const lazy = () => import("@opencode/theme")
+  `, "ts")).toEqual(["@opencode/client/solid", "@opencode/schema/token-usage", "@opencode/theme"])
 })

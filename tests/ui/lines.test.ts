@@ -9,6 +9,7 @@ import { mapClaudeInput } from "../../src/agents/claude/adapter.ts"
 const ORIGINAL_STDOUT_COLS = process.stdout.columns
 const ORIGINAL_STDERR_COLS = process.stderr.columns
 const ORIGINAL_COLUMNS_ENV = process.env.COLUMNS
+const ORIGINAL_KOKO_MARGIN = process.env.KOKO_STATUSLINE_RIGHT_MARGIN
 const ORIGINAL_RIGHT_MARGIN_ENV = process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN
 
 function setStreamColumns(stream: NodeJS.WriteStream, value: number | undefined): void {
@@ -19,6 +20,7 @@ beforeEach(() => {
   setStreamColumns(process.stdout, undefined)
   setStreamColumns(process.stderr, undefined)
   delete process.env.COLUMNS
+  delete process.env.KOKO_STATUSLINE_RIGHT_MARGIN
   process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN = "0"
 })
 
@@ -27,6 +29,8 @@ afterEach(() => {
   setStreamColumns(process.stderr, ORIGINAL_STDERR_COLS)
   if (ORIGINAL_COLUMNS_ENV === undefined) delete process.env.COLUMNS
   else process.env.COLUMNS = ORIGINAL_COLUMNS_ENV
+  if (ORIGINAL_KOKO_MARGIN === undefined) delete process.env.KOKO_STATUSLINE_RIGHT_MARGIN
+  else process.env.KOKO_STATUSLINE_RIGHT_MARGIN = ORIGINAL_KOKO_MARGIN
   if (ORIGINAL_RIGHT_MARGIN_ENV === undefined) delete process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN
   else process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN = ORIGINAL_RIGHT_MARGIN_ENV
 })
@@ -230,4 +234,27 @@ describe("renderLines terminal width fallbacks", () => {
     // With 60 usable cols (100 - 40), the line wraps
     expect(bodyLines.length).toBeGreaterThan(1)
   })
+})
+
+test("preserves rendered colors, spaces, graphemes and frames at two widths", () => {
+  const result = { ...EMPTY_RESULT, session: [`工作目錄${SEP}👩‍💻 é`] }
+  const panels = [14, 24].map(terminalWidth => renderLines(
+    { ...MINIMAL_DATA, terminalWidth, contextPercent: null, durationMs: null, cost: null },
+    result,
+  ).replaceAll("\x1b", "␛").replaceAll("\u00a0", "␣"))
+  expect(panels).toEqual([
+    [
+      "␛[0m ␛[36mOpus␛[0m",
+      "␛[0m ␛[38;2;110;110;120m┌───────␛[0m",
+      "␛[0m 工作目錄",
+      "␛[0m 👩‍💻␣é",
+      "␛[0m ␛[38;2;110;110;120m└───────␛[0m",
+    ].join("\n"),
+    [
+      "␛[0m ␛[36mOpus␛[0m",
+      "␛[0m ␛[38;2;110;110;120m┌────────────────␛[0m",
+      "␛[0m 工作目錄␛[2m␣␣│␣␣␛[0m👩‍💻␣é",
+      "␛[0m ␛[38;2;110;110;120m└────────────────␛[0m",
+    ].join("\n"),
+  ])
 })

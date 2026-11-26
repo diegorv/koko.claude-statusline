@@ -3,10 +3,10 @@
   "remote": "origin",
   "delivery": "merge",
   "checks": {
-    "setup": "bun install --frozen-lockfile",
-    "typecheck": "bun run typecheck",
+    "setup": "bun install --frozen-lockfile && bun install --cwd integrations/opencode --frozen-lockfile",
+    "typecheck": "bun run typecheck && bun run --cwd integrations/opencode typecheck",
     "testFile": "bun test <file>",
-    "suite": "bun test"
+    "suite": "bun run typecheck && bun run --cwd integrations/opencode typecheck && bun test && bun run --cwd integrations/opencode test"
   },
   "reReviews": 1,
   "codex": null,
