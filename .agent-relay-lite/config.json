@@ -1,0 +1,15 @@
+{
+  "base": "main",
+  "remote": "origin",
+  "delivery": "merge",
+  "checks": {
+    "setup": "bun install --frozen-lockfile",
+    "typecheck": "bun run typecheck",
+    "testFile": "bun test <file>",
+    "suite": "bun test"
+  },
+  "reReviews": 1,
+  "codex": null,
+  "docs": [],
+  "rules": []
+}
