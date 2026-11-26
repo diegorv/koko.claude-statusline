@@ -6,7 +6,7 @@
 
 **Blocked by:** 03
 
-**Status:** needs-info
+**Status:** ready-for-agent
 
 ## Acceptance criteria
 
@@ -24,4 +24,4 @@ Separate shared facts from internal details without deleting observable informat
 
 ## Comments
 
-- Draft awaiting approval of ticket granularity and dependencies. After approval, change the status to ready-for-agent.
+- 2026-11-26: The user approved starting the issues. The breakdown and dependencies are approved; this ticket is ready for execution when its blockers are resolved.

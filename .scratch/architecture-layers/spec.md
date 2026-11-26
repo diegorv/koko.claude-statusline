@@ -1,6 +1,6 @@
 # Statusline architecture and integration reorganization
 
-**Status:** draft — ticket breakdown awaiting review.
+**Status:** approved — implementation authorized by the user on 2026-11-26.
 
 ## Problem and objective
 
@@ -117,4 +117,4 @@ After 02, tickets 03 and 04 can be chosen in either order, but overlapping write
 
 ## Breakdown review
 
-The six tickets retain needs-info because approval of the breakdown is pending. The formatting and translation corrections do not change their scheduling status. After approval of granularity and dependencies, change them to ready-for-agent. Implementation and relay-lite workflow execution are outside this preparation task.
+The user approved starting all six issues on 2026-11-26. The breakdown and dependencies are approved, and the tickets are ready-for-agent. Execute them through relay-lite in dependency order, one workflow at a time, using the configured review, validation, and merge delivery process.
