@@ -5,7 +5,9 @@
     "": {
       "name": "@koko/opencode-statusline",
       "devDependencies": {
+        "@opencode/client": "2.4.2",
         "@opencode/plugin": "2.4.2",
+        "@opencode/schema": "2.4.2",
         "@opencode/theme": "2.4.2",
         "@opentui/core": "0.9.9",
         "@opentui/solid": "0.9.9",

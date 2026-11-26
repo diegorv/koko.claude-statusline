@@ -2,7 +2,7 @@ import { Plugin } from "@opencode/plugin/tui"
 import { TextAttributes } from "@opentui/core"
 import { createEffect, createMemo, createResource, createSignal, For, on, onCleanup } from "solid-js"
 import { opencodeAdapter } from "../../src/agents/opencode/adapter.ts"
-import { mapOpenCodeGit } from "../../src/agents/opencode/git.ts"
+import { fetchWorkspace } from "./workspace.ts"
 import { render } from "../../src/ui/render.ts"
 import { renderLines } from "../../src/ui/lines.ts"
 import { exportPaneHeader } from "../../src/export/pane-header.ts"
@@ -23,14 +23,7 @@ function Statusline(props: { context: Plugin.Context; sessionID?: string }) {
     request?.abort()
     request = new AbortController()
     const signal = AbortSignal.any([request.signal, AbortSignal.timeout(4000)])
-    try {
-      const [info, status, project] = await Promise.all([
-        context.client.vcs.get({ location: { directory } }, { signal }),
-        context.client.vcs.status({ location: { directory } }, { signal }),
-        context.client.location.get({ location: { directory } }, { signal }),
-      ])
-      return { directory, git: mapOpenCodeGit(project.project.directory, info.data.branch.current, status.data.length > 0) }
-    } catch { return { directory, git: null } }
+    return fetchWorkspace(context.client, directory, signal)
   })
   const timer = setInterval(() => { void refetch() }, 5000)
   onCleanup(() => clearInterval(timer))

@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import type { SessionMessageInfo } from "@opencode/client"
-import { activeContext } from "../host.ts"
+import { activeContext, resolveModel } from "../host.ts"
 
 const selected = { providerID: "provider", modelID: "model" }
 const models = [{ id: "model", modelID: "model", providerID: "provider", name: "Model", limit: { context: 1000, output: 200 } }]
@@ -30,5 +30,6 @@ test("matches public model identities, not provider wire aliases", () => {
     { id: "model", modelID: "model", providerID: "provider", name: "Model", limit: { context: 8000, output: 1000 } },
   ]
   expect(activeContext([assistant("m", 800)], selected, catalog)?.limit).toBe(8000)
+  expect(resolveModel(selected, catalog)?.name).toBe("Model")
   expect(activeContext([assistant("m", 800)], { ...selected, modelID: "alias" }, catalog)).toBeUndefined()
 })

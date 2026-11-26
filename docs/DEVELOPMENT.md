@@ -46,7 +46,7 @@ The Claude adapter owns all `~/.claude` reads and transcript parsing. Its option
 
 Adapters choose their layout policy: Claude keeps a 16-column overlay reserve and a frame sized around its header annotations; Antigravity and OpenCode default to no reserve and use the full available width. Environment overrides still win. OpenCode measures its slot's actual width, including changes caused by sidebars and terminal resizing.
 
-Unavailable measurements use `null`, including context percentage when the host cannot establish current usage. Known zero values stay distinct. Quotas carry provider-supplied labels, and reset timestamps use Unix seconds. OpenCode's SDK helper handles compaction and undo boundaries; model changes cannot mix an old usage sample with a different model's capacity.
+Unavailable measurements use `null`, including context percentage when the host cannot establish current usage. Known zero values stay distinct. Quotas carry provider-supplied labels, and reset timestamps use Unix seconds. OpenCode's adapter handles compaction and undo boundaries using a local selector tested against the pinned SDK helper; model changes cannot mix an old usage sample with a different model's capacity.
 
 To add another agent, implement its adapter and a real transport in the appropriate directories. Register it in `src/cli/agents.ts` only if it actually receives stdin payloads. Do not create placeholder adapters or infer one provider's format from another. Codex currently uses its native configurable footer; no custom Codex integration is implemented.
 
@@ -66,7 +66,7 @@ Native spans are produced from the shared renderer's ANSI colors; this avoids co
 
 ## Dependencies
 
-The standalone command has zero runtime dependencies and runs on Bun, Node or tsx. It uses `node:` builtins for local filesystem/process access. The OpenCode integration depends on APIs provided by OpenCode; its development SDKs are installed only in the integration directory.
+The standalone command has zero runtime dependencies and runs on Bun, Node or tsx. It uses `node:` builtins for local filesystem/process access. The OpenCode integration uses runtime APIs provided by its host; the client/schema SDKs are development-only dependencies used to verify its local mapping against the native contracts.
 
 ## Inspiration & Attribution
 
