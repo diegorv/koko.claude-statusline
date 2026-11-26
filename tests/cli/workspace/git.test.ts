@@ -1,9 +1,11 @@
 import { describe, expect, test } from "bun:test"
-import { getGitInfo } from "../../src/collection/git.ts"
+import { getGitInfo } from "../../../src/cli/workspace/git.ts"
+import { resolve } from "node:path"
+import { readLocalWorkspace } from "../../../src/cli/workspace/read.ts"
 
 describe("getGitInfo", () => {
   test("returns valid info for current repo", () => {
-    const cwd = import.meta.dir.replace(/\/tests\/collection$/, "")
+    const cwd = resolve(import.meta.dir, "../../..")
     const git = getGitInfo(cwd)
     expect(git.repo).toBe(cwd.split("/").pop() ?? "")
     expect(git.branch.length).toBeGreaterThan(0)
@@ -22,7 +24,7 @@ describe("getGitInfo", () => {
   })
 
   test("staged/modified/untracked are non-negative numbers", () => {
-    const cwd = import.meta.dir.replace(/\/tests\/collection$/, "")
+    const cwd = resolve(import.meta.dir, "../../..")
     const git = getGitInfo(cwd)
     expect(git.staged).toBeGreaterThanOrEqual(0)
     expect(git.modified).toBeGreaterThanOrEqual(0)
@@ -30,14 +32,14 @@ describe("getGitInfo", () => {
   })
 
   test("ahead/behind are non-negative numbers", () => {
-    const cwd = import.meta.dir.replace(/\/tests\/collection$/, "")
+    const cwd = resolve(import.meta.dir, "../../..")
     const git = getGitInfo(cwd)
     expect(git.ahead).toBeGreaterThanOrEqual(0)
     expect(git.behind).toBeGreaterThanOrEqual(0)
   })
 
   test("returns a short SHA for the current repo's HEAD", () => {
-    const cwd = import.meta.dir.replace(/\/tests\/collection$/, "")
+    const cwd = resolve(import.meta.dir, "../../..")
     const git = getGitInfo(cwd)
     // Short SHAs are usually 7 chars but git auto-grows them when ambiguous;
     // accept anything between 7 and 12 alphanumeric chars.
@@ -45,7 +47,7 @@ describe("getGitInfo", () => {
   })
 
   test("isFork is false for repos without an upstream remote", () => {
-    const cwd = import.meta.dir.replace(/\/tests\/collection$/, "")
+    const cwd = resolve(import.meta.dir, "../../..")
     const git = getGitInfo(cwd)
     // The project itself has no `upstream` remote configured.
     expect(git.isFork).toBe(false)
@@ -59,7 +61,7 @@ describe("getGitInfo", () => {
 })
 
 describe("getGitInfo worktree detection", () => {
-  const { mkdtempSync, rmSync } = require("node:fs") as typeof import("node:fs")
+  const { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } = require("node:fs") as typeof import("node:fs")
   const { spawnSync } = require("node:child_process") as typeof import("node:child_process")
   const { join } = require("node:path") as typeof import("node:path")
   const { tmpdir } = require("node:os") as typeof import("node:os")
@@ -69,18 +71,31 @@ describe("getGitInfo worktree detection", () => {
 
   test("main checkout has empty worktree; linked worktree reports its folder name", () => {
     const root = mkdtempSync(join(tmpdir(), "sl-wt-"))
+    const oldPath = process.env.PATH
     try {
+      const calls = join(root, "wt-calls")
+      writeFileSync(join(root, "wt"), `#!/bin/sh
+echo "$2" >> "${calls}"
+echo '{"items":[{"worktree":{"current":true},"marker":"linked"}]}'
+`, { mode: 0o755 })
+      process.env.PATH = root + ":" + oldPath
       const main = join(root, "repo")
       git(root, "init", "-q", "-b", "main", main)
       git(main, "commit", "-q", "--allow-empty", "-m", "init")
       const linked = join(root, "repo.feature")
       git(main, "worktree", "add", "-q", "-b", "feature", linked)
 
-      expect(getGitInfo(main).worktree).toBe("")
-      const info = getGitInfo(linked)
-      expect(info.worktree).toBe("repo.feature")
-      expect(info.branch).toBe("feature")
+      expect(readLocalWorkspace("").git).toBeNull()
+      expect(readLocalWorkspace(root).git?.repo).toBe("")
+      expect(readLocalWorkspace(main)).toMatchObject({ git: { worktree: "" }, worktrunk: null })
+      expect(existsSync(calls)).toBe(false)
+      expect(readLocalWorkspace(linked)).toMatchObject({
+        git: { worktree: "repo.feature", branch: "feature" }, worktrunk: { marker: "linked" },
+      })
+      expect(readFileSync(calls, "utf8").trim()).toBe(linked)
     } finally {
+      if (oldPath === undefined) delete process.env.PATH
+      else process.env.PATH = oldPath
       rmSync(root, { recursive: true, force: true })
     }
   })

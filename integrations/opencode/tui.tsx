@@ -2,7 +2,7 @@ import { Plugin } from "@opencode/plugin/tui"
 import { TextAttributes } from "@opentui/core"
 import { createEffect, createMemo, createResource, createSignal, For, on, onCleanup } from "solid-js"
 import { opencodeAdapter } from "../../src/agents/opencode/adapter.ts"
-import { fetchWorkspace } from "./workspace.ts"
+import { createWorkspaceRequests, workspaceFor } from "./workspace.ts"
 import { render } from "../../src/ui/render.ts"
 import { renderLines } from "../../src/ui/lines.ts"
 import { exportPaneHeader } from "../../src/export/pane-header.ts"
@@ -15,16 +15,12 @@ function Statusline(props: { context: Plugin.Context; sessionID?: string }) {
   const location = () => context.location ?? context.data.location.default()
   const directory = () => (props.sessionID ? context.data.session.get(props.sessionID)?.location.directory : undefined) ?? location().directory
 
-  // Async server VCS calls work for remote servers as well as local sessions.
-  // Solid ignores stale resource results after a directory change.
-  let request: AbortController | undefined
-  onCleanup(() => request?.abort())
-  const [vcs, { refetch }] = createResource(directory, async directory => {
-    request?.abort()
-    request = new AbortController()
-    const signal = AbortSignal.any([request.signal, AbortSignal.timeout(4000)])
-    return fetchWorkspace(context.client, directory, signal)
+  const selection = createMemo(() => ({ directory: directory(), sessionID: props.sessionID }), undefined, {
+    equals: (a, b) => a.directory === b.directory && a.sessionID === b.sessionID,
   })
+  const requests = createWorkspaceRequests(context.client)
+  onCleanup(requests.cancel)
+  const [vcs, { refetch }] = createResource(selection, requests.load)
   const timer = setInterval(() => { void refetch() }, 5000)
   onCleanup(() => clearInterval(timer))
 
@@ -42,9 +38,8 @@ function Statusline(props: { context: Plugin.Context; sessionID?: string }) {
   const content = createMemo(() => {
     if (width() <= 0) return []
     const current = snapshot()
-    const workspace = vcs()
-    const git = workspace?.directory === current.data.cwd ? workspace.git : null
-    const output = renderLines(current.data, render(current, git), git?.repo)
+    const workspace = workspaceFor(selection(), vcs())
+    const output = renderLines(current.data, render(current, workspace), workspace.git?.repo)
     return ansiSpans(output)
   })
 

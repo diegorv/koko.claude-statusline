@@ -1,7 +1,6 @@
 // Component: git branch and working tree status
 
-import type { GitInfo } from "../../collection/git.ts"
-import type { WorktrunkInfo } from "../../collection/worktrunk.ts"
+import type { GitInfo, WorktrunkInfo } from "../../core/workspace.ts"
 import { c, dim } from "../format.ts"
 
 /**

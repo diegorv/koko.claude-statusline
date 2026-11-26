@@ -1,23 +1,8 @@
 // Git repository info
 
 import { spawnSync } from "node:child_process"
+import type { GitInfo } from "../../core/workspace.ts"
 
-export interface GitInfo {
-  repo: string
-  branch: string
-  dirty: boolean | null
-  staged: number | null
-  modified: number | null
-  untracked: number | null
-  ahead: number | null
-  behind: number | null
-  /** Short SHA of HEAD (empty string when unavailable). */
-  sha: string
-  /** True when `origin` and `upstream` remotes belong to different owners. */
-  isFork: boolean | null
-  /** Folder name of a linked worktree; empty string in the main checkout. */
-  worktree: string
-}
 
 const EMPTY: GitInfo = {
   repo: "", branch: "", dirty: false,

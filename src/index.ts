@@ -5,8 +5,7 @@
 import { appendFileSync } from "node:fs"
 import { parseStdin } from "./cli/stdin.ts"
 import { parseAgentArgument, selectAdapter } from "./cli/agents.ts"
-import { getGitInfo } from "./collection/git.ts"
-import { getWorktrunkInfo } from "./collection/worktrunk.ts"
+import { readLocalWorkspace } from "./cli/workspace/read.ts"
 import { render } from "./ui/render.ts"
 import { renderLines } from "./ui/lines.ts"
 import { vlen } from "./ui/format.ts"
@@ -31,11 +30,9 @@ try {
 }
 const snapshot = adapter.read(raw)
 const { data, activity: transcript } = snapshot
-const git = data.cwd ? getGitInfo(data.cwd) : null
-// wt costs ~100ms, so only ask it inside linked worktrees.
-const worktrunk = data.cwd && git?.worktree ? getWorktrunkInfo(data.cwd) : null
-const result = render(snapshot, git, worktrunk)
-const output = renderLines(data, result, git?.repo)
+const workspace = readLocalWorkspace(data.cwd)
+const result = render(snapshot, workspace)
+const output = renderLines(data, result, workspace.git?.repo)
 console.log(output)
 
 // Optional session snapshot for a terminal-side pane header (see src/export/pane-header.ts).

@@ -2,8 +2,7 @@
 // visually self-contained (git, rate limits, tools, agents, todos).
 
 import type { AgentSnapshot } from "../core/adapter.ts"
-import type { GitInfo } from "../collection/git.ts"
-import type { WorktrunkInfo } from "../collection/worktrunk.ts"
+import type { WorkspaceSnapshot } from "../core/workspace.ts"
 import { SEP, GAP, ICONS } from "./constants.ts"
 import { c } from "./format.ts"
 import {
@@ -52,13 +51,12 @@ const GUTTERS = {
  * the renderer prints them in order without further joining.
  *
  * @param snapshot - Normalized data and annotations from the selected agent.
- * @param git - Git repository info (null if not in a repo).
+ * @param workspace - Git and Worktrunk data from the active host.
 
  */
 export function render(
   snapshot: AgentSnapshot,
-  git: GitInfo | null,
-  worktrunk: WorktrunkInfo | null = null,
+  { git, worktrunk }: WorkspaceSnapshot,
 ): RenderResult {
   const { data, config, activity: transcript, skipPermissions, headerBadges } = snapshot
   const session: string[] = []

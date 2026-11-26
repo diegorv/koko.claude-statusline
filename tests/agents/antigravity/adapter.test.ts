@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, setSystemTime, test } from "bun:test"
 import { antigravityAdapter, mapAntigravityInput } from "../../../src/agents/antigravity/adapter.ts"
 import { buildSnapshot } from "../../../src/export/pane-header.ts"
+import { EMPTY_WORKSPACE } from "../../../src/core/workspace.ts"
 import { render } from "../../../src/ui/render.ts"
 import { renderLines } from "../../../src/ui/lines.ts"
 import { vlen } from "../../../src/ui/format.ts"
@@ -25,7 +26,7 @@ const payload = {
 
 function output(raw: Record<string, unknown>): string {
   const snapshot = antigravityAdapter.read(raw)
-  return renderLines(snapshot.data, render(snapshot, null))
+  return renderLines(snapshot.data, render(snapshot, EMPTY_WORKSPACE))
     .replace(/\x1b\[[0-9;]*m/g, "").replaceAll("\u00a0", " ")
 }
 

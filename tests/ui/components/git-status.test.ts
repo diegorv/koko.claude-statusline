@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { renderGitStatus } from "../../../src/ui/components/git-status.ts"
-import type { GitInfo } from "../../../src/collection/git.ts"
+import type { GitInfo } from "../../../src/core/workspace.ts"
 
 const BASE: GitInfo = {
   repo: "myrepo", branch: "main", dirty: false,

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { opencodeAdapter } from "../../../src/agents/opencode/adapter.ts"
 import type { OpenCodeInput } from "../../../src/agents/opencode/input.ts"
 import { mapOpenCodeGit } from "../../../src/agents/opencode/git.ts"
+import { EMPTY_WORKSPACE } from "../../../src/core/workspace.ts"
 import { render } from "../../../src/ui/render.ts"
 import { renderLines } from "../../../src/ui/lines.ts"
 import { buildSnapshot } from "../../../src/export/pane-header.ts"
@@ -12,7 +13,7 @@ const base: OpenCodeInput = { directory: "/project", width: 100, messages: [], c
 describe("OpenCode adapter", () => {
   test("omits unknown usage and cost instead of showing zero", () => {
     const snapshot = opencodeAdapter.read(base)
-    const text = renderLines(snapshot.data, render(snapshot, null))
+    const text = renderLines(snapshot.data, render(snapshot, EMPTY_WORKSPACE))
     expect(snapshot.data.contextPercent).toBeNull()
     expect(snapshot.data.cost).toBeNull()
     expect(text).not.toContain("%")
@@ -71,7 +72,15 @@ describe("OpenCode adapter", () => {
     const git = mapOpenCodeGit("/remote/repo", "main", true)
     expect(git).toMatchObject({ repo: "repo", branch: "main", dirty: true, staged: null, ahead: null })
     const snapshot = opencodeAdapter.read(base)
-    expect(render(snapshot, git).session[0]).toContain("main")
+    const remoteRows = render(snapshot, { git, worktrunk: null }).session
+    expect(remoteRows[0]).toContain("main")
+    // Counts unavailable from the server add no glyphs, just like measured zeros.
+    const localRows = render(snapshot, {
+      git: { repo: "repo", branch: "main", dirty: true, sha: "", worktree: "", isFork: false,
+        staged: 0, modified: 0, untracked: 0, ahead: 0, behind: 0 },
+      worktrunk: null,
+    }).session
+    expect(remoteRows).toEqual(localRows)
     expect(mapOpenCodeGit("/remote/repo", undefined, null)).toBeNull()
   })
 })
@@ -86,7 +95,7 @@ test("failed tools and failed/interrupted/unclassified children are not shown as
       { id: "4", agent: "done-agent", running: false, outcome: "succeeded" },
     ],
   })
-  const text = renderLines(snapshot.data, render(snapshot, null)).replace(/\x1b\[[0-9;]*m/g, "").replaceAll("\u00a0", " ")
+  const text = renderLines(snapshot.data, render(snapshot, EMPTY_WORKSPACE)).replace(/\x1b\[[0-9;]*m/g, "").replaceAll("\u00a0", " ")
   expect(text).toContain("✗ edit ×1")
   expect(text).toContain("✗ failed-agent")
   expect(text).toContain("■ interrupted-agent")

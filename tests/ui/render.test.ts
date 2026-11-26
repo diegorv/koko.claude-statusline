@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, setSystemTime, test } from "bun:test"
 import { render as renderSnapshot } from "../../src/ui/render.ts"
 import type { SessionData } from "../../src/core/model.ts"
-import type { GitInfo } from "../../src/collection/git.ts"
+import type { GitInfo } from "../../src/core/workspace.ts"
 import type { ActivityData } from "../../src/core/model.ts"
 
 // Fixtures exercise the shared snapshot interface used by both hosts.
 function render(data: SessionData, git: GitInfo | null, config: import("../../src/core/model.ts").ConfigSummary | null, activity: ActivityData | null = null) {
-  return renderSnapshot({ data, config, activity, skipPermissions: false, headerBadges: [] }, git)
+  return renderSnapshot({ data, config, activity, skipPermissions: false, headerBadges: [] }, { git, worktrunk: null })
 }
 
 const MINIMAL_DATA: SessionData = {

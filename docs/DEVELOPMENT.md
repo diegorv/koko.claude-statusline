@@ -16,11 +16,11 @@ CI runs on push and PR via GitHub Actions.
 |---|---|
 | `src/index.ts` | Stable command entry point for Claude and Antigravity |
 | `src/cli/` | JSON stdin transport and selection of command-based adapters |
-| `src/core/` | Shared session/activity model and the `AgentAdapter<Input>` / `AgentSnapshot` contracts |
+| `src/core/` | Shared workspace, session and activity models and the `AgentAdapter<Input>` / `AgentSnapshot` contracts |
 | `src/agents/claude/` | Claude payload, local config, transcript, parent process and Caveman integration |
 | `src/agents/antigravity/` | Antigravity CLI payload mapping |
 | `src/agents/opencode/` | Typed OpenCode data and server VCS mapping; no SDK or UI lifecycle dependency |
-| `src/collection/` | Shared local Git and Worktrunk collectors |
+| `src/cli/workspace/` | Local Git acquisition and Worktrunk lookup for linked worktrees |
 | `src/ui/` | Shared ANSI formatters, components, compositor and width-aware layout |
 | `src/export/` | Shared pane-header export for Kitty/Herdr |
 | `integrations/opencode/` | OpenCode 2.4 TUI entry point, host SDK bridge, native text conversion and lifecycle |
@@ -40,7 +40,7 @@ core snapshot + workspace data -> ui -> ANSI output / native OpenCode spans
 core snapshot -> export -> Kitty/Herdr pane header
 ```
 
-`core/` imports only `core/`. Shared `ui/`, `collection/` and `export/` modules cannot import an agent or an integration. An agent cannot import another agent. No file under `src/` imports OpenCode, OpenTUI or Solid. `tests/architecture.test.ts` enforces these rules.
+`core/` imports only `core/`. The shared UI, exporter and remote mapper consume contracts from core. Local Git and Worktrunk subprocesses belong to the command. OpenCode obtains its workspace snapshot from the connected server. An agent cannot import another agent. No file under `src/` imports OpenCode, OpenTUI or Solid. `tests/architecture.test.ts` enforces these rules.
 
 The Claude adapter owns all `~/.claude` reads and transcript parsing. Its optional Caveman annotation is formatted inside that agent, so other adapters and shared rendering do not depend on it. The Antigravity adapter uses its documented stdin payload directly. The OpenCode adapter consumes typed plain data from its host bridge; it does not pretend OpenCode has a Claude-style stdin callback.
 

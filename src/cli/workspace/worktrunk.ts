@@ -1,15 +1,8 @@
 // Worktrunk (https://worktrunk.dev) data for the current worktree
 
 import { spawnSync } from "node:child_process"
+import type { WorktrunkInfo } from "../../core/workspace.ts"
 
-export interface WorktrunkInfo {
-  /** Agent activity marker set by worktrunk's Claude plugin (e.g. 🤖, 💬). */
-  marker: string
-  /** Commits ahead of / behind the repo's default branch. */
-  ahead: number
-  behind: number
-  defaultBranch: string
-}
 
 /** Extracts the current worktree's fields from `wt list --format=json` (schema 2). */
 export function parseWorktrunkList(output: string): WorktrunkInfo | null {

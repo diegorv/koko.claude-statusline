@@ -1,4 +1,4 @@
-import type { GitInfo } from "../../collection/git.ts"
+import type { GitInfo } from "../../core/workspace.ts"
 
 /** Map the connected server's VCS data; never probe a remote directory locally. */
 export function mapOpenCodeGit(repositoryRoot: string, branch: string | undefined, dirty: boolean | null): GitInfo | null {

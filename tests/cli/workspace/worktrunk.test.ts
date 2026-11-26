@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { parseWorktrunkList } from "../../src/collection/worktrunk.ts"
+import { parseWorktrunkList } from "../../../src/cli/workspace/worktrunk.ts"
 
 const json = (items: unknown[]) => JSON.stringify({ schema: 2, items })
 

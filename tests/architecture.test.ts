@@ -13,7 +13,7 @@ const layers = {
   "src/agents/antigravity": "antigravity",
   "src/agents/opencode": "opencode",
   "src/core": "core",
-  "src/collection": "collection",
+  "src/cli/workspace": "workspace",
   "src/export": "export",
   "src/ui": "ui",
   "src/ui/components": "ui",
@@ -22,12 +22,12 @@ const layers = {
 type Layer = (typeof layers)[keyof typeof layers]
 
 const dependencies: Record<Layer, readonly Layer[]> = {
-  cli: ["cli", "claude", "antigravity", "core", "collection", "ui", "export"],
+  cli: ["cli", "claude", "antigravity", "core", "workspace", "ui", "export"],
   claude: ["claude", "core"],
   antigravity: ["antigravity", "core"],
   opencode: ["opencode", "core"],
   core: ["core"],
-  collection: ["collection", "core"],
+  workspace: ["workspace", "core"],
   export: ["export", "core"],
   ui: ["ui", "core"],
   plugin: ["plugin", "opencode", "core", "ui", "export"],
@@ -36,9 +36,6 @@ const dependencies: Record<Layer, readonly Layer[]> = {
 // Existing edges to remove as the corresponding contracts and collectors move.
 const migrationEdges: Record<string, readonly string[]> = {
   "src/agents/claude/caveman-badge.ts": ["src/ui/format.ts"],
-  "src/agents/opencode/git.ts": ["src/collection/git.ts"],
-  "src/ui/render.ts": ["src/collection/git.ts", "src/collection/worktrunk.ts"],
-  "src/ui/components/git-status.ts": ["src/collection/git.ts", "src/collection/worktrunk.ts"],
 }
 
 function layer(file: string): Layer | undefined {
@@ -49,7 +46,7 @@ function layer(file: string): Layer | undefined {
 function allowed(file: string, owner: Layer, specifier: string): boolean {
   if (!specifier.startsWith(".")) {
     if (isBuiltin(specifier)) {
-      return ["cli", "claude", "collection", "export", "plugin"].includes(owner) || file === "src/ui/terminal.ts"
+      return ["cli", "claude", "workspace", "export", "plugin"].includes(owner) || file === "src/ui/terminal.ts"
     }
     return owner === "plugin" && /^(?:@opencode\/|@opentui\/|solid-js(?:\/|$))/.test(specifier)
   }
