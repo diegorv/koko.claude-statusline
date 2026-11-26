@@ -36,7 +36,7 @@ An Issue can start when its status is `todo` and every Issue in its "Blocked by"
 | # | Issue | Blocked by | Status | Branch / PR | Merged |
 |---|---|---|---|---|---|
 | 01 | [Protect both runtime contracts before reorganizing the code](issues/01-protect-contracts-and-validation.md) | none | done | issue/01-protect-contracts-and-validation (69b429c) | 2026-11-26 |
-| 02 | [Separate workspace data from local and remote sources](issues/02-separate-workspace-data-from-sources.md) | 01 | in-progress | issue/02-separate-workspace-data-from-sources | |
+| 02 | [Separate workspace data from local and remote sources](issues/02-separate-workspace-data-from-sources.md) | 01 | done | issue/02-separate-workspace-data-from-sources (b65596c) | 2026-11-26 |
 | 03 | [Render the panel through a shared interface with explicit layout](issues/03-isolate-panel-rendering-and-layout.md) | 02 | todo | | |
 | 04 | [Consolidate OpenCode implementation inside the plugin package](issues/04-consolidate-opencode-integration.md) | 02 | todo | | |
 | 05 | [Keep the shared snapshot free of ANSI and collection internals](issues/05-remove-presentation-escapes-and-collection-details.md) | 03 | todo | | |
@@ -48,3 +48,4 @@ An Issue can start when its status is `todo` and every Issue in its "Blocked by"
 - 2026-11-26 19:18 — 01 — start — Codex-native build and independent review; no Claude workflow — 2f4a306
 - 2026-11-26 19:26 — 01 — deliver — Codex review approved; both typechecks, 269 root and 9 plugin tests passed; Bun and Node 22/24/26 standalone smokes passed; relay ship merged and pushed — 69b429c
 - 2026-11-26 19:26 — 02 — start — Codex-native build and independent review; blocker 01 delivered — 98eab38
+- 2026-11-26 19:31 — 02 — deliver — Codex review approved; both typechecks, 269 root and 12 plugin tests passed; runtime smokes and reactive stale-response probe passed; merged and pushed — b65596c
