@@ -46,9 +46,7 @@ function quotaLimits(raw: unknown, now: number): RateLimit[] {
 export function mapAntigravityInput(raw: Record<string, unknown>, now = Date.now()): SessionData {
   const model = object(raw.model)
   const context = object(raw.context_window)
-  const usage = object(context.current_usage)
   const cost = object(raw.cost)
-  const input = number(usage.input_tokens)
   const width = number(raw.terminal_width)
   return {
     agent: "antigravity",
@@ -58,8 +56,9 @@ export function mapAntigravityInput(raw: Record<string, unknown>, now = Date.now
     terminalWidth: width !== null && width >= 1 ? Math.floor(width) : null,
     state: text(raw.agent_state),
     contextPercent: Math.min(100, number(context.used_percentage) ?? 0),
-    contextTokens: input === null ? null : input
-      + (number(usage.cache_creation_input_tokens) ?? 0) + (number(usage.cache_read_input_tokens) ?? 0),
+    // current_usage is not documented as occupied context and can contradict
+    // used_percentage. Keep the native percentage; do not invent a token count.
+    contextTokens: null,
     contextWindowSize: number(context.context_window_size) || null,
     cost: number(cost.total_usd),
     costEstimated: cost.estimated !== false,
@@ -68,6 +67,7 @@ export function mapAntigravityInput(raw: Record<string, unknown>, now = Date.now
     linesRemoved: null,
     cwd: text(object(raw.workspace).current_dir) ?? text(raw.cwd) ?? "",
     sessionName: text(raw.conversation_title),
+    sessionId: text(raw.conversation_id) || text(raw.session_id) || null,
     rateLimits: quotaLimits(raw.quota, now),
     vimMode: text(object(raw.vim).mode),
     worktree: null,

@@ -1,13 +1,13 @@
 # Layout & Features
 
-Claude Code pipes session JSON to stdin. The script writes a header row followed by a framed body containing one or more rows. Rows that have no data are simply not emitted — the statusline shrinks to just the header when you are outside a git repo and before any tools, agents, or todos appear.
+Claude Code or Antigravity CLI pipes session JSON to stdin. The script writes a header row followed by a framed body containing one or more rows. Rows that have no data are simply not emitted — the statusline shrinks to just the header when you are outside a git repo and before any tools, agents, or todos appear.
 
 ## Layout overview
 
 - **Header (always shown)** — a single line with content pinned to both edges and dashes filling the middle.
-- **Body (conditional)** — wrapped in a single box. When both the session-state rows and the activity rows are populated, a `├──` tee divides them inside the same box. Rows wrap at separator boundaries to fit the terminal width.
+- **Body (conditional)** — wrapped in a single box. When both the session-state rows and the activity rows are populated, a `├──` tee divides them inside the same box. Rows wrap at separator or activity-item boundaries to fit the terminal width. Individual items longer than the available width are left to terminal wrapping.
 
-The box's right edge aligns with the column where the header's right-side stats begin — everything to the left of that column is framed; cost, duration, and activity title sit outside as floating annotations. Any row wider than the box is wrapped at separator boundaries; the available width is shrunk by `CLAUDE_STATUSLINE_RIGHT_MARGIN` (see [Tuning](TUNING.md)) to leave room for Claude Code's overlay indicators.
+The box's right edge aligns with the column where the header's right-side stats begin — everything to the left of that column is framed; cost, duration, and activity title sit outside as floating annotations. Rows wider than the box wrap between items; the minimum frame width never exceeds the reported terminal width. Available width is shrunk by `KOKO_STATUSLINE_RIGHT_MARGIN` (or the legacy `CLAUDE_STATUSLINE_RIGHT_MARGIN`) (see [Tuning](TUNING.md)) to leave room for Claude Code's overlay indicators.
 
 ### Header
 
@@ -45,3 +45,7 @@ The consumption row is ordered most-stable to most-variable in width (rate limit
 - `⚡` warning when Claude Code was launched with `--dangerously-skip-permissions`
 - Worktree name, vim mode, `+added` / `-removed` line tally for the session
 - Self-healing terminal-width detection (cached + validated to suppress transient `/dev/tty` glitches that previously leaked content into the scrollback)
+
+## Agent-specific availability
+
+The feature list above describes Claude Code. Antigravity uses the same layout with native quota labels, agent state and subagent status. Its exact occupied context-token count and subagent elapsed times are omitted when unavailable. Missing costs are hidden for both agents; explicit zero remains visible. See [Antigravity installation](INSTALL.md#antigravity-cli) for the supported fields and limitations.

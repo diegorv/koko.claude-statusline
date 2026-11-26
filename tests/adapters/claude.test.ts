@@ -2,6 +2,14 @@ import { describe, expect, test } from "bun:test"
 import { mapClaudeInput } from "../../src/adapters/claude.ts"
 
 describe("mapClaudeInput", () => {
+  test("preserves reported zeros and uses the session ID or transcript filename for diagnostics", () => {
+    const data = mapClaudeInput({ cost: { total_cost_usd: 0, total_duration_ms: 0 }, session_id: "session", transcript_path: "/tmp/other.jsonl" })
+    expect(data.cost).toBe(0)
+    expect(data.durationMs).toBe(0)
+    expect(data.sessionId).toBe("session")
+    expect(mapClaudeInput({ transcript_path: "/tmp/fallback.jsonl" }).sessionId).toBe("fallback")
+    expect(mapClaudeInput({}).sessionId).toBeNull()
+  })
   test("maps complete raw input correctly", () => {
     const raw = {
       model: { display_name: "Opus" },
@@ -41,8 +49,8 @@ describe("mapClaudeInput", () => {
     const result = mapClaudeInput({})
     expect(result.model).toBe("Unknown")
     expect(result.contextPercent).toBe(0)
-    expect(result.cost).toBe(0)
-    expect(result.durationMs).toBe(0)
+    expect(result.cost).toBeNull()
+    expect(result.durationMs).toBeNull()
     expect(result.linesAdded).toBe(0)
     expect(result.linesRemoved).toBe(0)
     expect(result.cwd).toBe("")

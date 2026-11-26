@@ -42,6 +42,8 @@ export interface SessionData {
   cwd: string
   contextWindowSize: number | null
   sessionName: string | null
+  /** Provider conversation ID; Claude falls back to its transcript filename. */
+  sessionId: string | null
   rateLimits: RateLimit[]
   vimMode: string | null
   worktree: string | null

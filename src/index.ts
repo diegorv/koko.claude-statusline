@@ -3,7 +3,6 @@
 // Test:  echo '{"model":{"display_name":"Opus"}}' | bun src/index.ts
 
 import { appendFileSync } from "node:fs"
-import { basename } from "node:path"
 import { parseStdin } from "./parsing/stdin.ts"
 import { parseAgentArgument, selectAdapter } from "./adapters/index.ts"
 import { getGitInfo } from "./collection/git.ts"
@@ -14,18 +13,18 @@ import { vlen } from "./ui/format.ts"
 import { getTerminalWidth } from "./ui/terminal.ts"
 import { exportPaneHeader } from "./export/pane-header.ts"
 
-let requestedAgent: string | undefined
+let adapter
 try {
-  requestedAgent = parseAgentArgument(process.argv.slice(2))
+  const requestedAgent = parseAgentArgument(process.argv.slice(2))
+  if (requestedAgent) adapter = selectAdapter({}, requestedAgent)
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error))
   process.exit(1)
 }
 const raw = parseStdin()
 if (!raw) process.exit(0)
-let adapter
 try {
-  adapter = selectAdapter(raw, requestedAgent)
+  adapter ??= selectAdapter(raw)
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error))
   process.exit(1)
@@ -56,7 +55,7 @@ if (debugLogPath) {
       agent: data.agent,
       t: new Date().toISOString(),
       pid: process.pid,
-      sid: data.transcriptPath ? basename(data.transcriptPath, ".jsonl").slice(0, 8) : null,
+      sid: data.sessionId?.slice(0, 8) ?? null,
       rows: rows.length,
       maxW: widths.length ? Math.max(...widths) : 0,
       termW,

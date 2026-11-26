@@ -1,4 +1,5 @@
 // Claude Code owns these local configuration and transcript formats.
+import { basename } from "node:path"
 import type { SessionData } from "../model.ts"
 import type { AgentAdapter } from "./types.ts"
 import { getConfigCounts } from "../collection/config.ts"
@@ -29,13 +30,14 @@ export function mapClaudeInput(raw: any): SessionData {
       if (!u) return null
       return (u.input_tokens ?? 0) + (u.cache_creation_input_tokens ?? 0) + (u.cache_read_input_tokens ?? 0)
     })(),
-    cost:     raw.cost?.total_cost_usd ?? 0,
-    durationMs: raw.cost?.total_duration_ms ?? 0,
+    cost:     raw.cost?.total_cost_usd ?? null,
+    durationMs: raw.cost?.total_duration_ms ?? null,
     linesAdded:  raw.cost?.total_lines_added ?? 0,
     linesRemoved: raw.cost?.total_lines_removed ?? 0,
     cwd:      raw.workspace?.current_dir ?? raw.cwd ?? "",
     contextWindowSize: raw.context_window?.context_window_size ?? null,
     sessionName: raw.session_name ?? null,
+    sessionId: raw.session_id || (raw.transcript_path ? basename(raw.transcript_path, ".jsonl") : null),
     rateLimits: [
       ...(rateLimitFiveHour?.used_percentage != null
         ? [{ label: "5h", pct: Math.round(rateLimitFiveHour.used_percentage), resetsAt: rateLimitFiveHour.resets_at ?? 0, remaining: null, disabled: false }] : []),

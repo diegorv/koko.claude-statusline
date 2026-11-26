@@ -3,7 +3,7 @@
 import type { SessionData } from "../model.ts"
 import type { RenderResult } from "./render.ts"
 import { bold, c, dim, formatDuration, formatTokens, gradientBar, nbsp, pctColor, RESET, vlen } from "./format.ts"
-import { SEP, inRuleColor, inFaintColor } from "./constants.ts"
+import { GAP, SEP, inRuleColor, inFaintColor } from "./constants.ts"
 import { getTerminalWidth } from "./terminal.ts"
 
 const RULE_CHAR = "─"
@@ -102,8 +102,9 @@ function resolveRightMargin(): number {
 export function renderLines(data: SessionData, result: RenderResult, repoName?: string): string {
   const terminalWidth = data.terminalWidth ?? getTerminalWidth({ stabilityKey: data.transcriptPath })
   const margin = resolveRightMargin()
+  const minimumWidth = terminalWidth ? Math.min(MIN_USABLE_WIDTH, Math.max(1, terminalWidth - LEFT_PAD.length)) : MIN_USABLE_WIDTH
   const usableWidth = terminalWidth
-    ? Math.max(MIN_USABLE_WIDTH, terminalWidth - margin - LEFT_PAD.length)
+    ? Math.max(minimumWidth, terminalWidth - margin - LEFT_PAD.length)
     : Number.POSITIVE_INFINITY
 
   const left = buildHeaderLeft(data, repoName, result.effort, result.caveman ?? null)
@@ -119,7 +120,7 @@ export function renderLines(data: SessionData, result: RenderResult, repoName?: 
   // box falls back to the widest body row.
   const rightW = vlen(right)
   const boxWidth = Number.isFinite(usableWidth) && rightW > 0
-    ? Math.max(MIN_USABLE_WIDTH, usableWidth - rightW - HEADER_GAP.length)
+    ? Math.max(minimumWidth, usableWidth - rightW - HEADER_GAP.length)
     : null
 
   const headerLines = wrapLine(headerLine, usableWidth, SEP)
@@ -129,7 +130,11 @@ export function renderLines(data: SessionData, result: RenderResult, repoName?: 
   const sessionLines: string[] = []
   for (const line of result.session) sessionLines.push(...wrapLine(line, wrapTarget, SEP))
   const activityLines: string[] = []
-  for (const line of result.activity) activityLines.push(...wrapLine(line, wrapTarget, SEP))
+  for (const line of result.activity) {
+    for (const section of wrapLine(line, wrapTarget, SEP)) {
+      activityLines.push(...wrapLine(section, wrapTarget, GAP))
+    }
+  }
 
   // Frame the body. A single box wraps everything; when BOTH session and
   // activity rows are present, a ├── tee divides them visually as two

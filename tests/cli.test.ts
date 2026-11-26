@@ -44,6 +44,29 @@ describe("statusline CLI", () => {
     expect(result.stdout).not.toContain("¢")
   })
 
+  test("does not display unknown Claude cost as a reported zero", () => {
+    const result = run("{}")
+    expect(result.status).toBe(0)
+    expect(result.stdout).not.toContain("¢")
+    expect(result.stdout).not.toContain("$")
+  })
+
+  test("distinguishes Antigravity conversations with identical transcript filenames", () => {
+    const dir = mkdtempSync(join(tmpdir(), "koko-debug-"))
+    try {
+      const log = join(dir, "debug.jsonl")
+      for (const id of ["aaaaaaaa-session", "bbbbbbbb-session"]) {
+        const result = run(JSON.stringify({ product: "antigravity", conversation_id: id, transcript_path: `/brain/${id}/logs/transcript.jsonl` }), [], { KOKO_STATUSLINE_DEBUG_LOG: log })
+        expect(result.status).toBe(0)
+      }
+      const records = readFileSync(log, "utf8").trim().split("\n").map(line => JSON.parse(line))
+      expect(records.map(record => record.sid)).toEqual(["aaaaaaaa", "bbbbbbbb"])
+      expect(records.map(record => record.agent)).toEqual(["antigravity", "antigravity"])
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
   test("invalid stdin is silent and unsupported selection is actionable on stderr", () => {
     for (const input of ["", "not json", "null", "[]", "42", '"text"']) {
       const result = run(input)
@@ -51,9 +74,11 @@ describe("statusline CLI", () => {
       expect(result.stdout).toBe("")
       expect(result.stderr).toBe("")
     }
-    const result = run("{}", ["--agent", "codex"])
-    expect(result.status).toBe(1)
-    expect(result.stdout).toBe("")
-    expect(result.stderr).toContain("Supported agents: claude, antigravity")
+    for (const input of ["{}", ""]) {
+      const result = run(input, ["--agent", "codex"])
+      expect(result.status).toBe(1)
+      expect(result.stdout).toBe("")
+      expect(result.stderr).toContain("Supported agents: claude, antigravity")
+    }
   })
 })

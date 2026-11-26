@@ -35,12 +35,12 @@ describe("Antigravity adapter", () => {
     expect(data.agent).toBe("antigravity")
     expect(data.effortLevel).toBe("high")
     expect(data.cwd).toBe("/project")
-    expect(data.contextTokens).toBe(25000)
+    expect(data.contextTokens).toBeNull()
     expect(data.sessionName).toBe("Fix tests")
     expect(data.rateLimits[0]).toEqual({ label: "gemini-weekly", pct: 25, resetsAt: 1893456000, remaining: null, disabled: false })
     expect(buildSnapshot(data, data.effortLevel, 123)).toEqual({
       agent: "antigravity", model: "Gemini", effort: "high", context_pct: 25,
-      context_tokens: 25000, cost_usd: 0.42, cost_estimated: true,
+      context_tokens: null, cost_usd: 0.42, cost_estimated: true,
       session_name: "Fix tests", updated_at: 123,
     })
   })
@@ -112,5 +112,38 @@ describe("Antigravity adapter", () => {
     expect(text).toContain("0¢")
     expect(text).not.toContain("~0¢")
     for (const line of text.split("\n")) expect(vlen(line)).toBeLessThanOrEqual(80)
+  })
+
+  test("does not mix current-turn tokens with the official payload's context percentage", () => {
+    // Values from Google's published JSON payload example. current_usage sums
+    // to 84,239 input/cache tokens, which is not 14.24% of this context window.
+    const raw = { context_window: {
+      used_percentage: 14.24, context_window_size: 1048576,
+      total_input_tokens: 88244, total_output_tokens: 61074,
+      current_usage: { input_tokens: 63382, output_tokens: 346, cache_creation_input_tokens: 0, cache_read_input_tokens: 20857 },
+    } }
+    const text = output(raw)
+    expect(text).toContain("14%")
+    expect(text).not.toContain("84k/")
+    expect(text).toContain("↑88k")
+    expect(text).toContain("↓61k")
+    expect(buildSnapshot(mapAntigravityInput(raw), null).context_tokens).toBeNull()
+  })
+
+  test("fits narrow frames and wraps many subagents at item boundaries", () => {
+    for (const width of [30, 80]) {
+      const text = output({
+        model: { display_name: "Gemini" }, terminal_width: width,
+        agent_state: "working", cost: { total_usd: 2 },
+        subagents: Array.from({ length: 8 }, (_, i) => ({ name: `researcher-${i}`, status: "completed" })),
+      })
+      for (const line of text.split("\n")) expect(vlen(line)).toBeLessThanOrEqual(width)
+      for (let i = 0; i < 8; i++) expect(text).toContain(`researcher-${i}`)
+    }
+  })
+
+  test("uses conversation IDs, with a session ID fallback before a conversation starts", () => {
+    expect(mapAntigravityInput({ conversation_id: "conversation", session_id: "session" }).sessionId).toBe("conversation")
+    expect(mapAntigravityInput({ conversation_id: "", session_id: "session" }).sessionId).toBe("session")
   })
 })
