@@ -35,7 +35,7 @@ An Issue can start when its status is `todo` and every Issue in its "Blocked by"
 
 | # | Issue | Blocked by | Status | Branch / PR | Merged |
 |---|---|---|---|---|---|
-| 01 | [Protect both runtime contracts before reorganizing the code](issues/01-protect-contracts-and-validation.md) | none | todo | | |
+| 01 | [Protect both runtime contracts before reorganizing the code](issues/01-protect-contracts-and-validation.md) | none | in-progress | issue/01-protect-contracts-and-validation | |
 | 02 | [Separate workspace data from local and remote sources](issues/02-separate-workspace-data-from-sources.md) | 01 | todo | | |
 | 03 | [Render the panel through a shared interface with explicit layout](issues/03-isolate-panel-rendering-and-layout.md) | 02 | todo | | |
 | 04 | [Consolidate OpenCode implementation inside the plugin package](issues/04-consolidate-opencode-integration.md) | 02 | todo | | |
@@ -45,3 +45,4 @@ An Issue can start when its status is `todo` and every Issue in its "Blocked by"
 ## Log
 
 - 2026-11-26 19:18 — ledger created (6 Issues)
+- 2026-11-26 19:18 — 01 — start — Codex-native build and independent review; no Claude workflow — 2f4a306
