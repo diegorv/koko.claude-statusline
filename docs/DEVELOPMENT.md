@@ -35,7 +35,7 @@ CI runs on push and PR via GitHub Actions.
 
 The pipeline is `stdin → selectAdapter → adapter.read → shared Git/worktree collection → render → pane-header export`.
 
-`AgentAdapter.read(raw)` returns an `AgentSnapshot`: normalized `SessionData`, optional configuration counts and activity, plus optional permission/caveman indicators. UI modules consume shared types from `model.ts`, not a provider's input or transcript types. The existing compositors and ANSI components remain shared.
+`AgentAdapter.read(raw)` returns an `AgentSnapshot`: normalized `SessionData`, optional configuration counts and activity, plus optional permission/caveman indicators. UI modules consume shared types from `model.ts`, not a provider's input or transcript types. The existing compositors and ANSI components remain shared. Each adapter supplies its default `rightMargin` (Claude: 16 columns for overlays; Antigravity: 0); environment overrides still take precedence.
 
 The Claude adapter owns the previous stdin mapping and invokes the existing Claude config, transcript, parent-process and caveman collectors. The Antigravity adapter uses its documented stdin payload directly; it does not invoke those collectors. `null` means an unavailable cost, duration, session diff or subagent elapsed time. Known zero values remain distinct. Quotas are a list with provider-supplied labels rather than fixed 5h/7d fields; reset timestamps are normalized to Unix seconds.
 

@@ -4,6 +4,7 @@ import { vlen } from "../../src/ui/format.ts"
 import { SEP } from "../../src/ui/constants.ts"
 import type { SessionData } from "../../src/model.ts"
 import type { RenderResult } from "../../src/ui/render.ts"
+import { mapClaudeInput } from "../../src/adapters/claude.ts"
 
 const ORIGINAL_STDOUT_COLS = process.stdout.columns
 const ORIGINAL_STDERR_COLS = process.stderr.columns
@@ -31,7 +32,7 @@ afterEach(() => {
 })
 
 const MINIMAL_DATA: SessionData = {
-  agent: "claude", effortLevel: null, terminalWidth: null, costEstimated: false, state: null,
+  agent: "claude", effortLevel: null, terminalWidth: null, rightMargin: 16, costEstimated: false, state: null,
   model: "Opus", modelId: "", contextPercent: 50, contextTokens: null, cost: 0.05, durationMs: 60000,
   linesAdded: 0, linesRemoved: 0, cwd: "/tmp", contextWindowSize: null,
   sessionName: null, sessionId: null, rateLimits: [],
@@ -189,6 +190,26 @@ describe("renderLines wrapping", () => {
 })
 
 describe("renderLines terminal width fallbacks", () => {
+  test("keeps Claude's default overlay reserve", () => {
+    delete process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN
+    const previousKokoMargin = process.env.KOKO_STATUSLINE_RIGHT_MARGIN
+    delete process.env.KOKO_STATUSLINE_RIGHT_MARGIN
+    try {
+      setStreamColumns(process.stdout, 130)
+      const data = mapClaudeInput({ model: { display_name: "Opus" } })
+      const result: RenderResult = {
+        ...EMPTY_RESULT,
+        session: ["first-" + "a".repeat(52) + SEP + "second-" + "b".repeat(52)],
+      }
+      // 122 columns of body fit the terminal, but not Claude's 16-column reserve.
+      const body = renderLines(data, result).split("\n").filter(line => /first-|second-/.test(line))
+      expect(body).toHaveLength(2)
+    } finally {
+      if (previousKokoMargin === undefined) delete process.env.KOKO_STATUSLINE_RIGHT_MARGIN
+      else process.env.KOKO_STATUSLINE_RIGHT_MARGIN = previousKokoMargin
+    }
+  })
+
   test("uses stderr.columns when stdout has none", () => {
     setStreamColumns(process.stderr, 200)
     const longLine = Array.from({ length: 8 }, (_, i) => `seg-${i}`).join(SEP)

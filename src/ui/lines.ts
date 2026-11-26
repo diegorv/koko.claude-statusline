@@ -9,7 +9,6 @@ import { getTerminalWidth } from "./terminal.ts"
 const RULE_CHAR = "─"
 const LEFT_PAD = " "
 const HEADER_GAP = " "
-const DEFAULT_RIGHT_MARGIN = 16
 const MIN_USABLE_WIDTH = 40
 
 const rule = (s: string) => inRuleColor(s)
@@ -85,9 +84,9 @@ function joinHeader(left: string, right: string, maxWidth: number): string {
 }
 
 /** Resolves the configured right margin (env override → default). */
-function resolveRightMargin(): number {
+function resolveRightMargin(defaultMargin: number): number {
   const env = Number.parseInt(process.env.KOKO_STATUSLINE_RIGHT_MARGIN ?? process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN ?? "", 10)
-  return Number.isFinite(env) && env >= 0 ? env : DEFAULT_RIGHT_MARGIN
+  return Number.isFinite(env) && env >= 0 ? env : defaultMargin
 }
 
 /**
@@ -101,7 +100,7 @@ function resolveRightMargin(): number {
  */
 export function renderLines(data: SessionData, result: RenderResult, repoName?: string): string {
   const terminalWidth = data.terminalWidth ?? getTerminalWidth({ stabilityKey: data.transcriptPath })
-  const margin = resolveRightMargin()
+  const margin = resolveRightMargin(data.rightMargin)
   const minimumWidth = terminalWidth ? Math.min(MIN_USABLE_WIDTH, Math.max(1, terminalWidth - LEFT_PAD.length)) : MIN_USABLE_WIDTH
   const usableWidth = terminalWidth
     ? Math.max(minimumWidth, terminalWidth - margin - LEFT_PAD.length)

@@ -23,6 +23,8 @@ export interface SessionData {
   agent: AgentId
   effortLevel: EffortLevel | null
   terminalWidth: number | null
+  /** Columns reserved by default for the host CLI's overlays; env overrides win. */
+  rightMargin: number
   costEstimated: boolean
   state: string | null
   model: string

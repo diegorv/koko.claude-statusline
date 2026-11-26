@@ -20,6 +20,7 @@ export function mapClaudeInput(raw: any): SessionData {
     agent: "claude",
     effortLevel: null,
     terminalWidth: null,
+    rightMargin: 16,
     costEstimated: false,
     state: null,
     model:    compactModelName(raw.model?.display_name ?? "Unknown"),

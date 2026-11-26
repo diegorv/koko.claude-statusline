@@ -30,6 +30,38 @@ function output(raw: Record<string, unknown>): string {
 }
 
 describe("Antigravity adapter", () => {
+  test("keeps the four quota buckets on one row when they fit the terminal", () => {
+    const previous = [process.env.KOKO_STATUSLINE_RIGHT_MARGIN, process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN]
+    delete process.env.KOKO_STATUSLINE_RIGHT_MARGIN
+    delete process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN
+    try {
+      const raw = {
+        terminal_width: 130,
+        quota: {
+          "3p-5h": { remaining_fraction: 1 },
+          "3p-weekly": { remaining_fraction: 1 },
+          "gemini-5h": { remaining_fraction: 0.01, reset_in_seconds: 5520 },
+          "gemini-weekly": { remaining_fraction: 0.73, reset_in_seconds: 590400 },
+        },
+      }
+      const text = output(raw)
+      const quotaRows = text.split("\n").filter(line => /3p-|gemini-/.test(line))
+      expect(quotaRows).toHaveLength(1)
+      expect(vlen(quotaRows[0])).toBeLessThanOrEqual(130)
+
+      // Manual margins still work, including the legacy variable and KOKO precedence.
+      process.env.CLAUDE_STATUSLINE_RIGHT_MARGIN = "16"
+      expect(output(raw).split("\n").filter(line => /3p-|gemini-/.test(line))).toHaveLength(2)
+      process.env.KOKO_STATUSLINE_RIGHT_MARGIN = "0"
+      expect(output(raw).split("\n").filter(line => /3p-|gemini-/.test(line))).toHaveLength(1)
+    } finally {
+      for (const [i, key] of ["KOKO_STATUSLINE_RIGHT_MARGIN", "CLAUDE_STATUSLINE_RIGHT_MARGIN"].entries()) {
+        if (previous[i] === undefined) delete process.env[key]
+        else process.env[key] = previous[i]
+      }
+    }
+  })
+
   test("maps documented fields and exports the correct provider and cost semantics", () => {
     const data = mapAntigravityInput(payload)
     expect(data.agent).toBe("antigravity")

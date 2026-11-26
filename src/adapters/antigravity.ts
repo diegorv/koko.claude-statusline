@@ -54,6 +54,7 @@ export function mapAntigravityInput(raw: Record<string, unknown>, now = Date.now
     modelId: text(model.id) ?? "",
     effortLevel: effort(model.effort),
     terminalWidth: width !== null && width >= 1 ? Math.floor(width) : null,
+    rightMargin: 0,
     state: text(raw.agent_state),
     contextPercent: Math.min(100, number(context.used_percentage) ?? 0),
     // current_usage is not documented as occupied context and can contradict
