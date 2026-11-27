@@ -58,13 +58,15 @@ export const claudeAdapter = {
     const config = data.cwd ? getConfigCounts(data.cwd, raw.model?.id ?? "") : null
     data.effortLevel = config?.effortLevel ?? null
     const caveman = cavemanAnnotation(getCavemanState())
+    const transcript = raw.transcript_path ? parseTranscript(raw.transcript_path) : null
     const snapshot: AgentSnapshot = {
       data,
       config: config ? {
         instructionFiles: [{ name: "CLAUDE.md", count: config.claudeMd }],
         mcps: config.mcps, hooks: config.hooks, rules: config.rules,
       } : null,
-      activity: raw.transcript_path ? parseTranscript(raw.transcript_path) : null,
+      tokenTotals: transcript?.tokenTotals ?? null,
+      activity: transcript?.activity ?? null,
       skipPermissions: detectSkipPermissions(),
       headerAnnotations: caveman ? [caveman] : [],
     }

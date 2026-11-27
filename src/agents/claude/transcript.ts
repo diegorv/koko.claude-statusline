@@ -2,7 +2,7 @@
 
 import { readFileSync } from "fs"
 
-import type { ActivityData, AgentInfo, RunningTool, AssistantSample, TokenTotals } from "../../core/model.ts"
+import type { ActivityData, AgentInfo, RunningTool, AssistantSample } from "../../core/model.ts"
 
 /** Cap on the sliding window of assistant samples kept in memory. */
 const SAMPLE_WINDOW = 16
@@ -44,7 +44,7 @@ function extractTarget(name: string, input: any): string {
  * @param path - Absolute path to the transcript JSONL file.
  * @returns Parsed transcript data, or null if the file cannot be read.
  */
-export function parseTranscript(path: string): ActivityData | null {
+export function parseTranscript(path: string) {
   let text: string
   try {
     text = readFileSync(path, "utf-8")
@@ -71,7 +71,7 @@ export function parseTranscript(path: string): ActivityData | null {
   // is split across multiple JSONL records (thinking + text + tool_use), each
   // carrying the SAME usage block. Summing naively would multi-count.
   const seenRequestIds = new Set<string>()
-  const tokenTotals: TokenTotals = { input: 0, output: 0, cacheCreate: 0, cacheRead: 0 }
+  const tokenTotals = { input: 0, output: 0, cacheCreate: 0, cacheRead: 0 }
   const assistantSamples: AssistantSample[] = []
   let lastAssistantTimestamp: number | null = null
 
@@ -215,14 +215,14 @@ export function parseTranscript(path: string): ActivityData | null {
     runningTools.push({ name: mcpDisplayName(name), target: extractTarget(name, input) })
   }
 
-  return {
+  const activity: ActivityData = {
     tools: sortedTools,
     runningTools: runningTools.slice(-2),
     agents: agentInfos,
     todos: todoData,
     mcpStatus: { ok: mcpOk, errored: mcpErrored },
     lastAssistantTimestamp,
-    tokenTotals,
     assistantSamples,
   }
+  return { activity, tokenTotals }
 }

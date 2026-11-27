@@ -1,4 +1,4 @@
-import type { EffortLevel, RateLimit } from "../../src/core/model.ts"
+import type { EffortLevel, RateLimit, TokenTotals } from "../../src/core/model.ts"
 import type { AgentSnapshot } from "../../src/core/snapshot.ts"
 
 export function object(value: unknown): Record<string, unknown> | undefined {
@@ -21,6 +21,19 @@ function effort(value: unknown): EffortLevel | null {
 
 function observed(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null
+}
+
+function tokenTotals(raw: unknown): TokenTotals | null {
+  const total = object(raw)
+  if (!total) return null
+  const counters = {
+    // total_input_tokens already includes cache reads and writes.
+    input: observed(total.other_input_tokens),
+    output: observed(total.output_tokens),
+    cacheRead: observed(total.cache_read_input_tokens),
+    cacheCreate: observed(total.cache_write_input_tokens),
+  }
+  return Object.values(counters).every(value => value === null) ? null : counters
 }
 
 function windowLabel(minutes: number | null, slot: string): string {
@@ -60,7 +73,8 @@ function quotaWindows(account: unknown): RateLimit[] {
 export function mapCodexSnapshot(state: unknown): AgentSnapshot {
   const snapshot = object(state)
   const thread = object(snapshot?.thread)
-  const context = object(object(thread?.usage)?.context)
+  const usage = object(thread?.usage)
+  const context = object(usage?.context)
   const model = object(thread?.model)
   return {
     data: {
@@ -74,7 +88,7 @@ export function mapCodexSnapshot(state: unknown): AgentSnapshot {
       contextPercent: observed(context?.used_percentage),
       contextTokens: observed(context?.used_tokens),
       contextWindowSize: observed(context?.context_window_size),
-      cost: null,
+      cost: observed(object(usage?.cost)?.total_cost_usd),
       costEstimated: null,
       durationMs: null,
       linesAdded: null,
@@ -84,6 +98,7 @@ export function mapCodexSnapshot(state: unknown): AgentSnapshot {
       worktree: null,
       outputStyle: null,
     },
+    tokenTotals: tokenTotals(usage?.total),
     activity: null,
     config: null,
     skipPermissions: false,

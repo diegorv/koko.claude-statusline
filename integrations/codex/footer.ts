@@ -1,6 +1,7 @@
 import type { AgentSnapshot } from "../../src/core/snapshot.ts"
+import { tokenContent } from "../../src/ui/content/consumption.ts"
 import { contextContent, quotaContent } from "../../src/ui/content/metrics.ts"
-import { effortContent, modelContent, sessionContent, stateContent, type ContentGroup } from "../../src/ui/content/session.ts"
+import { costContent, effortContent, modelContent, sessionContent, stateContent, type ContentGroup } from "../../src/ui/content/session.ts"
 
 type TextNode = { type: "text"; props?: { color: string }; children: (string | TextNode)[] }
 type Row = { type: "row"; props: { gap: number; wrap: "wrap" }; children: TextNode[] }
@@ -54,7 +55,7 @@ export function encodeGroups(groups: readonly (ContentGroup | null)[]): string {
   return JSON.stringify(row.children.length ? row : null)
 }
 
-export function renderFooter({ data }: AgentSnapshot): string {
+export function renderFooter({ data, tokenTotals }: AgentSnapshot): string {
   const nowMs = Date.now()
   return encodeGroups([
     data.model ? modelContent(data.model) : null,
@@ -62,6 +63,8 @@ export function renderFooter({ data }: AgentSnapshot): string {
     contextContent(data),
     ...data.rateLimits.map(limit => quotaContent(limit, nowMs)),
     stateContent(data.state),
+    tokenContent(tokenTotals, "footer"),
+    costContent(data.cost, data.costEstimated),
     sessionContent(data.sessionName ?? data.sessionId),
   ])
 }

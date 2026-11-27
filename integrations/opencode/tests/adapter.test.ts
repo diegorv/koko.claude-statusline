@@ -30,8 +30,8 @@ describe("OpenCode adapter", () => {
     })
     expect(snapshot.data.contextTokens).toBe(210)
     expect(snapshot.data.contextPercent).toBe(21)
-    expect(snapshot.activity?.tokenTotals.input).toBe(2000)
-    expect(snapshot.activity?.tokenTotals.output).toBe(30)
+    expect(snapshot.tokenTotals?.input).toBe(2000)
+    expect(snapshot.tokenTotals?.output).toBe(30)
     expect(snapshot.data.cost).toBe(0)
     expect(snapshot.data.effortLevel).toBe("high")
     expect(buildSnapshot(snapshot.data, "high", 0)).toEqual({

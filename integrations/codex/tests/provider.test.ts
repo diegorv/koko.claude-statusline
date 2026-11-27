@@ -57,6 +57,22 @@ test("serves discovery and isolated, bounded reads while stdin stays open", asyn
     child.stdin.write(read(++id, {}))
     expect((await next()).result.contents[0].text).toBe("null")
 
+    // Each observation below goes through the same running provider process.
+    for (const [usage, expected] of [
+      [{ context: { used_tokens: 7 }, total: { total_input_tokens: 1000, other_input_tokens: 100,
+        cache_read_input_tokens: 800, cache_write_input_tokens: 100, output_tokens: 23 }, cost: { total_cost_usd: 0 } },
+        ["ctx 7 used", "↑100 ↓23 cache read 800 write 100", "0¢"]],
+      [{ total: { total_input_tokens: 300, cache_read_input_tokens: 0 }, cost: { total_credits: 42 } }, ["cache read 0"]],
+      [{ total: { other_input_tokens: 0, output_tokens: 0, cache_write_input_tokens: 0 }, cost: { total_cost_usd: 1.25 } },
+        ["↑0 ↓0 cache write 0", "$1.25"]],
+      [{ total: { total_input_tokens: 1000 }, cost: { total_credits: 80 } }, []],
+    ] as const) {
+      child.stdin.write(read(++id, { usage }))
+      const root = JSON.parse((await next()).result.contents[0].text)
+      expect((root?.children ?? []).map((group: { children: { children: string[] }[] }) =>
+        group.children.flatMap(span => span.children).join(""))).toEqual(expected)
+    }
+
     child.stdin.write("not-json\n[]\n" + request(10, "resources/read", { uri: "ui://wrong" }) + request(11, "unknown"))
     for (const [id, code] of [[null, -32700], [null, -32600], [10, -32602], [11, -32601]]) {
       expect(await next()).toMatchObject({ jsonrpc: "2.0", id, error: { code } })

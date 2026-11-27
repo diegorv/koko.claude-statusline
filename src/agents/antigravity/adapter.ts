@@ -78,7 +78,6 @@ export function mapAntigravityInput(raw: Record<string, unknown>, now = Date.now
 }
 
 function readActivity(raw: Record<string, unknown>): ActivityData {
-  const context = object(raw.context_window)
   const subagents = Array.isArray(raw.subagents) ? raw.subagents : []
   return {
     tools: new Map(),
@@ -96,13 +95,6 @@ function readActivity(raw: Record<string, unknown>): ActivityData {
     todos: { total: 0, completed: 0, current: null },
     mcpStatus: { ok: new Set(), errored: new Set() },
     lastAssistantTimestamp: null,
-    tokenTotals: {
-      input: number(context.total_input_tokens) ?? 0,
-      output: number(context.total_output_tokens) ?? 0,
-      // Only aggregate input/output counts are documented, not cache totals.
-      cacheCreate: 0,
-      cacheRead: 0,
-    },
     assistantSamples: [],
   }
 }
@@ -110,7 +102,11 @@ function readActivity(raw: Record<string, unknown>): ActivityData {
 export const antigravityAdapter = {
   id: "antigravity" as const,
   read(raw: Record<string, unknown>) {
+    const context = object(raw.context_window)
+    const input = number(context.total_input_tokens)
+    const output = number(context.total_output_tokens)
     const snapshot: AgentSnapshot = {
+      tokenTotals: input === null && output === null ? null : { input, output, cacheCreate: null, cacheRead: null },
       data: mapAntigravityInput(raw),
       activity: readActivity(raw),
       config: null,

@@ -8,7 +8,7 @@ export interface StyledText {
 }
 
 export interface ContentGroup {
-  kind: "model" | "effort" | "state" | "session" | "cost" | "context" | "quota"
+  kind: "model" | "effort" | "state" | "session" | "cost" | "context" | "quota" | "tokens"
   spans: readonly StyledText[]
 }
 

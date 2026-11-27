@@ -74,11 +74,12 @@ export interface McpStatus {
   errored: Set<string> // servers with at least one error
 }
 
+/** Cumulative session counters. A null category has no observation. */
 export interface TokenTotals {
-  input: number
-  output: number
-  cacheCreate: number
-  cacheRead: number
+  input: number | null
+  output: number | null
+  cacheCreate: number | null
+  cacheRead: number | null
 }
 
 /**
@@ -101,8 +102,6 @@ export interface ActivityData {
   mcpStatus: McpStatus
   /** Wall-clock time of the most recent assistant message, in ms epoch. Null if no assistant turns seen. */
   lastAssistantTimestamp: number | null
-  /** Session-level token usage; transcript adapters must deduplicate repeated records. */
-  tokenTotals: TokenTotals
   /** Up to 16 most recent assistant samples (for output-speed rate math). Oldest first. */
   assistantSamples: AssistantSample[]
 }

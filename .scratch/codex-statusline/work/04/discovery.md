@@ -1,0 +1,6 @@
+# Separate session consumption from activity
+
+- Move the normalized token totals from ActivityData (src/core/model.ts:105) to AgentSnapshot (src/core/snapshot.ts:9). An absent total or missing category can coexist with reported zero. Claude's transcript reader returns both its activity and deduplicated totals from the existing single pass. Antigravity and OpenCode already receive session totals independently.
+- Preserve the existing panel token widget's compact combined cache count and silence for all-zero totals (src/ui/components/token-breakdown.ts:15). Share token labels and formatting with the native widget while retaining separately identified reported cache read/write categories on Codex.
+- Map thread.usage.total and thread.usage.cost using the released contract in integrations/codex/adapter.ts. Only other_input_tokens denotes uncached input. Cost uses total_cost_usd. The footer composes these with the existing context, state and quota groups, leaving activity absent.
+- Exercise the MCP resource response with partial counters, cache-inclusive input, absent/zero cost, credits and changing displayed threads. Existing transcript deduplication, OpenCode reasoning, panel bytes, pane-header timing and standalone source/bundle checks cover the migration.

@@ -85,7 +85,7 @@ export function composeRows(
   if (outputSpeed) consumptionParts.push(outputSpeed)
   const sessionDiff = renderSessionDiff(data)
   if (sessionDiff) consumptionParts.push(sessionDiff)
-  const tokenBreakdown = transcript ? renderTokenBreakdown(transcript.tokenTotals) : null
+  const tokenBreakdown = snapshot.tokenTotals ? renderTokenBreakdown(snapshot.tokenTotals) : null
   if (tokenBreakdown) consumptionParts.push(tokenBreakdown)
   if (consumptionParts.length > 0) session.push(GUTTERS.consumption + consumptionParts.join(SEP))
 

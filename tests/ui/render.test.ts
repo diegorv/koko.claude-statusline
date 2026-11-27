@@ -2,11 +2,11 @@ import { afterEach, beforeEach, describe, expect, setSystemTime, test } from "bu
 import { composeRows as renderSnapshot } from "../../src/ui/rows.ts"
 import type { SessionData } from "../../src/core/model.ts"
 import type { GitInfo } from "../../src/core/workspace.ts"
-import type { ActivityData } from "../../src/core/model.ts"
+import type { ActivityData, TokenTotals } from "../../src/core/model.ts"
 
 // Fixtures exercise the shared snapshot interface used by both hosts.
-function render(data: SessionData, git: GitInfo | null, config: import("../../src/core/model.ts").ConfigSummary | null, activity: ActivityData | null = null) {
-  return renderSnapshot({ data, config, activity, skipPermissions: false, headerAnnotations: [] }, { git, worktrunk: null })
+function render(data: SessionData, git: GitInfo | null, config: import("../../src/core/model.ts").ConfigSummary | null, activity: ActivityData | null = null, tokenTotals: TokenTotals | null = null) {
+  return renderSnapshot({ data, config, activity, tokenTotals, skipPermissions: false, headerAnnotations: [] }, { git, worktrunk: null })
 }
 
 const MINIMAL_DATA: SessionData = {
@@ -28,7 +28,6 @@ const EMPTY_TRANSCRIPT: ActivityData = {
   todos: { total: 0, completed: 0, current: null },
   mcpStatus: { ok: new Set(), errored: new Set() },
   lastAssistantTimestamp: null,
-  tokenTotals: { input: 0, output: 0, cacheCreate: 0, cacheRead: 0 },
   assistantSamples: [],
 }
 
@@ -84,12 +83,9 @@ describe("render", () => {
     expect(result.session[0]).toContain("7d")
   })
 
-  test("token breakdown joins the consumption row when transcript has totals", () => {
-    const transcript: ActivityData = {
-      ...EMPTY_TRANSCRIPT,
-      tokenTotals: { input: 1200, output: 300, cacheCreate: 0, cacheRead: 0 },
-    }
-    const result = render(MINIMAL_DATA, null, null, transcript)
+  test("token breakdown joins the consumption row without activity", () => {
+    const totals = { input: 1200, output: 300, cacheCreate: 0, cacheRead: 0 }
+    const result = render(MINIMAL_DATA, null, null, null, totals)
     expect(result.session.length).toBe(1)
     expect(result.session[0]).toContain("↑")
     expect(result.session[0]).toContain("↓")
@@ -97,11 +93,8 @@ describe("render", () => {
 
   test("token breakdown shares its row with rate limits", () => {
     const data = { ...MINIMAL_DATA, rateLimits: [{ label: "5h", pct: 30, resetsAt: 0, remaining: null, disabled: false }] }
-    const transcript: ActivityData = {
-      ...EMPTY_TRANSCRIPT,
-      tokenTotals: { input: 1000, output: 200, cacheCreate: 0, cacheRead: 0 },
-    }
-    const result = render(data, null, null, transcript)
+    const totals = { input: 1000, output: 200, cacheCreate: 0, cacheRead: 0 }
+    const result = render(data, null, null, null, totals)
     expect(result.session.length).toBe(1)
     expect(result.session[0]).toContain("↑")
     expect(result.session[0]).toContain("5h")
@@ -111,14 +104,13 @@ describe("render", () => {
     const now = Date.now()
     const transcript: ActivityData = {
       ...EMPTY_TRANSCRIPT,
-      tokenTotals: { input: 100, output: 1400, cacheCreate: 0, cacheRead: 0 },
       // Δ400 output tokens in 4s = 100 tok/s. Most recent sample within freshness window.
       assistantSamples: [
         { t: now - 5000, output: 1000 },
         { t: now - 1000, output: 1400 },
       ],
     }
-    const result = render(MINIMAL_DATA, null, null, transcript)
+    const result = render(MINIMAL_DATA, null, null, transcript, { input: 100, output: 1400, cacheCreate: 0, cacheRead: 0 })
     expect(result.session.length).toBe(1)
     expect(result.session[0]).toContain("tok/s")
   })
@@ -126,14 +118,13 @@ describe("render", () => {
   test("output speed is omitted when samples are stale", () => {
     const transcript: ActivityData = {
       ...EMPTY_TRANSCRIPT,
-      tokenTotals: { input: 100, output: 1400, cacheCreate: 0, cacheRead: 0 },
       // Both samples are over a minute old — output speed gates out.
       assistantSamples: [
         { t: Date.now() - 120_000, output: 1000 },
         { t: Date.now() - 60_000, output: 1400 },
       ],
     }
-    const result = render(MINIMAL_DATA, null, null, transcript)
+    const result = render(MINIMAL_DATA, null, null, transcript, { input: 100, output: 1400, cacheCreate: 0, cacheRead: 0 })
     expect(result.session.join(" ")).not.toContain("tok/s")
   })
 

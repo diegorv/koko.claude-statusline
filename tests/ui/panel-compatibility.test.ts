@@ -11,7 +11,7 @@ const snapshot: AgentSnapshot = {
     cwd: "", sessionName: "café", sessionId: "session", rateLimits: [], vimMode: null,
     worktree: "feature", outputStyle: null,
   },
-  skipPermissions: false, config: null, activity: null, headerAnnotations: [],
+  skipPermissions: false, config: null, activity: null, tokenTotals: null, headerAnnotations: [],
 }
 const workspace = { git: null, worktrunk: null }
 

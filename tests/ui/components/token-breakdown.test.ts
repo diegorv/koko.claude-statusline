@@ -17,8 +17,7 @@ describe("renderTokenBreakdown", () => {
 
   test("merges cacheCreate and cacheRead into a single cache total", () => {
     const result = renderTokenBreakdown({ input: 1000, output: 100, cacheCreate: 30000, cacheRead: 50000 })!
-    expect(result).toContain("◆")
-    expect(result).toContain("80k") // 30k + 50k merged
+    expect(result).toBe("\x1b[36m↑\x1b[0m1k \x1b[32m↓\x1b[0m100 \x1b[2m◆80k\x1b[0m")
   })
 
   test("omits the cache marker when total cache is zero but other fields aren't", () => {

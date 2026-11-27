@@ -13,9 +13,10 @@ function effort(variant?: string): EffortLevel | null {
 }
 
 function tokenTotals(usage?: Usage) {
+  if (!usage) return null
   return {
-    input: count(usage?.input), output: count(usage?.output) + count(usage?.reasoning),
-    cacheRead: count(usage?.cache.read), cacheCreate: count(usage?.cache.write),
+    input: count(usage.input), output: count(usage.output) + count(usage.reasoning),
+    cacheRead: count(usage.cache.read), cacheCreate: count(usage.cache.write),
   }
 }
 
@@ -56,7 +57,6 @@ function activity(input: OpenCodeInput): ActivityData {
       ok: new Set(mcps.filter(server => server.status.status === "connected").map(server => server.name)),
       errored: new Set(mcps.filter(server => server.status.status === "failed").map(server => server.name)),
     },
-    tokenTotals: tokenTotals(input.session?.tokens),
     lastAssistantTimestamp: null,
     assistantSamples: [],
   }
@@ -80,6 +80,7 @@ export function mapOpenCodeSnapshot(input: OpenCodeInput): AgentSnapshot {
       state: input.status ?? null, rateLimits: [],
       vimMode: null, worktree: null, outputStyle: null,
     },
+    tokenTotals: tokenTotals(input.session?.tokens),
     config: input.mcps ? { instructionFiles: [], rules: 0, hooks: 0, mcps: input.mcps.length } : null,
     activity: activity(input), skipPermissions: false, headerAnnotations: [],
   }

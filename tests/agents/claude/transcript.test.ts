@@ -56,10 +56,10 @@ describe("parseTranscript", () => {
     const path = writeTmpTranscript([])
     const result = parseTranscript(path)
     expect(result).not.toBeNull()
-    expect(result!.tools.size).toBe(0)
-    expect(result!.runningTools.length).toBe(0)
-    expect(result!.agents.length).toBe(0)
-    expect(result!.todos.total).toBe(0)
+    expect(result!.activity.tools.size).toBe(0)
+    expect(result!.activity.runningTools.length).toBe(0)
+    expect(result!.activity.agents.length).toBe(0)
+    expect(result!.activity.todos.total).toBe(0)
   })
 
   test("tracks completed tool usage counts", () => {
@@ -72,8 +72,8 @@ describe("parseTranscript", () => {
       toolResultEntry("3"),
     ])
     const result = parseTranscript(path)!
-    expect(result.tools.get("read")).toBe(2)
-    expect(result.tools.get("edit")).toBe(1)
+    expect(result.activity.tools.get("read")).toBe(2)
+    expect(result.activity.tools.get("edit")).toBe(1)
   })
 
   test("excludes hidden tools from counts", () => {
@@ -86,9 +86,9 @@ describe("parseTranscript", () => {
       toolResultEntry("3"),
     ])
     const result = parseTranscript(path)!
-    expect(result.tools.has("todowrite")).toBe(false)
-    expect(result.tools.has("toolsearch")).toBe(false)
-    expect(result.tools.get("read")).toBe(1)
+    expect(result.activity.tools.has("todowrite")).toBe(false)
+    expect(result.activity.tools.has("toolsearch")).toBe(false)
+    expect(result.activity.tools.get("read")).toBe(1)
   })
 
   test("excludes Agent/Task from tool counts", () => {
@@ -97,7 +97,7 @@ describe("parseTranscript", () => {
       toolResultEntry("1"),
     ])
     const result = parseTranscript(path)!
-    expect(result.tools.has("agent")).toBe(false)
+    expect(result.activity.tools.has("agent")).toBe(false)
   })
 
   test("tracks running tools (no result yet)", () => {
@@ -106,10 +106,10 @@ describe("parseTranscript", () => {
       toolUseEntry("2", "Bash", { command: "npm test" }),
     ])
     const result = parseTranscript(path)!
-    expect(result.runningTools.length).toBe(2)
-    expect(result.runningTools[0].name).toBe("read")
-    expect(result.runningTools[0].target).toBe("a.ts")
-    expect(result.runningTools[1].name).toBe("bash")
+    expect(result.activity.runningTools.length).toBe(2)
+    expect(result.activity.runningTools[0].name).toBe("read")
+    expect(result.activity.runningTools[0].target).toBe("a.ts")
+    expect(result.activity.runningTools[1].name).toBe("bash")
   })
 
   test("groups MCP tools by server name", () => {
@@ -121,9 +121,9 @@ describe("parseTranscript", () => {
     ])
     const result = parseTranscript(path)!
     // MCP tools are grouped by server name in display (server name only)
-    expect(result.tools.has("github")).toBe(true)
-    expect(result.tools.get("github")).toBe(2)
-    expect(result.mcpStatus.ok.has("github")).toBe(true)
+    expect(result.activity.tools.has("github")).toBe(true)
+    expect(result.activity.tools.get("github")).toBe(2)
+    expect(result.activity.mcpStatus.ok.has("github")).toBe(true)
   })
 
   test("tracks MCP errors", () => {
@@ -132,7 +132,7 @@ describe("parseTranscript", () => {
       toolResultEntry("1", true),
     ])
     const result = parseTranscript(path)!
-    expect(result.mcpStatus.errored.has("slack")).toBe(true)
+    expect(result.activity.mcpStatus.errored.has("slack")).toBe(true)
   })
 
   test("tracks agents (last 3)", () => {
@@ -147,9 +147,9 @@ describe("parseTranscript", () => {
       toolResultEntry("a4", false, "2025-01-01T00:07:00Z"),
     ])
     const result = parseTranscript(path)!
-    expect(result.agents.length).toBe(3)
-    expect(result.agents[0].type).toBe("second")
-    expect(result.agents[2].type).toBe("fourth")
+    expect(result.activity.agents.length).toBe(3)
+    expect(result.activity.agents[0].type).toBe("second")
+    expect(result.activity.agents[2].type).toBe("fourth")
   })
 
   test("tracks running agent", () => {
@@ -157,9 +157,9 @@ describe("parseTranscript", () => {
       toolUseEntry("a1", "Agent", { description: "exploring" }, "2025-01-01T00:00:00Z"),
     ])
     const result = parseTranscript(path)!
-    expect(result.agents.length).toBe(1)
-    expect(result.agents[0].running).toBe(true)
-    expect(result.agents[0].type).toBe("exploring")
+    expect(result.activity.agents.length).toBe(1)
+    expect(result.activity.agents[0].running).toBe(true)
+    expect(result.activity.agents[0].type).toBe("exploring")
   })
 
   test("tracks todo progress from TodoWrite", () => {
@@ -174,9 +174,9 @@ describe("parseTranscript", () => {
       toolResultEntry("1"),
     ])
     const result = parseTranscript(path)!
-    expect(result.todos.total).toBe(3)
-    expect(result.todos.completed).toBe(1)
-    expect(result.todos.current).toBe("Task B")
+    expect(result.activity.todos.total).toBe(3)
+    expect(result.activity.todos.completed).toBe(1)
+    expect(result.activity.todos.current).toBe("Task B")
   })
 
   test("TodoWrite replaces previous todo state", () => {
@@ -191,8 +191,8 @@ describe("parseTranscript", () => {
       toolResultEntry("2"),
     ])
     const result = parseTranscript(path)!
-    expect(result.todos.total).toBe(1)
-    expect(result.todos.current).toBe("New task")
+    expect(result.activity.todos.total).toBe(1)
+    expect(result.activity.todos.current).toBe("New task")
   })
 
   test("sorts tools by count descending", () => {
@@ -205,7 +205,7 @@ describe("parseTranscript", () => {
       toolUseEntry("6", "Bash", {}), toolResultEntry("6"),
     ])
     const result = parseTranscript(path)!
-    const keys = [...result.tools.keys()]
+    const keys = [...result.activity.tools.keys()]
     expect(keys[0]).toBe("read")  // 3 times
     expect(keys[1]).toBe("edit")  // 2 times
     expect(keys[2]).toBe("bash")  // 1 time
@@ -235,7 +235,7 @@ describe("parseTranscript", () => {
     const result = parseTranscript(path)!
     expect(result.tokenTotals.input).toBe(100)
     expect(result.tokenTotals.output).toBe(50)
-    expect(result.assistantSamples.length).toBe(1)
+    expect(result.activity.assistantSamples.length).toBe(1)
   })
 
   test("defaults missing usage fields to 0", () => {
@@ -258,7 +258,7 @@ describe("parseTranscript", () => {
     ])
     const result = parseTranscript(path)!
     // Last entry processed wins, not the chronologically latest — parser order.
-    expect(result.lastAssistantTimestamp).toBe(new Date("2025-01-01T00:02:00Z").getTime())
+    expect(result.activity.lastAssistantTimestamp).toBe(new Date("2025-01-01T00:02:00Z").getTime())
   })
 
   test("caps assistantSamples sliding window at 16", () => {
@@ -267,10 +267,10 @@ describe("parseTranscript", () => {
     )
     const path = writeTmpTranscript(lines)
     const result = parseTranscript(path)!
-    expect(result.assistantSamples.length).toBe(16)
+    expect(result.activity.assistantSamples.length).toBe(16)
     // Oldest dropped — first sample should be from turn index 9 (25 - 16 = 9).
     const expectedFirstTs = new Date("2025-01-01T00:09:00Z").getTime()
-    expect(result.assistantSamples[0].t).toBe(expectedFirstTs)
+    expect(result.activity.assistantSamples[0].t).toBe(expectedFirstTs)
   })
 
   test("sample.output is cumulative across turns", () => {
@@ -280,9 +280,9 @@ describe("parseTranscript", () => {
       assistantEntry("req-3", { output_tokens: 25 }, "2025-01-01T00:02:00Z"),
     ])
     const result = parseTranscript(path)!
-    expect(result.assistantSamples[0].output).toBe(100)
-    expect(result.assistantSamples[1].output).toBe(150)
-    expect(result.assistantSamples[2].output).toBe(175)
+    expect(result.activity.assistantSamples[0].output).toBe(100)
+    expect(result.activity.assistantSamples[1].output).toBe(150)
+    expect(result.activity.assistantSamples[2].output).toBe(175)
   })
 
   test("malformed timestamp does not crash and does not produce a sample", () => {
@@ -294,15 +294,15 @@ describe("parseTranscript", () => {
     // The malformed-timestamp turn still contributes to totals (data is valid).
     expect(result.tokenTotals.output).toBe(80)
     // But only the well-timestamped one produces a sample.
-    expect(result.assistantSamples.length).toBe(1)
-    expect(result.lastAssistantTimestamp).toBe(new Date("2025-01-01T00:00:00Z").getTime())
+    expect(result.activity.assistantSamples.length).toBe(1)
+    expect(result.activity.lastAssistantTimestamp).toBe(new Date("2025-01-01T00:00:00Z").getTime())
   })
 
   test("empty transcript yields zeroed token totals and no samples", () => {
     const path = writeTmpTranscript([])
     const result = parseTranscript(path)!
     expect(result.tokenTotals).toEqual({ input: 0, output: 0, cacheCreate: 0, cacheRead: 0 })
-    expect(result.assistantSamples).toEqual([])
-    expect(result.lastAssistantTimestamp).toBeNull()
+    expect(result.activity.assistantSamples).toEqual([])
+    expect(result.activity.lastAssistantTimestamp).toBeNull()
   })
 })
