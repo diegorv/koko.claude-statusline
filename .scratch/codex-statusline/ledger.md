@@ -40,7 +40,7 @@ An Issue can start when its status is `todo` and every Issue in its "Blocked by"
 | 03 | [Show current context, quotas and reset countdowns](issues/03-show-context-quotas-and-resets.md) | 02 | done | issue/03-show-context-quotas-and-resets (5147cff) | 2026-11-27 |
 | 04 | [Show session consumption without conflating it with context](issues/04-show-session-consumption.md) | 02 | done | issue/04-show-session-consumption (bc1a5f1) | 2026-11-27 |
 | 05 | [Enrich the footer with asynchronous workspace details](issues/05-collect-workspace-asynchronously.md) | 02 | done | issue/05-collect-workspace-asynchronously (47ca9e0) | 2026-11-27 |
-| 06 | [Register and remove the provider without losing user configuration](issues/06-manage-provider-registration.md) | 02 | todo | | |
+| 06 | [Register and remove the provider without losing user configuration](issues/06-manage-provider-registration.md) | 02 | in-progress | issue/06-manage-provider-registration | |
 | 07 | [Verify and document the complete Codex integration](issues/07-verify-and-document-codex-integration.md) | 03, 04, 05, 06 | todo | | |
 
 ## Log
@@ -56,3 +56,4 @@ An Issue can start when its status is `todo` and every Issue in its "Blocked by"
 - 2026-11-27 08:23 — 04 — deliver — Independent Codex review approved; three typechecks and suites passed; all adapters migrated with no duplicate totals; partial/cache/USD and standalone compatibility passed; merged and pushed — bc1a5f1
 - 2026-11-27 08:23 — 05 — start — Native Codex isolated build and independent review; blocker 02 delivered; no overlapping issue running — 8f746e7
 - 2026-11-27 08:30 — 05 — deliver — Independent Codex review approved; three typechecks and suites passed; real stdio cache/race/cleanup and standalone checks passed; rebased planning only with identical production tree; merged and pushed — 47ca9e0
+- 2026-11-27 08:30 — 06 — start — Native Codex isolated build and review; blocker 02 verified; registration tests use temporary homes only — 0b65975
