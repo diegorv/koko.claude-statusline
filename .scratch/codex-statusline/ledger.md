@@ -37,7 +37,7 @@ An Issue can start when its status is `todo` and every Issue in its "Blocked by"
 |---|---|---|---|---|---|
 | 01 | [Share styled content while preserving existing panel output](issues/01-share-styled-content.md) | none | done | issue/01-share-styled-content (537e4f7) | 2026-11-27 |
 | 02 | [Display a minimal Koko footer through Codex's native provider](issues/02-display-native-codex-footer.md) | 01 | done | issue/02-display-native-codex-footer (23cb361) | 2026-11-27 |
-| 03 | [Show current context, quotas and reset countdowns](issues/03-show-context-quotas-and-resets.md) | 02 | in-progress | issue/03-show-context-quotas-and-resets | |
+| 03 | [Show current context, quotas and reset countdowns](issues/03-show-context-quotas-and-resets.md) | 02 | done | issue/03-show-context-quotas-and-resets (5147cff) | 2026-11-27 |
 | 04 | [Show session consumption without conflating it with context](issues/04-show-session-consumption.md) | 02 | todo | | |
 | 05 | [Enrich the footer with asynchronous workspace details](issues/05-collect-workspace-asynchronously.md) | 02 | todo | | |
 | 06 | [Register and remove the provider without losing user configuration](issues/06-manage-provider-registration.md) | 02 | todo | | |
@@ -51,3 +51,4 @@ An Issue can start when its status is `todo` and every Issue in its "Blocked by"
 - 2026-11-27 08:07 — 02 — start — Native Codex build and independent review; blocker 01 delivered and verified — c1f37ea
 - 2026-11-27 08:13 — 02 — deliver — Native Codex review approved; all three typechecks and suites passed; isolated official 0.172.0 rendered Koko and picker; Bun/Node compatibility passed; merged and pushed — 23cb361
 - 2026-11-27 08:14 — 03 — start — Native Codex isolated build and review; blocker 02 delivered and verified — e464cf2
+- 2026-11-27 08:18 — 03 — deliver — Independent Codex review approved; three typechecks and suites passed; context and quota identity/reset regressions and standalone compatibility passed; merged and pushed — 5147cff
