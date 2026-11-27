@@ -41,7 +41,7 @@ An Issue can start when its status is `todo` and every Issue in its "Blocked by"
 | 04 | [Show session consumption without conflating it with context](issues/04-show-session-consumption.md) | 02 | done | issue/04-show-session-consumption (bc1a5f1) | 2026-11-27 |
 | 05 | [Enrich the footer with asynchronous workspace details](issues/05-collect-workspace-asynchronously.md) | 02 | done | issue/05-collect-workspace-asynchronously (47ca9e0) | 2026-11-27 |
 | 06 | [Register and remove the provider without losing user configuration](issues/06-manage-provider-registration.md) | 02 | done | issue/06-manage-provider-registration (03d716c) | 2026-11-27 |
-| 07 | [Verify and document the complete Codex integration](issues/07-verify-and-document-codex-integration.md) | 03, 04, 05, 06 | todo | | |
+| 07 | [Verify and document the complete Codex integration](issues/07-verify-and-document-codex-integration.md) | 03, 04, 05, 06 | in-progress | issue/07-verify-and-document-codex-integration | |
 
 ## Log
 
@@ -58,3 +58,4 @@ An Issue can start when its status is `todo` and every Issue in its "Blocked by"
 - 2026-11-27 08:30 — 05 — deliver — Independent Codex review approved; three typechecks and suites passed; real stdio cache/race/cleanup and standalone checks passed; rebased planning only with identical production tree; merged and pushed — 47ca9e0
 - 2026-11-27 08:30 — 06 — start — Native Codex isolated build and review; blocker 02 verified; registration tests use temporary homes only — 0b65975
 - 2026-11-27 08:44 — 06 — deliver — Codex re-review approved after scope/override/comment fixes; three suites and standalone checks passed; real 0.172.0 temporary-home registration passed; live config unchanged; merged and pushed — 03d716c
+- 2026-11-27 08:44 — 07 — start — Native Codex isolated verification and independent review; blockers 03, 04, 05, 06 delivered and verified — e85f5aa
