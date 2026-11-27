@@ -27,7 +27,7 @@ export function modelContent(model: string): ContentGroup {
 }
 
 const effortStyles: Record<EffortLevel, TextStyle> = {
-  low: "dim", medium: "yellow", high: "green", xhigh: "magenta", max: "red",
+  none: "dim", minimal: "dim", low: "dim", medium: "yellow", high: "green", xhigh: "magenta", max: "red",
 }
 
 export function effortContent(level: EffortLevel | null): ContentGroup | null {

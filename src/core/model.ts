@@ -1,6 +1,6 @@
 // Shared data consumed by renderers and exporters. Provider formats stay in adapters.
-export type AgentId = "claude" | "antigravity" | "opencode"
-export type EffortLevel = "low" | "medium" | "high" | "xhigh" | "max"
+export type AgentId = "claude" | "antigravity" | "opencode" | "codex"
+export type EffortLevel = "none" | "minimal" | "low" | "medium" | "high" | "xhigh" | "max"
 
 export interface RateLimit {
   label: string

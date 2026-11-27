@@ -17,6 +17,7 @@ const layers = {
   "src/ui": "ui",
   "src/ui/components": "ui",
   "src/ui/content": "content",
+  "integrations/codex": "codex",
   "integrations/opencode": "plugin",
   "integrations/opencode/mapping": "mapping",
 } as const
@@ -32,6 +33,7 @@ const dependencies: Record<Layer, readonly Layer[]> = {
   export: ["export", "core"],
   ui: ["ui", "core", "content"],
   content: ["content", "core"],
+  codex: ["codex", "content", "core"],
   plugin: ["plugin", "mapping", "core", "ui", "export"],
 }
 
@@ -43,12 +45,12 @@ function layer(file: string): Layer | undefined {
 function allowed(file: string, owner: Layer, specifier: string): boolean {
   if (!specifier.startsWith(".")) {
     if (isBuiltin(specifier)) {
-      return ["cli", "claude", "workspace", "export", "plugin"].includes(owner)
+      return ["cli", "claude", "workspace", "export", "plugin", "codex"].includes(owner)
     }
     return owner === "plugin" && /^(?:@opencode\/|@opentui\/|solid-js(?:\/|$))/.test(specifier)
   }
   const target = join(dirname(file), specifier)
-  if (/^(src\/index|integrations\/opencode\/tui)(?:\.[jt]sx?)?$/.test(target)) return false
+  if (/^(src\/index|integrations\/opencode\/tui|integrations\/codex\/server)(?:\.[jt]sx?)?$/.test(target)) return false
   if (owner !== "ui" && /^src\/ui\/(?:rows|lines)\.ts$/.test(target)) return false
   const targetLayer = layer(target)
   return targetLayer !== undefined && dependencies[owner].includes(targetLayer)
@@ -101,6 +103,7 @@ test("finds forbidden dependencies and unclassified directories while skipping t
       "src/ui/fixture.tsx": 'import "../index.ts"; export { x } from "../agents/claude/adapter.ts";',
       "src/agents/claude/caveman-badge.ts": 'import "../../ui/format.ts"; import type { StdinAdapter } from "../../cli/adapter.ts"',
       "src/agents/claude/fixture.ts": 'import type { X } from "@opencode/client"; const x = import("../antigravity/adapter.ts")',
+      "integrations/codex/fixture.ts": 'import "../../src/ui/render.ts"; import "../opencode/workspace.ts"; import "./server.ts"',
       "integrations/opencode/fixture.ts": 'export * from "./tui.tsx"',
       "integrations/opencode/mapping/fixture.ts": 'import "../host.ts"; import "solid-js"; export * from "node:fs"; import("@opencode/client/solid")',
       "src/ui/widgets/nested.ts": "",
@@ -113,6 +116,9 @@ test("finds forbidden dependencies and unclassified directories while skipping t
       writeFileSync(join(temp, file), source)
     }
     expect(await violations(temp)).toEqual([
+      "integrations/codex/fixture.ts -> ../../src/ui/render.ts",
+      "integrations/codex/fixture.ts -> ../opencode/workspace.ts",
+      "integrations/codex/fixture.ts -> ./server.ts",
       "integrations/opencode/fixture.ts -> ./tui.tsx",
       "integrations/opencode/mapping/fixture.ts -> ../host.ts",
       "integrations/opencode/mapping/fixture.ts -> solid-js",
