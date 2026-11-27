@@ -11,7 +11,7 @@ import { gradientBar, pctColor, formatResetIn, dim, RESET } from "../format.ts"
  * @param label - Display label for the rate limit (e.g. "5h", "7d").
  * @param rateLimit - Rate limit data with percentage and reset timestamp.
  */
-export function renderRateLimit(label: string, rateLimit: { pct: number | null; resetsAt: number; remaining?: number | null; disabled?: boolean }): string {
+export function renderRateLimit(label: string, rateLimit: { pct: number | null; resetsAt: number | null; remaining?: number | null; disabled?: boolean }): string {
   let str = rateLimit.disabled ? `${label} ${dim("disabled")}`
     : rateLimit.pct !== null ? `${label} ${gradientBar(rateLimit.pct, 8)} ${pctColor(rateLimit.pct)}${rateLimit.pct}%${RESET}`
     : `${label} ${rateLimit.remaining ?? "?"} left`

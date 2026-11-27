@@ -1,4 +1,5 @@
 import type { AgentSnapshot } from "../../src/core/snapshot.ts"
+import { contextContent, quotaContent } from "../../src/ui/content/metrics.ts"
 import { effortContent, modelContent, sessionContent, stateContent, type ContentGroup } from "../../src/ui/content/session.ts"
 
 type TextNode = { type: "text"; props?: { color: string }; children: (string | TextNode)[] }
@@ -35,7 +36,7 @@ export function encodeGroups(groups: readonly (ContentGroup | null)[]): string {
       if (!span.text) continue
       const content = label(span.text)
       groupBytes += encoder.encode(content).length
-      const color = span.style === "dim" ? "status-metadata" : span.style
+      const color = span.style === "dim" ? "status-metadata" : span.style === "amber" ? "#ffaa3c" : span.style
       children.push({ type: "text", ...(color && { props: { color } }), children: [content] })
       if (nodes + 1 + 2 * children.length > maxNodes || leafBytes + groupBytes > maxTextBytes) break
     }
@@ -54,9 +55,12 @@ export function encodeGroups(groups: readonly (ContentGroup | null)[]): string {
 }
 
 export function renderFooter({ data }: AgentSnapshot): string {
+  const nowMs = Date.now()
   return encodeGroups([
     data.model ? modelContent(data.model) : null,
     effortContent(data.effortLevel),
+    contextContent(data),
+    ...data.rateLimits.map(limit => quotaContent(limit, nowMs)),
     stateContent(data.state),
     sessionContent(data.sessionName ?? data.sessionId),
   ])

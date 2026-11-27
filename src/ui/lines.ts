@@ -2,7 +2,8 @@
 
 import type { SessionData } from "../core/model.ts"
 import type { RenderResult } from "./rows.ts"
-import { ansiContent, bold, dim, formatDuration, formatTokens, gradientBar, nbsp, pctColor, RESET, vlen } from "./format.ts"
+import { ansiContent, bold, dim, formatDuration, gradientBar, nbsp, pctColor, RESET, vlen } from "./format.ts"
+import { contextTokenRatio } from "./content/metrics.ts"
 import { costContent, modelContent } from "./content/session.ts"
 import { GAP, SEP, inRuleColor, inFaintColor } from "./constants.ts"
 import type { PanelLayout } from "./layout.ts"
@@ -48,7 +49,7 @@ function buildHeaderLeft(data: SessionData, repoName: string | undefined, effort
   if (data.contextPercent !== null) {
     const pct = Math.round(data.contextPercent)
     const tokensLabel = data.contextTokens != null && data.contextWindowSize
-      ? " " + dim(`${formatTokens(data.contextTokens)}/${formatTokens(data.contextWindowSize)}`)
+      ? " " + dim(contextTokenRatio(data.contextTokens, data.contextWindowSize))
       : ""
     parts.push(`${gradientBar(data.contextPercent, 10)} ${pctColor(data.contextPercent)}${pct}%${RESET}${tokensLabel}`)
   }

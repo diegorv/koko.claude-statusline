@@ -4,10 +4,13 @@ export type EffortLevel = "none" | "minimal" | "low" | "medium" | "high" | "xhig
 
 export interface RateLimit {
   label: string
+  /** Source bucket and rolling duration when the host identifies the window. */
+  limitId?: string
+  windowMinutes?: number | null
   /** Percentage used; null for buckets that report only an absolute balance. */
   pct: number | null
-  /** Unix timestamp in seconds; 0 when unknown. */
-  resetsAt: number
+  /** Unix timestamp in seconds. Legacy adapters use zero for an unknown reset. */
+  resetsAt: number | null
   remaining: number | null
   disabled: boolean
 }

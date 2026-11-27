@@ -1,0 +1,6 @@
+# Context and quota observations
+
+- The released snapshot supplies three independent values at `thread.usage.context` and named account buckets with two optional windows. Map them in `integrations/codex/adapter.ts:22`. Keep the bucket ID, duration in minutes and nullable reset in the normalized rate limit at `src/core/model.ts:5`.
+- In `src/ui/format.ts:162`, extract shared calculations for bounded bar fill, percentage color thresholds, reset countdowns and compact token counts. Native content uses these decisions in `src/ui/content/`. The existing ANSI renderer keeps its RGB gradient bytes and panel layout.
+- Extend the native group sequence in `integrations/codex/footer.ts:59` with context and quota windows before run state and session identity. Use the reported minutes for labels, including nonstandard durations, and identify the bucket even when multiple buckets share a window size.
+- Add resource-read cases following `integrations/codex/tests/provider.test.ts`. Exercise partial/zero context, reversed slots, multiple identities, unknown resets, over-limit use and switching threads. Drive countdowns with a fixed clock. Existing format, rate-limit, header and byte-level compatibility tests protect other hosts.

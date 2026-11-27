@@ -2,11 +2,14 @@
 
 import type { ContentGroup } from "./content/session.ts"
 
+import { filledCells, percentageStyle, resetCountdown } from "./content/metrics.ts"
+
 const RESET = "\x1b[0m"
 const BOLD = "\x1b[1m"
 const DIM = "\x1b[2m"
 
 const ANSI: Record<string, string> = {
+  amber: "\x1b[38;2;255;170;60m",
   orange: "\x1b[38;5;172m",
   red: "\x1b[31m",
   green: "\x1b[32m",
@@ -160,7 +163,7 @@ export function vlen(s: string): number {
  * @returns ANSI-colored string of filled and empty block characters.
  */
 export function gradientBar(percent: number, width = 20): string {
-  const filled = Math.round((percent * width) / 100)
+  const filled = filledCells(percent, width)
   const parts: string[] = []
   for (let i = 0; i < width; i++) {
     const t = width > 1 ? i / (width - 1) : 0
@@ -182,19 +185,13 @@ export function gradientBar(percent: number, width = 20): string {
   return parts.join("") + RESET
 }
 
-// True-color orange for the intermediate 70-89% bucket — no ANSI-16 equivalent between yellow and red.
-const ORANGE = "\x1b[38;2;255;170;60m"
-
 /**
  * Returns the ANSI color code for a percentage value.
  * Four buckets: green < 50, yellow 50-69, orange 70-89, red >= 90.
  * The extra step at 50% gives a more informative ramp as usage climbs.
  */
 export function pctColor(pct: number): string {
-  if (pct >= 90) return ANSI.red
-  if (pct >= 70) return ORANGE
-  if (pct >= 50) return ANSI.yellow
-  return ANSI.green
+  return ANSI[percentageStyle(pct)]
 }
 
 /**
@@ -212,46 +209,10 @@ export function formatDuration(ms: number): string {
   return `${sec}s`
 }
 
-/**
- * Formats the time remaining until a reset epoch as a human-readable countdown.
- * Switches unit by magnitude so the result stays compact and readable:
- *   < 60m  → "23m"
- *   < 48h  → "1h 15m" / "47h"
- *   >= 48h → "6d 5h" / "7d"  (minutes dropped — irrelevant at this scale)
- * Returns empty string if the reset time is in the past.
- * @param epochSec - Reset timestamp in seconds since Unix epoch.
- * @returns Formatted countdown string, or empty if already past.
- */
-export function formatResetIn(epochSec: number): string {
-  const diff = epochSec * 1000 - Date.now()
-  if (diff <= 0) return ""
-  const mins = Math.ceil(diff / 60000)
-  if (mins < 60) return `${mins}m`
-  const h = Math.floor(mins / 60)
-  const m = mins % 60
-  if (h >= 48) {
-    const d = Math.floor(h / 24)
-    const hr = h % 24
-    return hr > 0 ? `${d}d ${hr}h` : `${d}d`
-  }
-  return m > 0 ? `${h}h ${m}m` : `${h}h`
-}
+export { formatTokens } from "./content/metrics.ts"
 
-/**
- * Formats a token count in compact form: `148k`, `1.2m`, `450`.
- * Uses 1 decimal place only when the value isn't a whole multiple of the unit.
- *
- * The 'k' threshold is 950 (not 1000) so values like 999_500 format as `1m`
- * instead of the misleading `1000k` that naive rounding would produce.
- */
-export function formatTokens(n: number): string {
-  if (n >= 950_000) {
-    const v = n / 1_000_000
-    const rounded = Math.round(v * 10) / 10
-    return rounded === Math.trunc(rounded) ? `${rounded}m` : `${rounded.toFixed(1)}m`
-  }
-  if (n >= 1_000) return `${Math.round(n / 1_000)}k`
-  return `${n}`
+export function formatResetIn(epochSec: number): string {
+  return resetCountdown(epochSec, Date.now())
 }
 
 /** Replaces regular spaces with non-breaking spaces for terminal rendering. */

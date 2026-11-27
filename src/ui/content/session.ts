@@ -1,6 +1,6 @@
 import type { EffortLevel } from "../../core/model.ts"
 
-export type TextStyle = "dim" | "cyan" | "green" | "yellow" | "magenta" | "red"
+export type TextStyle = "dim" | "cyan" | "green" | "yellow" | "magenta" | "red" | "amber"
 
 export interface StyledText {
   text: string
@@ -8,7 +8,7 @@ export interface StyledText {
 }
 
 export interface ContentGroup {
-  kind: "model" | "effort" | "state" | "session" | "cost"
+  kind: "model" | "effort" | "state" | "session" | "cost" | "context" | "quota"
   spans: readonly StyledText[]
 }
 
@@ -18,7 +18,7 @@ const operatingSystemCommand = /(?:\x1b\]|\x9d)[\s\S]*?(?:\x07|\x1b\\|\x9c|$)/g
 const controlString = /(?:\x1b[PX^_]|[\x90\x98\x9e\x9f])[\s\S]*?(?:\x1b\\|\x9c|$)/g
 const terminalControl = /(?:\x1b\[|\x9b)[0-?]*[ -/]*[@-~]|\x1b[ -/]*[0-~]|[\x00-\x1f\x7f-\x9f]/g
 
-function displayText(text: string): string {
+export function displayText(text: string): string {
   return text.replace(operatingSystemCommand, "").replace(controlString, "").replace(terminalControl, "")
 }
 
