@@ -36,7 +36,7 @@ An Issue can start when its status is `todo` and every Issue in its "Blocked by"
 | # | Issue | Blocked by | Status | Branch / PR | Merged |
 |---|---|---|---|---|---|
 | 01 | [Share styled content while preserving existing panel output](issues/01-share-styled-content.md) | none | done | issue/01-share-styled-content (537e4f7) | 2026-11-27 |
-| 02 | [Display a minimal Koko footer through Codex's native provider](issues/02-display-native-codex-footer.md) | 01 | todo | | |
+| 02 | [Display a minimal Koko footer through Codex's native provider](issues/02-display-native-codex-footer.md) | 01 | in-progress | issue/02-display-native-codex-footer | |
 | 03 | [Show current context, quotas and reset countdowns](issues/03-show-context-quotas-and-resets.md) | 02 | todo | | |
 | 04 | [Show session consumption without conflating it with context](issues/04-show-session-consumption.md) | 02 | todo | | |
 | 05 | [Enrich the footer with asynchronous workspace details](issues/05-collect-workspace-asynchronously.md) | 02 | todo | | |
@@ -48,3 +48,4 @@ An Issue can start when its status is `todo` and every Issue in its "Blocked by"
 - 2026-11-27 08:00 — ledger created (7 Issues)
 - 2026-11-27 08:00 — 01 — start — Codex-native isolated build and independent review; no blockers — 8d15538
 - 2026-11-27 08:07 — 01 — deliver — Native Codex re-review approved after OSC fix; both typechecks and full suites passed; 16 Bun/Node source/bundle smokes passed; relay ship merged and pushed — 537e4f7
+- 2026-11-27 08:07 — 02 — start — Native Codex build and independent review; blocker 01 delivered and verified — c1f37ea
