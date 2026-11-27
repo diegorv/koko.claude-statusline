@@ -6,7 +6,7 @@
 [![dependencies](https://img.shields.io/badge/runtime%20deps-0-success)](./package.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-A rich terminal statusline for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), [Antigravity CLI](https://antigravity.google/docs/cli/statusline/) and [OpenCode](https://opencode.ai/docs/build/plugins/cli/). The standalone command has zero runtime dependencies and runs on Bun, Node, or tsx. OpenCode has a separate native TUI integration sharing the same core.
+A rich terminal statusline for [Claude Code](https://docs.anthropic.com/en/docs/claude-code), [Antigravity CLI](https://antigravity.google/docs/cli/statusline/), [OpenCode](https://opencode.ai/docs/build/plugins/cli/) and [Codex CLI](docs/CODEX.md). The standalone command has zero runtime dependencies and runs on Bun, Node, or tsx. OpenCode loads a TUI plugin. Codex reads a compact native footer from a persistent MCP provider.
 
 Developed with AI coding agents, including Claude Code and Codex.
 
@@ -21,13 +21,13 @@ Works on any terminal with true-color support (iTerm2, Ghostty, Kitty, Alacritty
 | Claude Code | `src/index.ts` or the release bundle | Session JSON on stdin, local configuration and transcript |
 | Antigravity CLI | Same command with `--agent antigravity` or automatic product detection | Session JSON on stdin |
 | OpenCode 2.4.x | Local TUI plugin at `integrations/opencode` | Reactive host caches, server VCS and the measured slot width |
-| Codex | Its native configurable footer | Codex manages its own footer. This project provides no custom integration. |
+| Codex CLI 0.171.0 and 0.172.0 | [Experimental stdio provider](docs/CODEX.md) at `integrations/codex` | Codex polls the displayed thread. Local Git details arrive asynchronously. |
 
 The command and plugin share the session and workspace contracts, panel renderer and pane-header exporter. The command reads local Git state. OpenCode uses its existing server connection, which also supports remote workspaces.
 
 ## Quick install
 
-The steps below configure Claude Code. See the [Antigravity settings](docs/INSTALL.md#antigravity-cli) or the [OpenCode plugin settings](docs/INSTALL.md#opencode) for those hosts.
+The steps below configure Claude Code. See the [Antigravity settings](docs/INSTALL.md#antigravity-cli), [OpenCode plugin settings](docs/INSTALL.md#opencode) or [Codex provider setup](docs/CODEX.md) for those hosts.
 
 Recommended runtime: [Bun](https://bun.sh) `>= 1.0` — runs the TypeScript entry point directly, no build step.
 
@@ -86,6 +86,7 @@ Point your `command` at it — `node /Users/<you>/.claude-statusline.mjs`. Check
 | Doc | Contents |
 |---|---|
 | [docs/INSTALL.md](docs/INSTALL.md) | Full installation: clone or prebuilt bundle, configure, verify, update, other runtimes, troubleshoot |
+| [docs/CODEX.md](docs/CODEX.md) | Native footer, registration, removal, diagnostics and isolated verification |
 | [docs/LAYOUT.md](docs/LAYOUT.md) | What the statusline shows — header, body rows, and the full feature list |
 | [docs/TUNING.md](docs/TUNING.md) | Environment variables (`CLAUDE_STATUSLINE_RIGHT_MARGIN`, `CLAUDE_CODE_EFFORT_LEVEL`, `CLAUDE_STATUSLINE_DEBUG_LOG`, `PANE_HEADER_DIR`) |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) | Testing, project structure, dependencies, inspiration & attribution |

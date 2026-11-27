@@ -1,0 +1,20 @@
+VERDICT: APPROVED
+
+## Acceptance criteria
+
+- [met] Documentation describes the three runtime lifecycles, the native provider's entry point, shared presentation responsibilities and the effective dependency directions. — Compared the host matrix and contributor guide with the stdin runner, OpenCode panel and Codex server, dispatcher and footer. The guides locate the shared styled content and local parsers, OpenCode's server-side VCS acquisition, and the installer-only TOML dependency. All changed paths are reserved.
+- [met] Documentation accurately states experimental support, versioned UI capabilities, viewport limits, missing host fields and the distinction between context, consumption, quotas and optional cost. — Compared docs/CODEX.md with the released snapshot and tree contract, the adapter's independent context fields and duration-keyed windows, and the actual group order and limits in footer.ts. The guide describes host wrapping, bounded output, optional values, uncached input, separate cache categories and reported USD.
+- [met] The three packages' typechecks and complete suites pass. Automated scenarios cover provider lifecycle, malformed input, missing/zero metrics, multiple sessions, responsive Git and bounded UI output. — All three typechecks passed independently. The recorded provider, footer, metrics and workspace tests passed on this tree. Twelve additional registration and adapter cases passed in review. The complete three-package suite is the final ship gate.
+- [met] Direct standalone execution and a locally generated release bundle pass the existing Bun/Node compatibility checks without installing integration dependencies; the OpenCode installation path still resolves. — Inspected scripts/smoke-standalone.py and its passing relay record. The script builds from an isolated source copy, uses a separate output directory and compares bytes and expected host labels on both inputs. The record covers Bun and Node 22, 24 and 26. Independently resolved the OpenCode public package subpath and verified its tui.tsx exists.
+- [met] A reproducible isolated native-CLI smoke procedure and an evidence record name the exact versions, platforms, display modes, outcomes and remaining manual checks. No fixture-only result is presented as a live rendering result. — Verified all five raw PTY capture hashes against work/07/validation.md. The two thread-switch captures show the documented release, old and new IDs and local branch. The two 0.172.0 mode captures contain the ready footer, Git and clipped text. The timeout capture shows the timeout indication, picker and restored branch in that order. The guide isolates the TUI home and daemon. The record identifies the remaining interactive account, platform, remote-host and pending-directory checks.
+- [met] Existing command behavior, OpenCode resizing and remote workspace protection, and existing pane-header schema/timing retain their regression coverage. No temporary contracts or stale imports remain. — No production or existing test file changed in this diff. Exact-tree records cover the command, panel compatibility, exporter, measured OpenCode panel, remote workspace and module boundary checks. The final snapshot carries its own session totals, and the documented entry points and shared modules resolve in the checkout.
+
+## Checks
+
+Reviewed main...6224f06. Relay check-records listed passing records for eleven test files. From root these covered architecture, CLI, panel compatibility and pane-header. From integrations/opencode they covered panel, workspace and runtime imports. From integrations/codex they covered provider, footer, metrics and workspace. The separate passing standalone script record covered sixteen invocations.
+
+Independently ran all three package typechecks and two uncovered Codex test files (registration and adapter, twelve cases). Independently checked the OpenCode public export and inspected the terminal bytes and SHA-256 of every cited issue 07 capture. No bounded runner timed out.
+
+## Findings
+
+None.

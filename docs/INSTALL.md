@@ -1,6 +1,6 @@
 # Installation
 
-Claude Code and Antigravity CLI can run the TypeScript command from a checkout or a self-contained [release bundle](#install-from-a-prebuilt-bundle-no-clone). The numbered steps configure Claude Code. [Antigravity CLI](#antigravity-cli) uses its own command settings. [OpenCode](#opencode) loads the plugin directory from a full checkout.
+Claude Code and Antigravity CLI can run the TypeScript command from a checkout or a self-contained [release bundle](#install-from-a-prebuilt-bundle-no-clone). The numbered steps configure Claude Code. [Antigravity CLI](#antigravity-cli) uses its own command settings. [OpenCode](#opencode) loads the plugin directory from a full checkout. For Codex CLI 0.171.0 or 0.172.0, register the native provider from a checkout on the connected app-server host. See the [Codex setup guide](CODEX.md).
 
 ## Command prerequisites
 

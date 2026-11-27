@@ -6,18 +6,18 @@
 
 **Blocked by:** 03, 04, 05, 06
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Context:** [Specification](../spec.md) and [source investigation](../research.md).
 
 ## Acceptance criteria
 
-- [ ] Documentation describes the three runtime lifecycles, the native provider's entry point, shared presentation responsibilities and the effective dependency directions.
-- [ ] Documentation accurately states experimental support, versioned UI capabilities, viewport limits, missing host fields and the distinction between context, consumption, quotas and optional cost.
-- [ ] The three packages' typechecks and complete suites pass. Automated scenarios cover provider lifecycle, malformed input, missing/zero metrics, multiple sessions, responsive Git and bounded UI output.
-- [ ] Direct standalone execution and a locally generated release bundle pass the existing Bun/Node compatibility checks without installing integration dependencies; the OpenCode installation path still resolves.
-- [ ] A reproducible isolated native-CLI smoke procedure and an evidence record name the exact versions, platforms, display modes, outcomes and remaining manual checks. No fixture-only result is presented as a live rendering result.
-- [ ] Existing command behavior, OpenCode resizing and remote workspace protection, and existing pane-header schema/timing retain their regression coverage. No temporary contracts or stale imports remain.
+- [x] Documentation describes the three runtime lifecycles, the native provider's entry point, shared presentation responsibilities and the effective dependency directions.
+- [x] Documentation accurately states experimental support, versioned UI capabilities, viewport limits, missing host fields and the distinction between context, consumption, quotas and optional cost.
+- [x] The three packages' typechecks and complete suites pass. Automated scenarios cover provider lifecycle, malformed input, missing/zero metrics, multiple sessions, responsive Git and bounded UI output.
+- [x] Direct standalone execution and a locally generated release bundle pass the existing Bun/Node compatibility checks without installing integration dependencies; the OpenCode installation path still resolves.
+- [x] A reproducible isolated native-CLI smoke procedure and an evidence record name the exact versions, platforms, display modes, outcomes and remaining manual checks. No fixture-only result is presented as a live rendering result.
+- [x] Existing command behavior, OpenCode resizing and remote workspace protection, and existing pane-header schema/timing retain their regression coverage. No temporary contracts or stale imports remain.
 
 ## Manual checks
 
@@ -29,3 +29,5 @@
 ## Comments
 
 - 2026-11-26: The user approved the seven-ticket breakdown and its dependency graph for publication through `/to-tickets`.
+
+- 2026-11-27, branch `issue/07-verify-and-document-codex-integration`: docs: record final integration verification plan; docs: describe native footer and verify standalone compatibility; docs: record native rendering and compatibility checks; docs: review final Codex integration verification. Deliver: Independent Codex review verified native 0.171.0/0.172.0 captures, real resize/thread/timeout recovery, documentation and reproducible standalone matrix; all three typechecks and 307 tests passed; manual limits documented; live user config unchanged. Tests: exit=0 at f9cfa1e (log /Users/diegorv/Dev/pet-projects/koko/claude-statusline.worktrees/test-logs/codex-statusline/07-deliver.log). Reviews: round 1: APPROVED (.scratch/codex-statusline/work/07/review.md, native Codex reviewer).

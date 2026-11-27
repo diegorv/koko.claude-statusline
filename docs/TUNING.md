@@ -11,6 +11,8 @@ Set these variables in the environment that starts the command or plugin. For ma
 
 Antigravity's reported width takes precedence over terminal probing. OpenCode uses the actual slot width. The margin override applies to that selected width in each host. See [Layout](LAYOUT.md#agent-specific-availability).
 
+Codex controls wrapping and the available footer height. Its provider reads the displayed thread directly and does not export pane-header files. See the [Codex guide](CODEX.md).
+
 ## Pane-header output
 
 The exporter creates the directory with mode `0700`, writes each file with mode `0600`, and renames a temporary file into place so readers see complete JSON. The command writes after rendering. OpenCode batches session updates over 250 ms and can export before the first slot measurement. Resizing alone does not trigger a write.

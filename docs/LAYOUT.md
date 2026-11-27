@@ -1,6 +1,6 @@
 # Layout & Features
 
-Claude Code and Antigravity CLI pipe session JSON to the standalone command. OpenCode updates its plugin from reactive session data. Both runtimes use the same panel renderer to produce a header and an optional framed body. Rows that have no data are simply not emitted — the statusline shrinks to just the header when you are outside a git repo and before any tools, agents, or todos appear.
+Claude Code and Antigravity CLI pipe session JSON to the standalone command. OpenCode updates its plugin from reactive session data. Both runtimes use the same panel renderer to produce a header and an optional framed body. Codex renders a compact native row using the [footer layout](CODEX.md#reading-the-footer). Rows of the framed panel that have no data are simply not emitted — the statusline shrinks to just the header when you are outside a git repo and before any tools, agents, or todos appear.
 
 ## Layout overview
 
@@ -54,6 +54,7 @@ The feature list above describes Claude Code. Each host supplies its own viewpor
 |---|---|---|---|
 | Claude Code | Local terminal probe with per-session stabilization when a key is available. The default right margin is 16 columns. | The payload supplies the percentage, with a fallback of zero. Occupied tokens sum current input, cache creation and cache reads when usage is present. | Configured server count plus servers seen in the transcript. The check and cross reflect successful and errored MCP tool results. |
 | Antigravity CLI | Payload width first, then local probing. The frame spans the available width with a default margin of zero. | The payload supplies the percentage, with a fallback of zero. Aggregate input and output are shown separately. Occupied context tokens are unknown. | The payload supplies no MCP status. |
+| Codex CLI | A native wrapping row. The host controls the available height and width. | Percentage, occupancy and capacity are independent optional observations. | No tool activity in the released snapshot. |
 | OpenCode | The measured slot width sets the frame, with a default margin of zero. Resizing changes presentation only. | The active model's context sample includes input, visible output, reasoning, cache reads and cache writes. A known capacity is required for a percentage. Missing usage or capacity leaves the percentage unknown. | The host supplies connected and failed server states. |
 
 Antigravity displays native quota buckets, agent state and subagent status. Claude shows its reported five-hour and seven-day limits. OpenCode shows session token totals separately from the current context sample and adds reasoning to visible output in the output total. Model selection, compaction and undo boundaries determine which sample can supply current context.

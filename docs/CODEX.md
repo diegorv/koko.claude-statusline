@@ -1,6 +1,21 @@
 # Native Codex footer
 
-Koko runs as a persistent stdio MCP server for the experimental custom statusline in stock Codex CLI 0.171.0 and 0.172.0. It displays the model, reasoning effort, run state, and thread name or ID when the current snapshot supplies them. The host wraps the native row and controls the space available to it.
+Koko runs as a persistent stdio MCP server for the experimental custom statusline in stock Codex CLI 0.171.0 and 0.172.0. Each resource read describes the thread currently displayed. The provider returns one JSON text resource at the requested URI. A successful read starts a one-second wait before the next poll. Each read has its own one-second deadline.
+
+## Reading the footer
+
+| Group, in display order | What the figures mean |
+|---|---|
+| Model and effort | The displayed model and its reported reasoning level. |
+| Context | The percentage used, occupied tokens and capacity of the current context. Each value can arrive independently. |
+| Quotas | Each account limit keeps its ID. The reported duration identifies a five-hour or seven-day window in either slot. Other durations retain their own labels. The bar saturates at 100% while the number shows actual **consumed** usage, including values above 100%. A reported future reset adds a countdown refreshed on each read. |
+| State and session consumption | The agent state, uncached input (↑), output (↓), cache reads and cache writes. Codex's total input already includes cached input. Each observed category appears separately. Missing categories stay hidden, and reported zero is a value. |
+| Cost and session identity | Only host-reported USD appears as currency. Credits have no USD conversion. The thread name or ID identifies the session. |
+| Git | Local branch and worktree details appear when available on the provider host. A cold cache displays session data immediately. A background refresh uses Git and, for linked worktrees, optional Worktrunk. Up to 16 directories are cached, with a three-second freshness interval and a 1.5-second budget per refresh. |
+
+The released snapshot omits tool history, subagents, timing samples and session edit counts. The footer does not infer activity, speeds or charges from local logs.
+
+The released UI contract supports text, links, rows and text styles. Koko emits styled text groups in a wrapping row with a one-column gap. The host supplies no usable footer width and chooses its own height, depending on inline or fullscreen mode, available rows and hints. Narrow windows may clip later groups. The host limits a tree to 64 KiB of JSON, 16 KiB of UTF-8 leaf text, 256 non-null nodes and depth 16. Koko bounds output before responding.
 
 ## Register on the connected app-server host
 
@@ -31,7 +46,7 @@ From the checkout root, exercise the actual provider process and the native pick
 (cd integrations/codex && bun test tests/provider.test.ts)
 ```
 
-For a native observation, open a fresh shell and run the following in a subshell. The scratch user configuration and workspace stay under one temporary directory. Follow the picker steps above, note the Codex version, OS and display mode, then exit the TUI. Fullscreen and inline modes may allocate different numbers of rows. No credentials are copied into this setup. If the CLI requires login, record that limitation or use a dedicated test account.
+For a native observation, open a fresh shell and run the following in a subshell. The scratch user configuration and workspace stay under one temporary directory. Follow the picker steps above, note the Codex version, OS and display mode, then exit the TUI. Fullscreen and inline modes may allocate different numbers of rows. Start the subshell with a dedicated test environment. For an offline idle-footer check, a placeholder credential in the temporary home lets you open the TUI without a model turn. For live account metrics, use a dedicated test account.
 
 ```sh
 (
@@ -41,17 +56,21 @@ For a native observation, open a fresh shell and run the following in a subshell
   scratch="$(mktemp -d)"
   trap 'rm -rf "$scratch"' EXIT
   mkdir -p "$scratch/home" "$scratch/codex" "$scratch/workspace"
-  export HOME="$scratch/home" CODEX_HOME="$scratch/codex"
   cd "$scratch/workspace" || exit 1
-  "$codex_bin" --version
-  "$runtime" "$checkout/integrations/codex/register.ts" preview
-  "$runtime" "$checkout/integrations/codex/register.ts" install
-  "$runtime" "$checkout/integrations/codex/register.ts" doctor
-  "$codex_bin" --no-daemon
-  "$runtime" "$checkout/integrations/codex/register.ts" remove
+  isolated() {
+    env -i HOME="$scratch/home" CODEX_HOME="$scratch/codex" PATH="$PATH" TERM="${TERM:-xterm-256color}" "$@"
+  }
+  isolated "$codex_bin" --version
+  printf '%s\n' sk-isolated-placeholder | isolated "$codex_bin" login --with-api-key
+  isolated "$runtime" "$checkout/integrations/codex/register.ts" preview
+  isolated "$runtime" "$checkout/integrations/codex/register.ts" install
+  isolated "$runtime" "$checkout/integrations/codex/register.ts" doctor
+  isolated "$codex_bin" --no-daemon                  # fullscreen when the terminal permits it
+  isolated "$codex_bin" --no-daemon --no-alt-screen  # inline
+  isolated "$runtime" "$checkout/integrations/codex/register.ts" remove
 )
 ```
 
-The protocol fixture measures resource reads. Thread switching in that test is simulated. Rendering, picker selection and terminal resize require a native observation.
+For each mode, choose Koko in the picker and check the model, run state and thread name or ID. Resize the terminal from wide to narrow and back with shortcut hints visible. Open `/new`, choose the current workspace if prompted, and compare thread IDs. For Git, use a temporary Git repository with one commit and allow another poll after the cold read. The [verification record](../.scratch/codex-statusline/work/07/validation.md) identifies which observations were made on stock releases and which scenarios use fixtures.
 
 The [released provider guide](https://github.com/openai/codex/blob/rust-v0.171.0/codex-rs/skills/src/assets/samples/create-statusline/SKILL.md) and [released snapshot and UI types](https://github.com/openai/codex/blob/rust-v0.171.0/codex-rs/skills/src/assets/samples/create-statusline/references/statusline.d.ts) define the supported protocol.
