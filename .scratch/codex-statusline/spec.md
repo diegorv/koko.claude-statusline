@@ -1,12 +1,12 @@
 # Native Codex statusline integration
 
-**Status:** approved — breakdown approved and tickets published through `/to-tickets` on 2026-11-26.
+**Status:** implemented — all seven issues delivered through native Codex on 2026-11-27.
 
 ## Objective
 
 Display a compact Koko footer inside the official Codex CLI through its experimental stdio MCP statusline provider. Preserve the existing Claude, Antigravity and OpenCode installations and output.
 
-The source investigation is [research.md](research.md). The approved implementation slices are indexed in [breakdown.md](breakdown.md), with acceptance criteria in the individual issue files. The user authorized ticket publication; implementation and changes to the user's Codex configuration have not started.
+The source investigation is [research.md](research.md). The approved implementation slices are indexed in [breakdown.md](breakdown.md), with acceptance criteria in the individual issue files. The user authorized implementation and merge delivery on 2026-11-27. All seven issues are delivered; the user's live Codex configuration was not changed. See the [ledger](ledger.md) and [verification record](work/07/validation.md).
 
 ## Product behavior
 
@@ -61,4 +61,4 @@ Native CLI validation must distinguish executable harness results from actual in
 
 ## Planning state
 
-The user approved the seven-ticket breakdown and its dependency graph on 2026-11-26. Seven English issue files are published under `issues/`, each marked `ready-for-agent`. No implementation ledger or work claim was created during ticket publication.
+The user approved the seven-ticket breakdown and its dependency graph on 2026-11-26. The seven English issue files under `issues/` are resolved. Native Codex implementers and independent reviewers completed the work in isolated worktrees. The [ledger](ledger.md) records each verified merge and the [execution record](execution.md) describes the adaptation. Original acceptance criteria and functional dependencies remain unchanged.

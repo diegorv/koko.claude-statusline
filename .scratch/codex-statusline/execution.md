@@ -7,3 +7,11 @@ Use native Codex implementers and separate native Codex reviewers with the inher
 Configuration verified: main, origin, merge; one configured fix/re-review round, with delivery fixes and independent review when needed. Each issue runs serially in its own issue/NN-slug branch and sibling worktree. Planning is committed before worktrees; setup uses frozen lockfiles. Issue 02 adds its package to CI and relay checks immediately. Resolve validation from the worktree configuration at each delivery gate.
 
 Initial main HEAD: b6b035a (clean, one commit ahead of origin/main after fetch). Existing detached Codex worktree is preserved. No issue branches or interrupted Codex ledger were present. Installed codex-cli: 0.172.0. Native checks use isolated homes/configuration and record actual observations separately from fixtures and owner-only checks. Live user configuration must remain untouched.
+
+## Completion
+
+All seven issues were merged and pushed on 2026-11-27. The ledger records the verified squash commits: 01 `537e4f7`, 02 `23cb361`, 03 `5147cff`, 04 `bc1a5f1`, 05 `47ca9e0`, 06 `03d716c`, 07 `855d0f5`. Issues 01 and 06 required fixes and independent re-review; all final reviews approved. Each delivery ran the full worktree-configured suite through relay suite reset/run/wait and used relay deliver ship followed by relay check merged.
+
+The final gate passed all three typechecks and 268 root, 20 OpenCode and 19 Codex tests. The standalone matrix passed 16 source/bundle invocations on Bun and Node 22/24/26. Actual macOS CLI rendering was observed on official 0.171.0 and 0.172.0; the verification record separates native thread/resize/timeout observations from fixtures, Ubuntu CI and remaining owner checks. Live user configuration remained unchanged.
+
+Final planning updates change completion metadata only; the approved criteria and functional dependency graph are unchanged. No Claude CLI, Claude session, Workflow tool, relay next/launch/codex-review/finish, fabricated workflow transcript or usage record was used.
