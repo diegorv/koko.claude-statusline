@@ -2,6 +2,8 @@
 
 **What to build:** The Codex footer can show reported input, output and cache totals, plus available host-reported USD cost, even when no tool activity is supplied.
 
+**Files:** src/core/, src/agents/, src/cli/, src/ui/, src/export/, tests/, integrations/opencode/, integrations/codex/, .scratch/codex-statusline/work/04/
+
 **Blocked by:** 02
 
 **Status:** ready-for-agent

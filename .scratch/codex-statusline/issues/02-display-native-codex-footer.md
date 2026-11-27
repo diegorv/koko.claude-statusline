@@ -2,6 +2,8 @@
 
 **What to build:** A stock supported Codex CLI can discover and select Koko, then display the current thread's model, effort and run state through a persistent stdio MCP provider.
 
+**Files:** integrations/codex/, src/core/model.ts, src/ui/, tests/ui/, tests/architecture.test.ts, .github/workflows/ci.yml, .agent-relay-lite/config.json, docs/CODEX.md, .scratch/codex-statusline/work/02/
+
 **Blocked by:** 01
 
 **Status:** ready-for-agent

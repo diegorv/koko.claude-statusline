@@ -2,6 +2,8 @@
 
 **What to build:** The existing Claude, Antigravity and OpenCode panels keep their appearance while presentation exposes reusable content that can also serve a native host renderer.
 
+**Files:** src/ui/, tests/ui/, tests/architecture.test.ts, integrations/opencode/tests/, .scratch/codex-statusline/work/01/
+
 **Blocked by:** none
 
 **Status:** ready-for-agent

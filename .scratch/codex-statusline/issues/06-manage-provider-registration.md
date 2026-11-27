@@ -2,6 +2,8 @@
 
 **What to build:** Users can register Koko in the correct Codex configuration, diagnose setup problems and remove it while preserving their previous settings.
 
+**Files:** integrations/codex/, tests/architecture.test.ts, docs/CODEX.md, .scratch/codex-statusline/work/06/
+
 **Blocked by:** 02
 
 **Status:** ready-for-agent

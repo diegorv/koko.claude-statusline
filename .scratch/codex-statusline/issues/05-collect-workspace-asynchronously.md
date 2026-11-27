@@ -2,6 +2,8 @@
 
 **What to build:** Git information appears for an accessible local workspace while session data remains responsive during cold, slow or failing workspace queries.
 
+**Files:** src/cli/, src/workspace/, src/core/workspace.ts, tests/cli/workspace/, tests/workspace/, tests/architecture.test.ts, integrations/codex/, integrations/opencode/tests/, .scratch/codex-statusline/work/05/
+
 **Blocked by:** 02
 
 **Status:** ready-for-agent

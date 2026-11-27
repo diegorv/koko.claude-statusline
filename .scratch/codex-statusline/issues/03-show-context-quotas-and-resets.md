@@ -2,6 +2,8 @@
 
 **What to build:** The Codex footer shows the displayed thread's context and available account usage windows with Koko's indicators and reset countdowns.
 
+**Files:** integrations/codex/, src/core/model.ts, src/ui/, tests/ui/, tests/architecture.test.ts, .scratch/codex-statusline/work/03/
+
 **Blocked by:** 02
 
 **Status:** ready-for-agent

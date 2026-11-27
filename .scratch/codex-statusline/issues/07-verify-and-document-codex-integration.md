@@ -2,6 +2,8 @@
 
 **What to build:** Users can install the completed integration with accurate expectations, and maintainers can reproduce its compatibility and failure checks.
 
+**Files:** README.md, docs/, tests/, integrations/codex/tests/, integrations/codex/package.json, integrations/opencode/tests/, .github/workflows/ci.yml, .agent-relay-lite/config.json, scripts/, .scratch/codex-statusline/work/07/
+
 **Blocked by:** 03, 04, 05, 06
 
 **Status:** ready-for-agent
