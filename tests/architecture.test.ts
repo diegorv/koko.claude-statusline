@@ -16,6 +16,7 @@ const layers = {
   "src/export": "export",
   "src/ui": "ui",
   "src/ui/components": "ui",
+  "src/ui/content": "content",
   "integrations/opencode": "plugin",
   "integrations/opencode/mapping": "mapping",
 } as const
@@ -29,7 +30,8 @@ const dependencies: Record<Layer, readonly Layer[]> = {
   core: ["core"],
   workspace: ["workspace", "core"],
   export: ["export", "core"],
-  ui: ["ui", "core"],
+  ui: ["ui", "core", "content"],
+  content: ["content", "core"],
   plugin: ["plugin", "mapping", "core", "ui", "export"],
 }
 
@@ -95,6 +97,7 @@ test("finds forbidden dependencies and unclassified directories while skipping t
   const temp = mkdtempSync(join(tmpdir(), "koko-layers-"))
   try {
     const samples = {
+      "src/ui/content/fixture.ts": 'import "../format.ts"; import "node:fs"; import "@opencode/client"',
       "src/ui/fixture.tsx": 'import "../index.ts"; export { x } from "../agents/claude/adapter.ts";',
       "src/agents/claude/caveman-badge.ts": 'import "../../ui/format.ts"; import type { StdinAdapter } from "../../cli/adapter.ts"',
       "src/agents/claude/fixture.ts": 'import type { X } from "@opencode/client"; const x = import("../antigravity/adapter.ts")',
@@ -120,6 +123,9 @@ test("finds forbidden dependencies and unclassified directories while skipping t
       "src/agents/claude/caveman-badge.ts -> ../../cli/adapter.ts",
       "src/agents/claude/fixture.ts -> @opencode/client",
       "src/agents/claude/fixture.ts -> ../antigravity/adapter.ts",
+      "src/ui/content/fixture.ts -> ../format.ts",
+      "src/ui/content/fixture.ts -> node:fs",
+      "src/ui/content/fixture.ts -> @opencode/client",
       "src/ui/fixture.tsx -> ../index.ts",
       "src/ui/fixture.tsx -> ../agents/claude/adapter.ts",
       "unclassified: src/ui/widgets/nested.ts",

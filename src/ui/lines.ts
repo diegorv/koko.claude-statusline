@@ -2,7 +2,8 @@
 
 import type { SessionData } from "../core/model.ts"
 import type { RenderResult } from "./rows.ts"
-import { bold, c, dim, formatDuration, formatTokens, gradientBar, nbsp, pctColor, RESET, vlen } from "./format.ts"
+import { ansiContent, bold, dim, formatDuration, formatTokens, gradientBar, nbsp, pctColor, RESET, vlen } from "./format.ts"
+import { costContent, modelContent } from "./content/session.ts"
 import { GAP, SEP, inRuleColor, inFaintColor } from "./constants.ts"
 import type { PanelLayout } from "./layout.ts"
 
@@ -41,7 +42,7 @@ function wrapLine(line: string, maxWidth: number, separator: string): string[] {
 function buildHeaderLeft(data: SessionData, repoName: string | undefined, effort: string | null, headerBadges: string[]): string {
   const parts: string[] = []
   if (repoName) parts.push(bold("yellow", repoName))
-  parts.push(c("cyan", data.model))
+  parts.push(ansiContent(modelContent(data.model)))
   if (effort) parts.push(effort)
   parts.push(...headerBadges)
   if (data.contextPercent !== null) {
@@ -57,10 +58,8 @@ function buildHeaderLeft(data: SessionData, repoName: string | undefined, effort
 /** Right side of the header: cost · duration · activity title (config counts). */
 function buildHeaderRight(data: SessionData, activityTitle: string): string {
   const parts: string[] = []
-  if (data.cost !== null) {
-    const costLabel = data.cost < 0.10 ? `${Math.round(data.cost * 100)}¢` : `$${data.cost.toFixed(2)}`
-    parts.push(c("yellow", (data.costEstimated ? "~" : "") + costLabel))
-  }
+  const cost = costContent(data.cost, data.costEstimated)
+  if (cost) parts.push(ansiContent(cost))
   if (data.durationMs !== null && data.durationMs >= 1000) parts.push(`⏱ ${formatDuration(data.durationMs)}`)
   if (activityTitle) parts.push(dim(activityTitle))
   return parts.join(SEP)

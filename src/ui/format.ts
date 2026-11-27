@@ -1,5 +1,7 @@
 // ANSI formatting helpers
 
+import type { ContentGroup } from "./content/session.ts"
+
 const RESET = "\x1b[0m"
 const BOLD = "\x1b[1m"
 const DIM = "\x1b[2m"
@@ -25,6 +27,14 @@ export const bold = (color: string, text: string) => `${BOLD}${ANSI[color] ?? ""
 
 /** Wraps text in dim (faint) ANSI style with an automatic reset. */
 export const dim = (text: string) => `${DIM}${text}${RESET}`
+
+/** Serialize a semantic field for terminal panels. The compositor supplies inter-field spacing. */
+export function ansiContent(group: ContentGroup): string {
+  return group.spans.map(({ text, style }) => {
+    if (style === "dim") return dim(text)
+    return style ? c(style, text) : text
+  }).join("")
+}
 
 /**
  * Codepoints in the BMP "Misc Symbols + Dingbats + Misc Technical" range that

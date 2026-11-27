@@ -2,7 +2,8 @@
 
 import type { ConfigSummary } from "../../core/model.ts"
 import type { McpStatus } from "../../core/model.ts"
-import { c } from "../format.ts"
+import { sessionContent } from "../content/session.ts"
+import { ansiContent, c } from "../format.ts"
 import { GAP } from "../constants.ts"
 
 /**
@@ -48,6 +49,7 @@ export function renderActivityTitle(
     if (config.rules > 0) titleParts.push(`${config.rules} rules`)
   }
   if (outputStyle && outputStyle !== "default") titleParts.push(c("magenta", outputStyle))
-  if (sessionName) titleParts.push(sessionName)
+  const session = sessionContent(sessionName)
+  if (session) titleParts.push(ansiContent(session))
   return titleParts.join(GAP)
 }

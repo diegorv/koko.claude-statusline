@@ -4,7 +4,8 @@
 import type { AgentSnapshot } from "../core/snapshot.ts"
 import type { WorkspaceSnapshot } from "../core/workspace.ts"
 import { SEP, GAP, ICONS } from "./constants.ts"
-import { c } from "./format.ts"
+import { stateContent } from "./content/session.ts"
+import { ansiContent, c } from "./format.ts"
 import {
   renderGitStatus,
   renderWorkspaceInfo,
@@ -89,7 +90,8 @@ export function composeRows(
   if (consumptionParts.length > 0) session.push(GUTTERS.consumption + consumptionParts.join(SEP))
 
   const activity: string[] = []
-  if (data.state) activity.push(GUTTERS.tools + data.state)
+  const state = stateContent(data.state)
+  if (state) activity.push(GUTTERS.tools + ansiContent(state))
 
   if (transcript) {
     // Row 3 (tools, cyan): running with spinner + completed with counts.

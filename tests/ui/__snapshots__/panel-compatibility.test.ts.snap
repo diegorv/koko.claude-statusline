@@ -1,0 +1,32 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`public renderer preserves ANSI bytes in the command and measured-slot layouts: content 1`] = `
+{
+  "activityRows": 1,
+  "output": 
+"␛[0m ␛[36m模型␣👩‍💻␛[0m␛[2m␣␣│␣␣␛[0m␛[2meffort:␣␛[0m␛[35mxhigh␛[0m
+␛[0m ␛[33m~$0.42␛[0m␛[2m␣␣│␣␣␛[0m␛[2mcafé␛[0m
+␛[0m ␛[38;2;110;110;120m┌──────────────────────────────────␛[0m
+␛[0m ␛[32m␛[0m␣␣␛[35m␣feature␛[0m
+␛[0m ␛[38;2;110;110;120m├──────────────────────────────────␛[0m
+␛[0m ␛[36m␛[0m␣␣working
+␛[0m ␛[38;2;110;110;120m└──────────────────────────────────␛[0m"
+,
+  "sessionRows": 1,
+}
+`;
+
+exports[`public renderer preserves ANSI bytes in the command and measured-slot layouts: available 1`] = `
+{
+  "activityRows": 1,
+  "output": 
+"␛[0m ␛[36m模型␣👩‍💻␛[0m␛[2m␣␣│␣␣␛[0m␛[2meffort:␣␛[0m␛[35mxhigh␛[0m␣␛[38;2;60;60;70m─────────────────────────␛[0m␣␛[33m~$0.42␛[0m␛[2m␣␣│␣␣␛[0m␛[2mcafé␛[0m
+␛[0m ␛[38;2;110;110;120m┌──────────────────────────────────────────────────────────────────␛[0m
+␛[0m ␛[32m␛[0m␣␣␛[35m␣feature␛[0m
+␛[0m ␛[38;2;110;110;120m├──────────────────────────────────────────────────────────────────␛[0m
+␛[0m ␛[36m␛[0m␣␣working
+␛[0m ␛[38;2;110;110;120m└──────────────────────────────────────────────────────────────────␛[0m"
+,
+  "sessionRows": 1,
+}
+`;
