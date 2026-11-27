@@ -9,6 +9,10 @@
   },
   "devDependencies": {
     "@types/bun": "1.4.5",
+    "@types/eslint": "9.6.1",
     "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "toml-eslint-parser": "1.0.3"
   }
 }

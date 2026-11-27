@@ -49,10 +49,11 @@ function allowed(file: string, owner: Layer, specifier: string): boolean {
     if (isBuiltin(specifier)) {
       return ["cli", "localCli", "claude", "export", "plugin", "codex"].includes(owner)
     }
+    if (file === "integrations/codex/registration-toml.ts" && specifier === "toml-eslint-parser") return true
     return owner === "plugin" && /^(?:@opencode\/|@opentui\/|solid-js(?:\/|$))/.test(specifier)
   }
   const target = join(dirname(file), specifier)
-  if (/^(src\/index|integrations\/opencode\/tui|integrations\/codex\/server)(?:\.[jt]sx?)?$/.test(target)) return false
+  if (/^(src\/index|integrations\/opencode\/tui|integrations\/codex\/(?:register|server))(?:\.[jt]sx?)?$/.test(target)) return false
   if (owner !== "ui" && /^src\/ui\/(?:rows|lines)\.ts$/.test(target)) return false
   const targetLayer = layer(target)
   return targetLayer !== undefined && dependencies[owner].includes(targetLayer)
