@@ -1,0 +1,6 @@
+# Asynchronous workspace discovery
+
+- `src/cli/workspace/git.ts:47` mixes normalized Git parsing with three synchronous commands. Share the query arguments and pure parsing in `src/workspace/` while preserving the command's values, including its linked-worktree-only Worktrunk lookup in `read.ts:8`.
+- `integrations/codex/protocol.ts` currently renders each snapshot without workspace data. Give the persistent server a bounded per-absolute-cwd cache with deferred, cancellable async subprocess reads. Return session data on the first read, refresh successes and failures after a short TTL, and dispose work at EOF or termination. Keep response content tied to its supplied cwd and session.
+- `src/ui/components/git-status.ts:13` owns the branch, dirty indicator, counts and Worktrunk presentation. Extract a semantic group shared by the panel and native footer. Preserve ANSI styles and ordering. Update the ticket's UI reservations before editing those files.
+- `tests/architecture.test.ts:10` classifies shared acquisition and protects OpenCode's server-only workspace dependency. Use real temporary repositories/worktrees and the persistent provider harness to exercise cold reads, failures, lagging Git, concurrent thread/cwd changes, eviction, expiry and cancellation.

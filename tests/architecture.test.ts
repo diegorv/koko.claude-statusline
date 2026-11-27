@@ -12,7 +12,8 @@ const layers = {
   "src/agents/claude": "claude",
   "src/agents/antigravity": "antigravity",
   "src/core": "core",
-  "src/cli/workspace": "workspace",
+  "src/cli/workspace": "localCli",
+  "src/workspace": "workspace",
   "src/export": "export",
   "src/ui": "ui",
   "src/ui/components": "ui",
@@ -24,7 +25,8 @@ const layers = {
 type Layer = (typeof layers)[keyof typeof layers]
 
 const dependencies: Record<Layer, readonly Layer[]> = {
-  cli: ["cli", "claude", "antigravity", "core", "workspace", "ui", "export"],
+  localCli: ["localCli", "workspace", "core"],
+  cli: ["cli", "claude", "antigravity", "core", "localCli", "ui", "export"],
   claude: ["claude", "core"],
   antigravity: ["antigravity", "core"],
   mapping: ["mapping", "core"],
@@ -33,7 +35,7 @@ const dependencies: Record<Layer, readonly Layer[]> = {
   export: ["export", "core"],
   ui: ["ui", "core", "content"],
   content: ["content", "core"],
-  codex: ["codex", "content", "core"],
+  codex: ["codex", "content", "core", "workspace"],
   plugin: ["plugin", "mapping", "core", "ui", "export"],
 }
 
@@ -45,7 +47,7 @@ function layer(file: string): Layer | undefined {
 function allowed(file: string, owner: Layer, specifier: string): boolean {
   if (!specifier.startsWith(".")) {
     if (isBuiltin(specifier)) {
-      return ["cli", "claude", "workspace", "export", "plugin", "codex"].includes(owner)
+      return ["cli", "localCli", "claude", "export", "plugin", "codex"].includes(owner)
     }
     return owner === "plugin" && /^(?:@opencode\/|@opentui\/|solid-js(?:\/|$))/.test(specifier)
   }
@@ -104,7 +106,7 @@ test("finds forbidden dependencies and unclassified directories while skipping t
       "src/agents/claude/caveman-badge.ts": 'import "../../ui/format.ts"; import type { StdinAdapter } from "../../cli/adapter.ts"',
       "src/agents/claude/fixture.ts": 'import type { X } from "@opencode/client"; const x = import("../antigravity/adapter.ts")',
       "integrations/codex/fixture.ts": 'import "../../src/ui/render.ts"; import "../opencode/workspace.ts"; import "./server.ts"',
-      "integrations/opencode/fixture.ts": 'export * from "./tui.tsx"',
+      "integrations/opencode/fixture.ts": 'export * from "./tui.tsx"; import "../../src/workspace/git.ts"',
       "integrations/opencode/mapping/fixture.ts": 'import "../host.ts"; import "solid-js"; export * from "node:fs"; import("@opencode/client/solid")',
       "src/ui/widgets/nested.ts": "",
       "new-package/index.ts": "",
@@ -120,6 +122,7 @@ test("finds forbidden dependencies and unclassified directories while skipping t
       "integrations/codex/fixture.ts -> ../opencode/workspace.ts",
       "integrations/codex/fixture.ts -> ./server.ts",
       "integrations/opencode/fixture.ts -> ./tui.tsx",
+      "integrations/opencode/fixture.ts -> ../../src/workspace/git.ts",
       "integrations/opencode/mapping/fixture.ts -> ../host.ts",
       "integrations/opencode/mapping/fixture.ts -> solid-js",
       "integrations/opencode/mapping/fixture.ts -> node:fs",

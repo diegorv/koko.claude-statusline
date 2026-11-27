@@ -1,3 +1,4 @@
+import type { WorkspaceCache } from "./workspace.ts"
 import { mapCodexSnapshot, object } from "./adapter.ts"
 import { renderFooter } from "./footer.ts"
 
@@ -18,7 +19,7 @@ export function error(id: Id, code: number, message: string) {
   return { jsonrpc: "2.0", id, error: { code, message } }
 }
 
-export function reply(line: string) {
+export function reply(line: string, workspaces?: WorkspaceCache) {
   let request: Record<string, unknown> | undefined
   try {
     request = object(JSON.parse(line))
@@ -52,7 +53,7 @@ export function reply(line: string) {
       if (params.uri !== resourceUri) return error(id, -32602, "Unknown resource URI")
       const state = object(params._meta)?.["com.openai/codex-statusline-state"]
       const snapshot = mapCodexSnapshot(state)
-      return ok({ contents: [{ uri: resourceUri, mimeType, text: renderFooter(snapshot) }] })
+      return ok({ contents: [{ uri: resourceUri, mimeType, text: renderFooter(snapshot, workspaces?.read(snapshot.data.cwd)) }] })
     }
     default: return error(id, -32601, "Method not found")
   }

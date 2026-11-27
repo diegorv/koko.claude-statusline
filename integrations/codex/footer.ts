@@ -1,3 +1,5 @@
+import { EMPTY_WORKSPACE } from "../../src/core/workspace.ts"
+import { gitContent } from "../../src/ui/content/workspace.ts"
 import type { AgentSnapshot } from "../../src/core/snapshot.ts"
 import { tokenContent } from "../../src/ui/content/consumption.ts"
 import { contextContent, quotaContent } from "../../src/ui/content/metrics.ts"
@@ -55,7 +57,7 @@ export function encodeGroups(groups: readonly (ContentGroup | null)[]): string {
   return JSON.stringify(row.children.length ? row : null)
 }
 
-export function renderFooter({ data, tokenTotals }: AgentSnapshot): string {
+export function renderFooter({ data, tokenTotals }: AgentSnapshot, workspace = EMPTY_WORKSPACE): string {
   const nowMs = Date.now()
   return encodeGroups([
     data.model ? modelContent(data.model) : null,
@@ -66,5 +68,6 @@ export function renderFooter({ data, tokenTotals }: AgentSnapshot): string {
     tokenContent(tokenTotals, "footer"),
     costContent(data.cost, data.costEstimated),
     sessionContent(data.sessionName ?? data.sessionId),
+    gitContent(workspace.git, workspace.worktrunk),
   ])
 }
